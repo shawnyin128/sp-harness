@@ -25,6 +25,9 @@ always has drift — naming inconsistencies, dead imports, debug leftovers.
 If you scan files and find zero issues, scan again more carefully. A clean
 bill of health for recently changed code is a sign you didn't look closely
 enough, not that the code is perfect.
+
+**Self-persuasion traps** — if you think "minor, not worth fixing" or
+"it works so it's fine": flag it anyway. Your job is finding dirt.
 </EXTREMELY-IMPORTANT>
 
 ---

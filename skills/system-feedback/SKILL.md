@@ -24,6 +24,13 @@ all 4 dimensions, do a second pass — you are not looking hard enough.
 For every dimension where you find zero issues, you MUST document what you
 checked and why nothing was found. "No issues" without explanation is not
 acceptable.
+
+**Self-persuasion traps — if you catch yourself thinking any of these, STOP:**
+- "This is minor, not worth reporting" → report it, user decides severity
+- "It works for the common case" → untested edge cases are issues
+- "The tests pass so it's fine" → tests only cover what was thought of
+- "It's not perfect but good enough" → your job is to find flaws, not approve
+- "This would be caught later" → there is no later. You are it.
 </EXTREMELY-IMPORTANT>
 
 **Trigger:** feature-tracker invokes this when all features in docs/features.json

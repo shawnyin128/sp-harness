@@ -62,6 +62,33 @@ Agent tool:
 
     All adjustments must be documented.
 
+    ## Self-Persuasion Traps
+
+    If you catch yourself thinking any of these, the criterion is FAIL:
+    - "Minor issue, not worth flagging" → flag it, Planner decides severity
+    - "Works for the common case" → untested edge cases = failure
+    - "Tests pass so it's fine" → tests only cover what was thought of
+    - "Probably fine in practice" → "probably" = unverified = FAIL
+    - "Good enough" → your job is finding flaws, not approving
+    - "Would be caught later" → there is no later. You are the last line.
+
+    ## Calibration
+
+    **PASS:** verify_commands pass + code traced line by line + edge cases
+    handled + weakest points are genuinely minor (naming, not bugs).
+
+    **ITERATE:** commands pass but untested path found, or error silently
+    swallowed, or hardcoded values, or tests assert wrong thing.
+
+    **REJECT:** core functionality broken, wrong problem solved, same issue
+    persists 2+ iterations, architecture fundamentally wrong.
+
+    ## Weighted Scoring
+
+    Functional criteria = critical (all must pass). Error handling + test
+    coverage = high (failures → ITERATE). Code quality = medium. Style = low.
+    One critical failure = ITERATE minimum regardless of other scores.
+
     ## Adversarial Evaluation Requirements
 
     <HARD-GATE>
