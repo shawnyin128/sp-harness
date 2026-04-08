@@ -42,13 +42,8 @@ Extract:
 
 1. **Project name**
 2. **Quick commands**: build, test, lint, dev server (from package.json scripts, Makefile, etc.)
-3. **Architecture understanding**: What does this system do? How does data flow
-   through it? What are the major layers or subsystems? Summarize in 2-3 sentences.
-   Do NOT list directories — describe the design.
-4. **Key entry points**: Identify 3-5 most important files/modules. For each one,
-   explain WHEN a developer would need to look at it (e.g., "to modify the audit
-   pipeline, start here"). These are navigation pointers, not an exhaustive listing.
-5. **Docs index**: list of files in docs/ with brief description (from filename or first heading)
+3. **Docs tree**: list the full directory tree of docs/ — every subdirectory and
+   every file. This IS the project map. The filenames are self-describing.
 
 If the project is empty or has no recognizable structure, ask the user to describe
 what the project will be. Use their answer for the Project Map section.
@@ -115,33 +110,25 @@ snapshot (not a log) — always rewrite to reflect current state.
 
 <Quick commands — only if detected>
 
-### Architecture
-<2-3 sentences describing how the system works: core purpose, data flow,
-major layers/subsystems. This is a design description, NOT a directory listing.>
-
-### Key Entry Points
-<3-5 most important files/modules with WHEN to look at them:>
-- <path> — <when you need this (e.g., "to modify the API layer")>
-- <path> — <when you need this>
-
-### Docs
-- Design docs → docs/design-docs/
-- Active plans → docs/plans/active/
-- Completed plans → docs/plans/completed/
-- Feature progress → docs/features.json
-- Reports → docs/reports/
+docs/
+├── design-docs/
+│   └── <list actual files found, or (empty) if none>
+├── plans/
+│   ├── active/
+│   │   └── <list actual files>
+│   └── completed/
+│       └── <list actual files>
+├── features.json
+└── reports/
+    └── <list actual files>
 ```
 
 **Rules:**
 - Total CLAUDE.md MUST stay under 80 lines.
 - Do not add sections beyond the three above.
 - Quick commands: use `command | command` inline format, not a table.
-- Architecture section: DESCRIBE the design in sentences. NEVER list directories.
-  Bad: "src/api/ — REST endpoints". Good: "REST API layer handles auth and
-  routes requests to domain services."
-- Key Entry Points: maximum 5. Each must say WHEN to look at it, not just
-  WHAT it contains. This is a navigation guide for new agents.
-- Docs subsection: always include the five standard entries.
+- Project Map IS the docs/ directory tree. List every file. No code directories.
+- Update this tree whenever brainstorming or writing-plans creates new docs.
 
 ---
 
