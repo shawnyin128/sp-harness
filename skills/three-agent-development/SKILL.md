@@ -166,14 +166,12 @@ reason and location. The user needs this to understand what is happening.
 ### ITERATE
 1. Check `convergence.status` from the printed results
 2. **If diverging** — escalate to REJECT
-3. **If converging** — dispatch Planner with eval-report.json.
-   Planner reads `iteration_items[]` and `criteria_results[]` to revise
-   both `task-plan.json` and `eval-plan.json`.
-4. **After Planner completes: REPEAT the Step 2 HARD-GATE** — read the
-   revised JSONs, print the updated plan table, ask user to confirm.
-   The user MUST see what changed before Generator re-executes.
-5. Generator executes revised plan → Evaluator assesses again →
-   print results (Step 5 HARD-GATE) → handle verdict again → loop
+3. **If converging** — GO BACK TO STEP 2. The only difference from the
+   first run is that Planner now also reads eval-report.json as input.
+   Everything else is identical: Planner produces plans → orchestrator
+   prints table → user confirms → Generator executes → Evaluator
+   assesses → orchestrator prints results → handle verdict.
+   **ITERATE is not a shortcut. It is a full cycle through Steps 2-5.**
 
 ### REJECT
 1. Stop. Preserve all files in `.claude/agents/`
