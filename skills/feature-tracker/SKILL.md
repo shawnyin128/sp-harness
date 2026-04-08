@@ -110,9 +110,13 @@ Commit the change:
 
 ---
 
-## Step 7: Update memory and pick next
+## Step 7: Update memory, hygiene check, pick next
 
 Update `.claude/mem/memory.md` Current State to reflect completion.
+
+**Hygiene check:** Count how many features have completed since the last
+code-hygiene run. If the count reaches 3 (or user-configured interval),
+invoke the **code-hygiene** skill before picking the next feature.
 
 Then return to Step 2 to show updated progress and pick the next feature.
 
