@@ -28,10 +28,11 @@ You MUST create a task for each of these items and complete them in order:
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Update feature list** — extract features from the approved design into `docs/features.json` (see Feature List section below)
-10. **Update project map** — add the new spec and features.json to CLAUDE.md's Project Map (see Project Map Update section below)
-11. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+8. **Divergence risk analysis** — identify all non-deterministic components, build risk matrix and divergence trees, append to spec doc (see Divergence Risk Analysis section below)
+9. **User reviews written spec** — ask user to review the spec file (including divergence analysis) before proceeding
+10. **Update feature list** — extract features from the approved design into `docs/features.json` (see Feature List section below)
+11. **Update project map** — add the new spec and features.json to CLAUDE.md's Project Map (see Project Map Update section below)
+12. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
@@ -132,6 +133,67 @@ After writing the spec document, look at it with fresh eyes:
 4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
 
 Fix any issues inline. No need to re-review — just fix and move on.
+
+**Divergence Risk Analysis:**
+
+After the spec self-review, analyze every component in the design for divergence
+risk. Append a `## Divergence Risk Analysis` section to the spec document.
+
+**Step 1: Identify divergence sources.**
+
+Scan the design for any component whose output is non-deterministic. Common sources:
+
+| Source type | Examples |
+|-------------|----------|
+| LLM calls | Prompt → response, embedding generation, classification |
+| Network / external APIs | HTTP requests, third-party services, webhooks |
+| User input | Forms, natural language, file uploads |
+| Concurrency / timing | Async operations, race conditions, event ordering |
+| State dependencies | File system, database, cache, environment variables |
+
+List every divergence source found in the design. If none exist (pure deterministic
+system), note that explicitly and skip the remaining steps.
+
+**Step 2: Build risk matrix.**
+
+For each divergence source, assess:
+- **Probability**: how likely is divergent behavior? (low / medium / high)
+- **Impact scope**: if it diverges, what breaks? (local = single component / chain = downstream cascade / global = system-level failure)
+
+```
+              Impact scope
+  global  │  medium  │  high    │  critical
+  chain   │  low     │  medium  │  high
+  local   │  low     │  low     │  medium
+          └──────────┴──────────┴──────────
+             low       medium     high
+                   Probability
+```
+
+**Step 3: Build divergence trees for medium/high/critical risks.**
+
+For each risk rated medium or above, trace the propagation path:
+
+```
+[Divergence source] → [immediate effect] → [downstream effect] → [user-visible impact]
+```
+
+Example:
+```
+LLM returns malformed JSON
+  → parser throws exception
+    → API handler returns 500
+      → frontend shows error screen
+```
+
+These trees directly inform where fallback logic must be inserted during
+implementation planning.
+
+**Step 4: Append to spec document.**
+
+Add the complete analysis (sources table, risk matrix, divergence trees) as the
+final section of the spec document. This becomes input for the writing-plans skill
+which will design fallback chains for each identified risk.
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:

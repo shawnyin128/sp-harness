@@ -131,6 +131,44 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
+## Fallback Chain Design
+
+If the spec contains a `## Divergence Risk Analysis` section, you MUST design
+fallback logic for every risk rated medium or above.
+
+**Do not use a template library.** Each fallback is derived from the specific
+divergence tree in the spec. For each risk, answer these four questions in order:
+
+**1. Consequence** — what is the user-visible impact if this divergence occurs?
+(The divergence tree in the spec already shows the propagation path.)
+
+**2. Detection** — can you detect the divergence at the point it happens?
+What signal tells you something went wrong? (e.g., schema validation failure,
+timeout, unexpected return type, empty response)
+
+**3. Recovery** — once detected, what is the minimum-cost way to recover?
+Think from cheapest to most expensive: retry < fallback value < degraded mode
+< pause and notify. Pick the cheapest that actually solves the problem.
+
+**4. Safe stop** — if recovery fails, how does the system stop safely without
+corrupting state or leaving the user confused? (e.g., roll back transaction,
+return explicit error, preserve partial progress)
+
+**Incorporate into tasks:** For each divergence point, the fallback logic must
+appear as concrete code steps in the relevant task — not as a separate "error
+handling" task. The fallback is part of the implementation, not an afterthought.
+
+Example in a task:
+```
+- [ ] **Step 3: Add LLM response validation and fallback**
+[code that validates LLM output against expected schema]
+[if validation fails: retry with simplified prompt]
+[if retry fails: return cached/default response + log warning]
+```
+
+**No placeholders.** "Add error handling for LLM response" is a plan failure.
+Show the actual detection logic, recovery code, and safe-stop behavior.
+
 ## Execution Handoff
 
 After saving the plan, offer execution choice:
