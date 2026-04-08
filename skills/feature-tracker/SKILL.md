@@ -73,15 +73,16 @@ Wait for user confirmation before proceeding.
 
 Invoke `superpowers:three-agent-development` with the selected feature.
 
-Three-agent-development handles the entire implementation cycle:
-- Planner (designs plan + eval criteria, discovers implicit requirements)
-- Generator (executes plan via subagent-driven-development)
-- Evaluator (assesses feature completion, triggers iteration if needed)
-- Iteration loop until PASS or REJECT
+This skill will:
+1. Dispatch Planner → produces task-plan.json + eval-plan.json
+2. **Print plan summary table to you and wait for your confirmation**
+3. Dispatch Generator → executes via subagent-driven-development
+4. Dispatch Evaluator → produces eval-report.json
+5. Handle PASS/ITERATE/REJECT
 
-When three-agent-development returns PASS, the feature is marked complete
-in features.json and feature-tracker proceeds to Step 5.
+You will see the plan and approve it before any code is written.
 
+When three-agent-development returns PASS, feature-tracker proceeds to Step 5.
 If REJECT, feature-tracker stops and reports to user.
 
 ---

@@ -65,9 +65,28 @@ Dispatch using `./planner-prompt.md`. Use most capable model (e.g. Opus).
 - `eval-plan.json` — evaluation playbook: for each task, specifies method
   (spec-review / code-review / both), quantifiable criteria, and verify commands.
 
-**After writing both files, Planner prints a merged summary table** showing
-each task with its description, eval method, and criteria. The orchestrator
-waits for user acknowledgment before dispatching Generator.
+**After Planner completes**, the orchestrator (YOU — not the Planner subagent)
+MUST do the following before dispatching Generator:
+
+<HARD-GATE>
+1. Read `.claude/agents/task-plan.json` and `.claude/agents/eval-plan.json`
+2. Print a merged summary table to the user:
+
+```
+Feature: {feature-id} (iteration {N})
+
+| Task | Description | Eval Method | Criteria |
+|------|-------------|-------------|----------|
+| 1. {name} | {desc} | {method} | {criteria} |
+| 2. {name} | {desc} | {method} | {criteria} |
+
+Feature-level: {feature_level_criteria}
+Threshold: {acceptance_threshold}
+```
+
+3. Ask: "Plans ready. Review and confirm before I start implementation?"
+4. WAIT for user confirmation. Do NOT dispatch Generator until user says yes.
+</HARD-GATE>
 
 ---
 

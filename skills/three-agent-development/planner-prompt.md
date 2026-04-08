@@ -105,28 +105,13 @@ Agent tool:
     }
     ```
 
-    ## Phase 4: Present Summary Table to User
+    ## Phase 4: Done
 
-    Print a single merged table showing both plans side by side:
+    After writing both JSON files, your job is complete. The orchestrator
+    will read your files, print a summary table to the user, and handle
+    user confirmation before dispatching the Generator.
 
-    ```
-    Feature: {feature-id} (iteration {N})
-    Based on: {spec path}
-
-    | Task | Description | Eval Method | Criteria |
-    |------|-------------|-------------|----------|
-    | 1. {name} | {description} | {method} | {criteria, comma-separated} |
-    | 2. {name} | {description} | {method} | {criteria} |
-
-    Feature-level: {feature_level_criteria, comma-separated}
-    Threshold: {acceptance_threshold}
-
-    Plans saved to:
-      .claude/agents/task-plan.json
-      .claude/agents/eval-plan.json
-
-    Review before I dispatch the Generator?
-    ```
+    Do NOT print the table yourself — the orchestrator does this.
 
     Wait for user acknowledgment before the orchestrator proceeds.
 
