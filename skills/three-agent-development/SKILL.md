@@ -17,7 +17,7 @@ Each agent delegates to existing superpowers skills — this skill only
 orchestrates the agent dispatch and iteration loop.
 
 ```
-Planner  → calls writing-plans    → task-plan.md + eval-plan.md
+Planner  → calls writing-plans    → task-plan.json + eval-plan.json
 Generator → calls subagent-driven → implementation.md
 Evaluator → reads code + reports  → eval-report.md
                   ↕ iteration loop (ITERATE → Planner re-plans)
@@ -31,8 +31,8 @@ All agent communication goes through `.claude/agents/`. Create if missing.
 
 ```
 .claude/agents/
-├── task-plan.md       ← Planner output: implementation plan for Generator
-├── eval-plan.md       ← Planner output: evaluation playbook for Evaluator
+├── task-plan.json     ← Planner output: implementation plan (Generator reads)
+├── eval-plan.json     ← Planner output: evaluation playbook (Evaluator reads)
 ├── implementation.md  ← Generator output: execution report
 └── eval-report.md     ← Evaluator output: assessment + iteration items
 ```
@@ -60,15 +60,14 @@ Dispatch using `./planner-prompt.md`. Use most capable model (e.g. Opus).
    the implementation plan. Follows all writing-plans conventions (TDD steps,
    file structure, no placeholders, fallback chain design).
 
-**Planner writes two paired files to `.claude/agents/`:**
-- `task-plan.md` — implementation plan (from writing-plans)
-- `eval-plan.md` — evaluation playbook: for each task, specifies the evaluation
-  method (spec-review / code-review / both), specific criteria, and exact
-  verification steps. Also includes feature-level cross-cutting criteria.
+**Planner writes two JSON files to `.claude/agents/`:**
+- `task-plan.json` — implementation plan (from writing-plans, serialized as JSON)
+- `eval-plan.json` — evaluation playbook: for each task, specifies method
+  (spec-review / code-review / both), quantifiable criteria, and verify commands.
 
-**After writing both files, Planner presents a summary to the user.**
-The orchestrator waits for user acknowledgment before dispatching Generator.
-This ensures the user sees and approves the plan before code is written.
+**After writing both files, Planner prints a merged summary table** showing
+each task with its description, eval method, and criteria. The orchestrator
+waits for user acknowledgment before dispatching Generator.
 
 ---
 
@@ -78,7 +77,7 @@ Dispatch using `./generator-prompt.md`. Use standard model (e.g. Sonnet).
 
 **Generator does one thing internally:**
 
-Invokes `superpowers:subagent-driven-development` to execute task-plan.md.
+Invokes `superpowers:subagent-driven-development` to execute task-plan.json.
 This runs the full existing task-level machinery:
 - Fresh implementer subagent per task (using implementer-prompt.md)
 - Spec compliance review after each task (using spec-reviewer-prompt.md)
@@ -94,11 +93,12 @@ This runs the full existing task-level machinery:
 
 Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 
-**Evaluator follows the Planner's eval-plan.md task by task:**
-- For each task: uses the specified method (spec-review / code-review / both)
-  and follows the exact verification steps
+**Evaluator parses eval-plan.json and follows it task by task:**
+- For each `task_evaluations` entry: uses the specified `method`, checks
+  each `criteria` item, runs `verify_commands`
 - Does NOT trust Generator's report — reads actual code and runs tests
-- After all tasks: evaluates feature-level cross-cutting criteria
+- After all tasks: evaluates `feature_level_criteria`
+- Checks against `acceptance_threshold`
 - Can adjust criteria if needed (must document why)
 
 **Evaluator writes one file to `.claude/agents/`:**
@@ -117,7 +117,7 @@ Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 ### ITERATE
 1. Read convergence assessment in eval-report.md
 2. **If converging** — dispatch Planner again with eval-report.md as input.
-   Planner reads Iteration Items, revises task-plan.md and eval-plan.md.
+   Planner reads Iteration Items, revises task-plan.json and eval-plan.json.
 3. **If diverging** — escalate to REJECT
 4. Generator executes revised plan → Evaluator assesses again → loop
 
@@ -143,8 +143,8 @@ All intermediate files preserved for user diagnosis.
 
 1. Planner never sees implementation.md or eval-report.md (except when
    re-planning after ITERATE — then it reads eval-report.md only)
-2. Generator never sees eval-plan.md or eval-report.md
-3. Evaluator never sees task-plan.md or the Planner's prompt
+2. Generator never sees eval-plan.json or eval-report.md
+3. Evaluator never sees task-plan.json or the Planner's prompt
 4. All communication through `.claude/agents/` files only
 
 ---
