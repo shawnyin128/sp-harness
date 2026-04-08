@@ -127,7 +127,35 @@ Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 
 ---
 
-## Step 5: Handle Verdict
+## Step 5: Print Evaluation Results and Handle Verdict
+
+<HARD-GATE>
+**Before handling the verdict, you MUST print the evaluation summary to the user.**
+
+Read `.claude/agents/eval-report.json` and print:
+
+```
+Evaluation Results (iteration {N}): {VERDICT}
+
+Task Results:
+  Task 1: {name} — {PASS/FAIL}
+    Failed: {list failed criteria with reasons}
+    Weakest: {weakest_point for passed criteria}
+  Task 2: {name} — {PASS/FAIL}
+    ...
+
+Feature-Level:
+  {each criterion — PASS/FAIL with evidence/reason}
+
+Iteration Items:
+  [{priority}] {location}: {problem} → {suggestion}
+
+Convergence: {status} — {evidence}
+```
+
+Do NOT summarize or skip details. Print every failed criterion with its
+reason and location. The user needs this to understand what is happening.
+</HARD-GATE>
 
 ### PASS
 1. Update `docs/features.json` — set `passes: true`
@@ -136,17 +164,17 @@ Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 4. Return to feature-tracker
 
 ### ITERATE
-1. Read `eval-report.json`: check `convergence.status`
-2. **If converging** — dispatch Planner. Planner reads `iteration_items[]`
-   and `task_results[].criteria_results[]` to understand what failed.
-   Planner revises both `task-plan.json` and `eval-plan.json`.
+1. Check `convergence.status` from the printed results
+2. **If converging** — dispatch Planner with eval-report.json.
+   Planner reads `iteration_items[]` and `criteria_results[]` to revise
+   both `task-plan.json` and `eval-plan.json`.
 3. **If diverging** — escalate to REJECT
 4. Generator executes revised plan → Evaluator assesses again → loop
 
 ### REJECT
 1. Stop. Preserve all files in `.claude/agents/`
 2. Update `.claude/mem/memory.md` — note rejection and reason
-3. Report to user: what was attempted, why it failed, evaluator's assessment
+3. Report to user: what was attempted, why it failed, full evaluator assessment
 
 ---
 
