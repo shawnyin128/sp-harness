@@ -99,6 +99,29 @@ Keep memory.md under ~40 lines. When it grows beyond that:
 
 ---
 
+## Git commit convention
+
+Every commit message must follow this format:
+
+```
+[module]: concise description of what changed and why
+```
+
+- `module` is the area of code affected (e.g., `auth`, `api`, `skills`, `config`, `tests`)
+- The description should be meaningful enough that `git log --oneline` tells the
+  story of recent progress to a new agent scanning the history
+- Bad: `[misc]: update files` — says nothing
+- Good: `[auth]: switch from JWT to session cookies — reduces token refresh complexity`
+
+When a commit spans multiple modules, use the primary one. When in doubt, use
+the directory name.
+
+This convention serves a specific purpose: new sessions read `git log --oneline -20`
+to quickly understand what happened recently. Structured commit messages make this
+a reliable context source alongside memory.md.
+
+---
+
 ## Hard rules
 
 1. memory.md must always be readable as a standalone context briefing
@@ -107,3 +130,4 @@ Keep memory.md under ~40 lines. When it grows beyond that:
 3. Never let memory.md become a changelog — it is a state snapshot
 4. Current State section must be updated on every non-trivial update
 5. Do not update for trivial tasks
+6. Every non-trivial commit must follow the `[module]: description` convention

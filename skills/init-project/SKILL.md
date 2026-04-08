@@ -93,13 +93,15 @@ fact does not affect the next action, omit it.
 Project memory lives in `.claude/mem/`. memory.md is a structured state
 snapshot (not a log) — always rewrite to reflect current state.
 
-**Core rules:**
-1. Read memory files at session start before any non-trivial task
-2. Update memory.md (especially Current State) after every task that changes design or state
-3. Keep memory.md under ~40 lines — merge and compress, never let it grow into a changelog
+**Session start protocol — read these in order:**
+1. `.claude/mem/memory.md` — current state, key decisions, findings
+2. `.claude/mem/todo.md` — open problems and deferred tasks
+3. `git log --oneline -20` — recent commits (uses `[module]: description` format)
 
-- `memory.md` — current state, key decisions, findings
-- `todo.md` — open problems and deferred tasks
+**Update rules:**
+- Update memory.md (especially Current State) after every non-trivial task
+- Keep memory.md under ~40 lines — compress, never let it become a changelog
+- Every commit follows `[module]: description` convention
 
 ---
 
