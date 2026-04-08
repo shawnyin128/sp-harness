@@ -15,7 +15,7 @@ version: 2.1.0
 Orchestrate incremental development by working through features one at a time.
 
 <EXTREMELY-IMPORTANT>
-Every feature follows the SAME path: Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → back to Step 2.
+Every feature follows the SAME path: Step 1 → Step 2 → Step 3 → Step 4 → Step 5 → back to Step 1.
 This is a LOOP. After completing a feature, you MUST return to Step 2 and pick the next one.
 You do NOT stop after one feature unless ALL features pass or the user tells you to stop.
 </EXTREMELY-IMPORTANT>
@@ -121,17 +121,12 @@ If REJECT, feature-tracker stops and reports to user.
 
 ---
 
-## Step 5: Update memory, check hygiene, LOOP BACK
+## Step 5: Update memory, LOOP BACK
 
-1. Update `.claude/mem/memory.md` Current State to reflect completion.
+Update `.claude/mem/memory.md` Current State to reflect completion.
 
-2. **Hygiene check** (same logic as Step 1, items 5-8):
-   - Read `last_hygiene_at_completed` and count `completed_count` from features.json
-   - If `delta >= 3`: invoke code-hygiene, verify result, update counter
-   - If `delta < 3`: continue
-
-3. **Check if ALL features pass:**
-   - **NO (features remain)** → GO BACK TO STEP 2 NOW.
+**Check if ALL features pass:**
+   - **NO (features remain)** → GO BACK TO STEP 1 NOW. (Step 1 re-reads context and checks hygiene.)
    - **YES (all pass)** →
      ```
      All features complete. docs/features.json shows X/X passing.
@@ -151,5 +146,6 @@ If REJECT, feature-tracker stops and reports to user.
    split it into sub-features in features.json before continuing
 5. If implementation reveals a new feature that is needed, add it to
    features.json with appropriate priority — do not scope-creep the current feature
-6. Hygiene counter MUST be checked at Step 1 (session start) AND Step 5
-   (after each feature). Never skip hygiene checks.
+6. Hygiene counter is checked ONCE at Step 1 (before any feature work).
+   The loop back to Step 2 goes through Step 1 next iteration, so hygiene
+   is always checked before each feature. Never skip Step 1.
