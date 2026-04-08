@@ -58,83 +58,75 @@ If `CLAUDE.md` already exists with all three sections (check A), skip this step.
 If `CLAUDE.md` exists but is incomplete, **merge** missing sections in — do not
 overwrite existing content.
 
-If `CLAUDE.md` does not exist, create it with this structure:
+If `CLAUDE.md` does not exist, create it using the EXACT template below.
 
-```markdown
-# <Project Name>
+**STRICT RULES — read before writing:**
+- Copy the template EXACTLY. Do not rearrange, rename, or add sections.
+- The ONLY parts you fill in are marked with `{FILL}`. Everything else is literal.
+- Do NOT add: Key References, tables, extra headings, summaries, or any
+  content not in the template.
+- Total CLAUDE.md MUST stay under 80 lines.
+- If you are tempted to "improve" the template — stop. Use it as-is.
+
+### Template (copy exactly, fill in `{FILL}` parts only):
+
+````markdown
+# {FILL: project name}
 
 ## First-Principles Standards
 
-Before writing any code, internalize these standards. They override all other
-conventions.
-
 **1. Clarify before acting.**
-If the motivation or goal is unclear, stop and ask. Do not infer intent from
-context and proceed silently. A wrong implementation that compiles is worse than
-no implementation.
+If the goal is unclear, stop and ask. Do not infer intent silently.
 
 **2. Shortest path wins.**
-If the requested approach is not the most direct solution, say so immediately.
-State the better alternative, explain the tradeoff in one sentence, and wait for
-a decision before writing code.
+If a better approach exists, say so and wait for a decision.
 
 **3. Fix root causes, not symptoms.**
-When something breaks, find out why before touching code. No defensive
-programming, no try/except patches, no "just add a check here". Every decision
-must answer "why does this solve the root problem?"
+Find out why before touching code. No defensive patches.
 
 **4. Output only what changes decisions.**
-Skip preamble, summaries of what you just did, and obvious observations. If a
-fact does not affect the next action, omit it.
+Skip preamble, summaries, and obvious observations.
 
 ---
 
 ## Context Management
 
-Project memory lives in `.claude/mem/`. memory.md is a structured state
-snapshot (not a log) — always rewrite to reflect current state.
+Memory lives in `.claude/mem/`. memory.md is a state snapshot, not a log.
 
-**Session start protocol — read these in order:**
-1. `.claude/mem/memory.md` — current state, key decisions, findings
-2. `.claude/mem/todo.md` — open problems and deferred tasks
-3. `git log --oneline -20` — recent commits (uses `[module]: description` format)
+**Session start — read in order:**
+1. `.claude/mem/memory.md` — current state, decisions, findings
+2. `.claude/mem/todo.md` — open problems
+3. `git log --oneline -20` — recent commits
 4. `docs/features.json` — feature progress (if exists)
 
-**Update rules:**
-- Update memory.md (especially Current State) after every non-trivial task
-- Keep memory.md under ~40 lines — compress, never let it become a changelog
-- Every commit follows `[module]: description` convention
+**Rules:** update memory.md after every non-trivial task. Keep under ~40 lines.
+Commits use `[module]: description` format.
 
 ---
 
 ## Project Map
 
-<Quick commands — only if detected>
+{FILL: quick commands if detected, e.g. "build: npm run build | test: npm test", or omit if none}
 
 ### Design Docs
+{FILL: tree listing of docs/ showing every subdirectory and file, e.g.:
 docs/
 ├── design-docs/
-│   └── <list actual files, or (empty)>
+│   └── (empty)
 ├── plans/
 │   ├── active/
-│   │   └── <list actual files>
 │   └── completed/
-│       └── <list actual files>
 ├── features.json
 └── reports/
-    └── <list actual files>
+}
 
 ### Codebase
-<directory tree with a few words per entry, generated from Step 1>
-```
-
-**Rules:**
-- Total CLAUDE.md MUST stay under 80 lines.
-- Do not add sections beyond the three above.
-- Quick commands: use `command | command` inline format, not a table.
-- Design Docs: list every file in docs/. Update when new docs are created.
-- Codebase: brief directory tree with short descriptions. Not every file —
-  just directories that help a new agent navigate.
+{FILL: directory tree of code dirs, a few words per entry, e.g.:
+src/api/        — REST endpoints
+src/models/     — data layer
+tests/          — pytest suite
+}
+````
 
 ---
 
