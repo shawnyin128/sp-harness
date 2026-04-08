@@ -10,7 +10,7 @@
 
 ### OpenCode Fixes
 
-- **Skills path consistency** — the bootstrap text no longer advertises a misleading `configDir/skills/superpowers/` path that didn't match the runtime path. The agent should use the native `skill` tool, not navigate to files by path. Tests now use consistent paths derived from a single source of truth. (#847, #916)
+- **Skills path consistency** — the bootstrap text no longer advertises a misleading `configDir/skills/sp-harness/` path that didn't match the runtime path. The agent should use the native `skill` tool, not navigate to files by path. Tests now use consistent paths derived from a single source of truth. (#847, #916)
 - **Bootstrap as user message** — moved bootstrap injection from `experimental.chat.system.transform` to `experimental.chat.messages.transform`, prepending to the first user message instead of adding a system message. Avoids token bloat from system messages repeated every turn (#750) and fixes compatibility with Qwen and other models that break on multiple system messages (#894).
 
 ## v5.0.6 (2026-03-24)
@@ -65,7 +65,7 @@ Dramatically reduces token usage and speeds up spec and plan reviews by eliminat
 ### OpenCode
 
 - **One-line plugin install** — OpenCode plugin now auto-registers the skills directory via a `config` hook. No symlinks or `skills.paths` config needed. Install is just adding one line to `opencode.json`. (PR #753)
-- **Added `package.json`** so OpenCode can install superpowers as an npm package from git.
+- **Added `package.json`** so OpenCode can install sp-harness as an npm package from git.
 
 ### Bug Fixes
 
@@ -206,8 +206,8 @@ Dramatically reduces token usage and speeds up spec and plan reviews by eliminat
 
 **Specs and plans directory restructured**
 
-- Specs (brainstorming output) now save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-- Plans (writing-plans output) now save to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+- Specs (brainstorming output) now save to `docs/sp-harness/specs/YYYY-MM-DD-<topic>-design.md`
+- Plans (writing-plans output) now save to `docs/sp-harness/plans/YYYY-MM-DD-<feature-name>.md`
 - User preferences for spec/plan locations override these defaults
 - All internal skill references, test files, and example paths updated to match
 - Migration: move existing files from `docs/plans/` to new locations if desired
@@ -246,7 +246,7 @@ Automated review loops for spec and plan documents using subagent dispatch:
 - Writing-plans includes chunk-based plan review loop after each section
 - Review loops repeat until approved or escalate after 5 iterations
 - End-to-end tests in `tests/claude-code/test-document-review-system.sh`
-- Design spec and implementation plan in `docs/superpowers/`
+- Design spec and implementation plan in `docs/sp-harness/`
 
 **Architecture guidance across the skill pipeline**
 
@@ -332,7 +332,7 @@ Models were skipping the design phase and jumping straight to implementation ski
 - Anti-pattern callout for "this is too simple to need a design" — the exact rationalization models use to skip the process
 - Design section sizing based on section complexity, not project complexity
 
-**Using-superpowers workflow graph intercepts EnterPlanMode**
+**Using-sp-harness workflow graph intercepts EnterPlanMode**
 
 Added an `EnterPlanMode` intercept to the skill flow graph. When the model is about to enter Claude's native plan mode, it checks whether brainstorming has happened and routes through the brainstorming skill instead. Plan mode is never entered.
 
@@ -348,7 +348,7 @@ Changed `async: true` to `async: false` in hooks.json. When async, the hook coul
 
 **Codex: Replaced bootstrap CLI with native skill discovery**
 
-The `superpowers-codex` bootstrap CLI, Windows `.cmd` wrapper, and related bootstrap content file have been removed. Codex now uses native skill discovery via `~/.agents/skills/superpowers/` symlink, so the old `use_skill`/`find_skills` CLI tools are no longer needed.
+The `sp-harness-codex` bootstrap CLI, Windows `.cmd` wrapper, and related bootstrap content file have been removed. Codex now uses native skill discovery via `~/.agents/skills/sp-harness/` symlink, so the old `use_skill`/`find_skills` CLI tools are no longer needed.
 
 Installation is now just clone + symlink (documented in INSTALL.md). No Node.js dependency required. The old `~/.codex/skills/` path is deprecated.
 
@@ -362,7 +362,7 @@ Fix: hooks.json now calls session-start.sh directly. Claude Code 2.1.x handles t
 
 **Windows: SessionStart hook runs async to prevent terminal freeze (#404, #413, #414, #419)**
 
-The synchronous SessionStart hook blocked the TUI from entering raw mode on Windows, freezing all keyboard input. Running the hook async prevents the freeze while still injecting superpowers context.
+The synchronous SessionStart hook blocked the TUI from entering raw mode on Windows, freezing all keyboard input. Running the hook async prevents the freeze while still injecting sp-harness context.
 
 **Windows: Fixed O(n^2) `escape_for_json` performance**
 
@@ -370,7 +370,7 @@ The character-by-character loop using `${input:$i:1}` was O(n^2) in bash due to 
 
 **Codex: Fixed Windows/PowerShell invocation (#285, #243)**
 
-- Windows doesn't respect shebangs, so directly invoking the extensionless `superpowers-codex` script triggered an "Open with" dialog. All invocations now prefixed with `node`.
+- Windows doesn't respect shebangs, so directly invoking the extensionless `sp-harness-codex` script triggered an "Open with" dialog. All invocations now prefixed with `node`.
 - Fixed `~/` path expansion on Windows — PowerShell doesn't expand `~` when passed as an argument to `node`. Changed to `$HOME` which expands correctly in both bash and PowerShell.
 
 **Codex: Fixed path resolution in installer**
@@ -436,7 +436,7 @@ Changes:
 
 SP Harness for OpenCode now uses OpenCode's native `skill` tool instead of custom `use_skill`/`find_skills` tools. This is a cleaner integration that works with OpenCode's built-in skill discovery.
 
-**Migration required:** Skills must be symlinked to `~/.config/opencode/skills/superpowers/` (see updated installation docs).
+**Migration required:** Skills must be symlinked to `~/.config/opencode/skills/sp-harness/` (see updated installation docs).
 
 ### Fixes
 
@@ -624,7 +624,7 @@ Description changed to imperative: "You MUST use this before any creative work�
   - Message insertion pattern for skill persistence across context compaction
   - Automatic context injection via chat.message hook
   - Auto re-injection on session.compacted events
-  - Three-tier skill priority: project > personal > superpowers
+  - Three-tier skill priority: project > personal > sp-harness
   - Project-local skills support (`.opencode/skills/`)
   - Shared core module (`lib/skills-core.js`) for code reuse with Codex
   - Automated test suite with proper isolation (`tests/opencode/`)
@@ -673,7 +673,7 @@ Description changed to imperative: "You MUST use this before any creative work�
 ### New Features
 
 **Experimental Codex Support**
-- Added unified `superpowers-codex` script with bootstrap/use-skill/find-skills commands
+- Added unified `sp-harness-codex` script with bootstrap/use-skill/find-skills commands
 - Cross-platform Node.js implementation (works on Windows, macOS, Linux)
 - Namespaced skills: `sp-harness:skill-name` for sp-harness skills, `skill-name` for personal
 - Personal skills override sp-harness skills when names match
@@ -691,10 +691,10 @@ Description changed to imperative: "You MUST use this before any creative work�
 
 ### Files Added
 - `.codex/INSTALL.md` - Installation guide for Codex users
-- `.codex/superpowers-bootstrap.md` - Bootstrap instructions with Codex adaptations
-- `.codex/superpowers-codex` - Unified Node.js executable with all functionality
+- `.codex/sp-harness-bootstrap.md` - Bootstrap instructions with Codex adaptations
+- `.codex/sp-harness-codex` - Unified Node.js executable with all functionality
 
-**Note:** Codex support is experimental. The integration provides core superpowers functionality but may require refinement based on user feedback.
+**Note:** Codex support is experimental. The integration provides core sp-harness functionality but may require refinement based on user feedback.
 
 ## v3.2.3 (2025-10-23)
 
@@ -869,7 +869,7 @@ We now use Anthropic's first-party skills system!
 
 SP Harness v2.0 makes skills more accessible, maintainable, and community-driven through a major architectural shift.
 
-The headline change is **skills repository separation**: all skills, scripts, and documentation have moved from the plugin into a dedicated repository ([obra/superpowers-skills](https://github.com/obra/superpowers-skills)). This transforms superpowers from a monolithic plugin into a lightweight shim that manages a local clone of the skills repository. Skills auto-update on session start. Users fork and contribute improvements via standard git workflows. The skills library versions independently from the plugin.
+The headline change is **skills repository separation**: all skills, scripts, and documentation have moved from the plugin into a dedicated repository ([obra/sp-harness-skills](https://github.com/obra/sp-harness-skills)). This transforms sp-harness from a monolithic plugin into a lightweight shim that manages a local clone of the skills repository. Skills auto-update on session start. Users fork and contribute improvements via standard git workflows. The skills library versions independently from the plugin.
 
 Beyond infrastructure, this release adds nine new skills focused on problem-solving, research, and architecture. We rewrote the core **using-skills** documentation with imperative tone and clearer structure, making it easier for Claude to understand when and how to use skills. **find-skills** now outputs paths you can paste directly into the Read tool, eliminating friction in the skills discovery workflow.
 
@@ -879,11 +879,11 @@ Users experience seamless operation: the plugin handles cloning, forking, and up
 
 ### Skills Repository Separation
 
-**The biggest change:** Skills no longer live in the plugin. They've been moved to a separate repository at [obra/superpowers-skills](https://github.com/obra/superpowers-skills).
+**The biggest change:** Skills no longer live in the plugin. They've been moved to a separate repository at [obra/sp-harness-skills](https://github.com/obra/sp-harness-skills).
 
 **What this means for you:**
 
-- **First install:** Plugin automatically clones skills to `~/.config/superpowers/skills/`
+- **First install:** Plugin automatically clones skills to `~/.config/sp-harness/skills/`
 - **Forking:** During setup, you'll be offered the option to fork the skills repo (if `gh` is installed)
 - **Updates:** Skills auto-update on session start (fast-forward when possible)
 - **Contributing:** Work on branches, commit locally, submit PRs to upstream
@@ -892,21 +892,21 @@ Users experience seamless operation: the plugin handles cloning, forking, and up
 **Migration:**
 
 If you have an existing installation:
-1. Your old `~/.config/superpowers/.git` will be backed up to `~/.config/superpowers/.git.bak`
-2. Old skills will be backed up to `~/.config/superpowers/skills.bak`
-3. Fresh clone of obra/superpowers-skills will be created at `~/.config/superpowers/skills/`
+1. Your old `~/.config/sp-harness/.git` will be backed up to `~/.config/sp-harness/.git.bak`
+2. Old skills will be backed up to `~/.config/sp-harness/skills.bak`
+3. Fresh clone of obra/sp-harness-skills will be created at `~/.config/sp-harness/skills/`
 
 ### Removed Features
 
-- **Personal superpowers overlay system** - Replaced with git branch workflow
-- **setup-personal-superpowers hook** - Replaced by initialize-skills.sh
+- **Personal sp-harness overlay system** - Replaced with git branch workflow
+- **setup-personal-sp-harness hook** - Replaced by initialize-skills.sh
 
 ## New Features
 
 ### Skills Repository Infrastructure
 
 **Automatic Clone & Setup** (`lib/initialize-skills.sh`)
-- Clones obra/superpowers-skills on first run
+- Clones obra/sp-harness-skills on first run
 - Offers fork creation if GitHub CLI is installed
 - Sets up upstream/origin remotes correctly
 - Handles migration from old installation
@@ -977,21 +977,21 @@ If you have an existing installation:
 - Moved "skills behind" warning to end of output
 
 **Environment Variables**
-- `SUPERPOWERS_SKILLS_ROOT` set to `~/.config/superpowers/skills`
+- `SP_HARNESS_SKILLS_ROOT` set to `~/.config/sp-harness/skills`
 - Used consistently throughout all paths
 
 ## Bug Fixes
 
 - Fixed duplicate upstream remote addition when forking
 - Fixed find-skills double "skills/" prefix in output
-- Removed obsolete setup-personal-superpowers call from session-start
+- Removed obsolete setup-personal-sp-harness call from session-start
 - Fixed path references throughout hooks and commands
 
 ## Documentation
 
 ### README
 - Updated for new skills repository architecture
-- Prominent link to superpowers-skills repo
+- Prominent link to sp-harness-skills repo
 - Updated auto-update description
 - Fixed skill names and references
 - Updated Meta skills list
@@ -1011,15 +1011,15 @@ If you have an existing installation:
 - `.claude-plugin/marketplace.json` - Local testing config
 
 **Removed:**
-- `skills/` directory (82 files) - Now in obra/superpowers-skills
-- `scripts/` directory - Now in obra/superpowers-skills/skills/using-skills/
-- `hooks/setup-personal-superpowers.sh` - Obsolete
+- `skills/` directory (82 files) - Now in obra/sp-harness-skills
+- `scripts/` directory - Now in obra/sp-harness-skills/skills/using-skills/
+- `hooks/setup-personal-sp-harness.sh` - Obsolete
 
 **Modified:**
-- `hooks/session-start.sh` - Use skills from ~/.config/superpowers/skills
-- `commands/brainstorm.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
-- `commands/write-plan.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
-- `commands/execute-plan.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
+- `hooks/session-start.sh` - Use skills from ~/.config/sp-harness/skills
+- `commands/brainstorm.md` - Updated paths to SP_HARNESS_SKILLS_ROOT
+- `commands/write-plan.md` - Updated paths to SP_HARNESS_SKILLS_ROOT
+- `commands/execute-plan.md` - Updated paths to SP_HARNESS_SKILLS_ROOT
 - `README.md` - Complete rewrite for new architecture
 
 ### Commit History
@@ -1027,7 +1027,7 @@ If you have an existing installation:
 This release includes:
 - 20+ commits for skills repository separation
 - PR #1: Amplifier-inspired problem-solving and research skills
-- PR #2: Personal superpowers overlay system (later replaced)
+- PR #2: Personal sp-harness overlay system (later replaced)
 - Multiple skill refinements and documentation improvements
 
 ## Upgrade Instructions
@@ -1036,8 +1036,8 @@ This release includes:
 
 ```bash
 # In Claude Code
-/plugin marketplace add obra/superpowers-marketplace
-/plugin install superpowers@superpowers-marketplace
+/plugin marketplace add obra/sp-harness-marketplace
+/plugin install sp-harness@sp-harness-marketplace
 ```
 
 The plugin handles everything automatically.
@@ -1046,12 +1046,12 @@ The plugin handles everything automatically.
 
 1. **Backup your personal skills** (if you have any):
    ```bash
-   cp -r ~/.config/superpowers/skills ~/superpowers-skills-backup
+   cp -r ~/.config/sp-harness/skills ~/sp-harness-skills-backup
    ```
 
 2. **Update the plugin:**
    ```bash
-   /plugin update superpowers
+   /plugin update sp-harness
    ```
 
 3. **On next session start:**
@@ -1075,7 +1075,7 @@ The plugin handles everything automatically.
 
 ### For Contributors
 
-- Skills repository is now at https://github.com/obra/superpowers-skills
+- Skills repository is now at https://github.com/obra/sp-harness-skills
 - Fork → Branch → PR workflow
 - See skills/meta/writing-skills/SKILL.md for TDD approach to documentation
 
@@ -1091,6 +1091,6 @@ None at this time.
 
 ---
 
-**Full Changelog:** https://github.com/obra/superpowers/compare/dd013f6...main
-**Skills Repository:** https://github.com/obra/superpowers-skills
-**Issues:** https://github.com/obra/superpowers/issues
+**Full Changelog:** https://github.com/obra/sp-harness/compare/dd013f6...main
+**Skills Repository:** https://github.com/obra/sp-harness-skills
+**Issues:** https://github.com/obra/sp-harness/issues

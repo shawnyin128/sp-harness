@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use sp-harness:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add full superpowers support for OpenCode.ai with a native JavaScript plugin that shares core functionality with the existing Codex implementation.
+**Goal:** Add full sp-harness support for OpenCode.ai with a native JavaScript plugin that shares core functionality with the existing Codex implementation.
 
 **Architecture:** Extract common skill discovery/parsing logic into `lib/skills-core.js`, refactor Codex to use it, then build OpenCode plugin using their native plugin API with custom tools and session hooks.
 
@@ -16,7 +16,7 @@
 
 **Files:**
 - Create: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 40-74)
+- Reference: `.codex/sp-harness-codex` (lines 40-74)
 
 **Step 1: Create lib/skills-core.js with extractFrontmatter function**
 
@@ -98,7 +98,7 @@ git commit -m "feat: create shared skills core module with frontmatter parser"
 
 **Files:**
 - Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 97-136)
+- Reference: `.codex/sp-harness-codex` (lines 97-136)
 
 **Step 1: Add findSkillsInDir function to skills-core.js**
 
@@ -109,7 +109,7 @@ Add before `module.exports`:
  * Find all SKILL.md files in a directory recursively.
  *
  * @param {string} dir - Directory to search
- * @param {string} sourceType - 'personal' or 'superpowers' for namespacing
+ * @param {string} sourceType - 'personal' or 'sp-harness' for namespacing
  * @param {number} maxDepth - Maximum recursion depth (default: 3)
  * @returns {Array<{path: string, name: string, description: string, sourceType: string}>}
  */
@@ -180,7 +180,7 @@ git commit -m "feat: add skill discovery function to core module"
 
 **Files:**
 - Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 212-280)
+- Reference: `.codex/sp-harness-codex` (lines 212-280)
 
 **Step 1: Add resolveSkillPath function**
 
@@ -192,11 +192,11 @@ Add before `module.exports`:
  * (personal skills override sp-harness skills).
  *
  * @param {string} skillName - Name like "sp-harness:brainstorming" or "my-skill"
- * @param {string} superpowersDir - Path to sp-harness skills directory
+ * @param {string} sp-harnessDir - Path to sp-harness skills directory
  * @param {string} personalDir - Path to personal skills directory
  * @returns {{skillFile: string, sourceType: string, skillPath: string} | null}
  */
-function resolveSkillPath(skillName, superpowersDir, personalDir) {
+function resolveSkillPath(skillName, sp-harnessDir, personalDir) {
     // Strip sp-harness: prefix if present
     const forceSP Harness = skillName.startsWith('sp-harness:');
     const actualSkillName = forceSP Harness ? skillName.replace(/^sp-harness:/, '') : skillName;
@@ -215,13 +215,13 @@ function resolveSkillPath(skillName, superpowersDir, personalDir) {
     }
 
     // Try sp-harness skills
-    if (superpowersDir) {
-        const superpowersPath = path.join(superpowersDir, actualSkillName);
-        const superpowersSkillFile = path.join(superpowersPath, 'SKILL.md');
-        if (fs.existsSync(superpowersSkillFile)) {
+    if (sp-harnessDir) {
+        const sp-harnessPath = path.join(sp-harnessDir, actualSkillName);
+        const sp-harnessSkillFile = path.join(sp-harnessPath, 'SKILL.md');
+        if (fs.existsSync(sp-harnessSkillFile)) {
             return {
-                skillFile: superpowersSkillFile,
-                sourceType: 'superpowers',
+                skillFile: sp-harnessSkillFile,
+                sourceType: 'sp-harness',
                 skillPath: actualSkillName
             };
         }
@@ -259,7 +259,7 @@ git commit -m "feat: add skill path resolution with shadowing support"
 
 **Files:**
 - Modify: `lib/skills-core.js`
-- Reference: `.codex/superpowers-codex` (lines 16-38)
+- Reference: `.codex/sp-harness-codex` (lines 16-38)
 
 **Step 1: Add checkForUpdates function**
 
@@ -333,7 +333,7 @@ git commit -m "feat: add git update checking to core module"
 ### Task 5: Update Codex to Import Shared Core
 
 **Files:**
-- Modify: `.codex/superpowers-codex` (add import at top)
+- Modify: `.codex/sp-harness-codex` (add import at top)
 
 **Step 1: Add import statement**
 
@@ -345,13 +345,13 @@ const skillsCore = require('../lib/skills-core');
 
 **Step 2: Verify syntax**
 
-Run: `node -c .codex/superpowers-codex`
+Run: `node -c .codex/sp-harness-codex`
 Expected: No output
 
 **Step 3: Commit**
 
 ```bash
-git add .codex/superpowers-codex
+git add .codex/sp-harness-codex
 git commit -m "refactor: import shared skills core in codex"
 ```
 
@@ -360,7 +360,7 @@ git commit -m "refactor: import shared skills core in codex"
 ### Task 6: Replace extractFrontmatter with Core Version
 
 **Files:**
-- Modify: `.codex/superpowers-codex` (lines 40-74)
+- Modify: `.codex/sp-harness-codex` (lines 40-74)
 
 **Step 1: Remove local extractFrontmatter function**
 
@@ -374,13 +374,13 @@ Affected lines approximately: 90, 310
 
 **Step 3: Verify script still works**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
+Run: `.codex/sp-harness-codex find-skills | head -20`
 Expected: Shows list of skills
 
 **Step 4: Commit**
 
 ```bash
-git add .codex/superpowers-codex
+git add .codex/sp-harness-codex
 git commit -m "refactor: use shared extractFrontmatter in codex"
 ```
 
@@ -389,7 +389,7 @@ git commit -m "refactor: use shared extractFrontmatter in codex"
 ### Task 7: Replace findSkillsInDir with Core Version
 
 **Files:**
-- Modify: `.codex/superpowers-codex` (lines 97-136, approximately)
+- Modify: `.codex/sp-harness-codex` (lines 97-136, approximately)
 
 **Step 1: Remove local findSkillsInDir function**
 
@@ -401,13 +401,13 @@ Replace calls from `findSkillsInDir(` to `skillsCore.findSkillsInDir(`
 
 **Step 3: Verify script still works**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
+Run: `.codex/sp-harness-codex find-skills | head -20`
 Expected: Shows list of skills
 
 **Step 4: Commit**
 
 ```bash
-git add .codex/superpowers-codex
+git add .codex/sp-harness-codex
 git commit -m "refactor: use shared findSkillsInDir in codex"
 ```
 
@@ -416,7 +416,7 @@ git commit -m "refactor: use shared findSkillsInDir in codex"
 ### Task 8: Replace checkForUpdates with Core Version
 
 **Files:**
-- Modify: `.codex/superpowers-codex` (lines 16-38, approximately)
+- Modify: `.codex/sp-harness-codex` (lines 16-38, approximately)
 
 **Step 1: Remove local checkForUpdates function**
 
@@ -428,13 +428,13 @@ Replace calls from `checkForUpdates(` to `skillsCore.checkForUpdates(`
 
 **Step 3: Verify script still works**
 
-Run: `.codex/superpowers-codex bootstrap | head -50`
+Run: `.codex/sp-harness-codex bootstrap | head -50`
 Expected: Shows bootstrap content
 
 **Step 4: Commit**
 
 ```bash
-git add .codex/superpowers-codex
+git add .codex/sp-harness-codex
 git commit -m "refactor: use shared checkForUpdates in codex"
 ```
 
@@ -445,7 +445,7 @@ git commit -m "refactor: use shared checkForUpdates in codex"
 ### Task 9: Create OpenCode Plugin Directory Structure
 
 **Files:**
-- Create: `.opencode/plugin/superpowers.js`
+- Create: `.opencode/plugin/sp-harness.js`
 
 **Step 1: Create directory**
 
@@ -469,7 +469,7 @@ const fs = require('fs');
 const os = require('os');
 
 const homeDir = os.homedir();
-const superpowersSkillsDir = path.join(homeDir, '.config/opencode/superpowers/skills');
+const sp-harnessSkillsDir = path.join(homeDir, '.config/opencode/sp-harness/skills');
 const personalSkillsDir = path.join(homeDir, '.config/opencode/skills');
 
 /**
@@ -484,13 +484,13 @@ export const SP HarnessPlugin = async ({ project, client, $, directory, worktree
 
 **Step 3: Verify file was created**
 
-Run: `ls -l .opencode/plugin/superpowers.js`
+Run: `ls -l .opencode/plugin/sp-harness.js`
 Expected: File exists
 
 **Step 4: Commit**
 
 ```bash
-git add .opencode/plugin/superpowers.js
+git add .opencode/plugin/sp-harness.js
 git commit -m "feat: create opencode plugin scaffold"
 ```
 
@@ -499,7 +499,7 @@ git commit -m "feat: create opencode plugin scaffold"
 ### Task 10: Implement use_skill Tool
 
 **Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+- Modify: `.opencode/plugin/sp-harness.js`
 
 **Step 1: Add use_skill tool implementation**
 
@@ -519,10 +519,10 @@ export const SP HarnessPlugin = async ({ project, client, $, directory, worktree
           skill_name: z.string().describe('Name of the skill to load (e.g., "sp-harness:brainstorming" or "my-custom-skill")')
         }),
         execute: async ({ skill_name }) => {
-          // Resolve skill path (handles shadowing: personal > superpowers)
+          // Resolve skill path (handles shadowing: personal > sp-harness)
           const resolved = skillsCore.resolveSkillPath(
             skill_name,
-            superpowersSkillsDir,
+            sp-harnessSkillsDir,
             personalSkillsDir
           );
 
@@ -574,13 +574,13 @@ ${content}`;
 
 **Step 2: Verify syntax**
 
-Run: `node -c .opencode/plugin/superpowers.js`
+Run: `node -c .opencode/plugin/sp-harness.js`
 Expected: No output
 
 **Step 3: Commit**
 
 ```bash
-git add .opencode/plugin/superpowers.js
+git add .opencode/plugin/sp-harness.js
 git commit -m "feat: implement use_skill tool for opencode"
 ```
 
@@ -589,7 +589,7 @@ git commit -m "feat: implement use_skill tool for opencode"
 ### Task 11: Implement find_skills Tool
 
 **Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+- Modify: `.opencode/plugin/sp-harness.js`
 
 **Step 1: Add find_skills tool to tools array**
 
@@ -598,13 +598,13 @@ Add after the use_skill tool definition, before closing the tools array:
 ```javascript
       {
         name: 'find_skills',
-        description: 'List all available skills in the superpowers and personal skill libraries.',
+        description: 'List all available skills in the sp-harness and personal skill libraries.',
         schema: z.object({}),
         execute: async () => {
           // Find skills in both directories
-          const superpowersSkills = skillsCore.findSkillsInDir(
-            superpowersSkillsDir,
-            'superpowers',
+          const sp-harnessSkills = skillsCore.findSkillsInDir(
+            sp-harnessSkillsDir,
+            'sp-harness',
             3
           );
           const personalSkills = skillsCore.findSkillsInDir(
@@ -614,10 +614,10 @@ Add after the use_skill tool definition, before closing the tools array:
           );
 
           // Combine and format skills list
-          const allSkills = [...personalSkills, ...superpowersSkills];
+          const allSkills = [...personalSkills, ...sp-harnessSkills];
 
           if (allSkills.length === 0) {
-            return 'No skills found. Install sp-harness skills to ~/.config/opencode/superpowers/skills/';
+            return 'No skills found. Install sp-harness skills to ~/.config/opencode/sp-harness/skills/';
           }
 
           let output = 'Available skills:\n\n';
@@ -640,13 +640,13 @@ Add after the use_skill tool definition, before closing the tools array:
 
 **Step 2: Verify syntax**
 
-Run: `node -c .opencode/plugin/superpowers.js`
+Run: `node -c .opencode/plugin/sp-harness.js`
 Expected: No output
 
 **Step 3: Commit**
 
 ```bash
-git add .opencode/plugin/superpowers.js
+git add .opencode/plugin/sp-harness.js
 git commit -m "feat: implement find_skills tool for opencode"
 ```
 
@@ -655,7 +655,7 @@ git commit -m "feat: implement find_skills tool for opencode"
 ### Task 12: Implement Session Start Hook
 
 **Files:**
-- Modify: `.opencode/plugin/superpowers.js`
+- Modify: `.opencode/plugin/sp-harness.js`
 
 **Step 1: Add session.started hook**
 
@@ -666,7 +666,7 @@ After the tools array, add:
       // Read using-sp-harness skill content
       const usingSP HarnessPath = skillsCore.resolveSkillPath(
         'using-sp-harness',
-        superpowersSkillsDir,
+        sp-harnessSkillsDir,
         personalSkillsDir
       );
 
@@ -712,24 +712,24 @@ When skills reference tools you don't have, substitute OpenCode equivalents:
 - Utilities and helpers specific to that skill
 
 **Skills naming:**
-- SP Harness skills: \`sp-harness:skill-name\` (from ~/.config/opencode/superpowers/skills/)
+- SP Harness skills: \`sp-harness:skill-name\` (from ~/.config/opencode/sp-harness/skills/)
 - Personal skills: \`skill-name\` (from ~/.config/opencode/skills/)
 - Personal skills override sp-harness skills when names match
 `;
 
       // Check for updates (non-blocking)
       const hasUpdates = skillsCore.checkForUpdates(
-        path.join(homeDir, '.config/opencode/superpowers')
+        path.join(homeDir, '.config/opencode/sp-harness')
       );
 
       const updateNotice = hasUpdates ?
-        '\n\n⚠️ **Updates available!** Run `cd ~/.config/opencode/superpowers && git pull` to update superpowers.' :
+        '\n\n⚠️ **Updates available!** Run `cd ~/.config/opencode/sp-harness && git pull` to update sp-harness.' :
         '';
 
       // Return context to inject into session
       return {
         context: `<EXTREMELY_IMPORTANT>
-You have superpowers.
+You have sp-harness.
 
 **Below is the full content of your 'sp-harness:using-sp-harness' skill - your introduction to using skills. For all other skills, use the 'use_skill' tool:**
 
@@ -743,13 +743,13 @@ ${toolMapping}${updateNotice}
 
 **Step 2: Verify syntax**
 
-Run: `node -c .opencode/plugin/superpowers.js`
+Run: `node -c .opencode/plugin/sp-harness.js`
 Expected: No output
 
 **Step 3: Commit**
 
 ```bash
-git add .opencode/plugin/superpowers.js
+git add .opencode/plugin/sp-harness.js
 git commit -m "feat: implement session.started hook for opencode"
 ```
 
@@ -779,23 +779,23 @@ git commit -m "feat: implement session.started hook for opencode"
 
 ```bash
 # Clone sp-harness skills to OpenCode config directory
-mkdir -p ~/.config/opencode/superpowers
-git clone https://github.com/obra/superpowers.git ~/.config/opencode/superpowers
+mkdir -p ~/.config/opencode/sp-harness
+git clone https://github.com/obra/sp-harness.git ~/.config/opencode/sp-harness
 ```
 
 ### 2. Install the Plugin
 
-The plugin is included in the superpowers repository you just cloned.
+The plugin is included in the sp-harness repository you just cloned.
 
 OpenCode will automatically discover it from:
-- `~/.config/opencode/superpowers/.opencode/plugin/superpowers.js`
+- `~/.config/opencode/sp-harness/.opencode/plugin/sp-harness.js`
 
 Or you can link it to the project-local plugin directory:
 
 ```bash
 # In your OpenCode project
 mkdir -p .opencode/plugin
-ln -s ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js .opencode/plugin/superpowers.js
+ln -s ~/.config/opencode/sp-harness/.opencode/plugin/sp-harness.js .opencode/plugin/sp-harness.js
 ```
 
 ### 3. Restart OpenCode
@@ -803,7 +803,7 @@ ln -s ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js .opencode/p
 Restart OpenCode to load the plugin. On the next session, you should see:
 
 ```
-You have superpowers.
+You have sp-harness.
 ```
 
 ## Usage
@@ -850,7 +850,7 @@ Personal skills override sp-harness skills with the same name.
 ## Updating
 
 ```bash
-cd ~/.config/opencode/superpowers
+cd ~/.config/opencode/sp-harness
 git pull
 ```
 
@@ -858,13 +858,13 @@ git pull
 
 ### Plugin not loading
 
-1. Check plugin file exists: `ls ~/.config/opencode/superpowers/.opencode/plugin/superpowers.js`
+1. Check plugin file exists: `ls ~/.config/opencode/sp-harness/.opencode/plugin/sp-harness.js`
 2. Check OpenCode logs for errors
 3. Verify Node.js is installed: `node --version`
 
 ### Skills not found
 
-1. Verify skills directory exists: `ls ~/.config/opencode/superpowers/skills`
+1. Verify skills directory exists: `ls ~/.config/opencode/sp-harness/skills`
 2. Use `find_skills` tool to see what's discovered
 3. Check file structure: each skill should have a `SKILL.md` file
 
@@ -878,8 +878,8 @@ When a skill references a Claude Code tool you don't have:
 
 ## Getting Help
 
-- Report issues: https://github.com/obra/superpowers/issues
-- Documentation: https://github.com/obra/superpowers
+- Report issues: https://github.com/obra/sp-harness/issues
+- Documentation: https://github.com/obra/sp-harness
 ```
 
 **Step 2: Verify file created**
@@ -982,21 +982,21 @@ git commit -m "docs: add opencode support to release notes"
 ### Task 16: Test Codex Still Works
 
 **Files:**
-- Test: `.codex/superpowers-codex`
+- Test: `.codex/sp-harness-codex`
 
 **Step 1: Test find-skills command**
 
-Run: `.codex/superpowers-codex find-skills | head -20`
+Run: `.codex/sp-harness-codex find-skills | head -20`
 Expected: Shows list of skills with names and descriptions
 
 **Step 2: Test use-skill command**
 
-Run: `.codex/superpowers-codex use-skill sp-harness:brainstorming | head -20`
+Run: `.codex/sp-harness-codex use-skill sp-harness:brainstorming | head -20`
 Expected: Shows brainstorming skill content
 
 **Step 3: Test bootstrap command**
 
-Run: `.codex/superpowers-codex bootstrap | head -30`
+Run: `.codex/sp-harness-codex bootstrap | head -30`
 Expected: Shows bootstrap content with instructions
 
 **Step 4: If all tests pass, record success**
@@ -1015,7 +1015,7 @@ No commit needed - this is verification only.
 Run:
 ```bash
 ls -l lib/skills-core.js
-ls -l .opencode/plugin/superpowers.js
+ls -l .opencode/plugin/sp-harness.js
 ls -l .opencode/INSTALL.md
 ```
 
@@ -1029,7 +1029,7 @@ Expected:
 .opencode/
 ├── INSTALL.md
 └── plugin/
-    └── superpowers.js
+    └── sp-harness.js
 ```
 
 **Step 3: If structure correct, proceed**
@@ -1057,8 +1057,8 @@ Expected: Shows all commits from this implementation
 
 Create a completion summary showing:
 - Total commits made
-- Files created: `lib/skills-core.js`, `.opencode/plugin/superpowers.js`, `.opencode/INSTALL.md`
-- Files modified: `.codex/superpowers-codex`, `README.md`, `RELEASE-NOTES.md`
+- Files created: `lib/skills-core.js`, `.opencode/plugin/sp-harness.js`, `.opencode/INSTALL.md`
+- Files modified: `.codex/sp-harness-codex`, `README.md`, `RELEASE-NOTES.md`
 - Testing performed: Codex commands verified
 - Ready for: Testing with actual OpenCode installation
 
@@ -1086,9 +1086,9 @@ These steps require OpenCode to be installed and are not part of the automated i
 ## Success Criteria
 
 - [ ] `lib/skills-core.js` created with all core functions
-- [ ] `.codex/superpowers-codex` refactored to use shared core
+- [ ] `.codex/sp-harness-codex` refactored to use shared core
 - [ ] Codex commands still work (find-skills, use-skill, bootstrap)
-- [ ] `.opencode/plugin/superpowers.js` created with tools and hooks
+- [ ] `.opencode/plugin/sp-harness.js` created with tools and hooks
 - [ ] Installation guide created
 - [ ] README and RELEASE-NOTES updated
 - [ ] All changes committed

@@ -22,7 +22,7 @@ A harness engineering skills library forked from [obra/superpowers](https://gith
 
 ```bash
 # Add this fork as marketplace
-/plugin marketplace add shawnyin128/superpowers
+/plugin marketplace add shawnyin128/sp-harness
 
 # Install
 /plugin install sp-harness@sp-harness-dev

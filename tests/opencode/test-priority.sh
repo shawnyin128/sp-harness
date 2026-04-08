@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test: Skill Priority Resolution
-# Verifies that skills are resolved with correct priority: project > personal > superpowers
+# Verifies that skills are resolved with correct priority: project > personal > sp-harness
 # NOTE: These tests require OpenCode to be installed and configured
 set -euo pipefail
 
@@ -17,18 +17,18 @@ trap cleanup_test_env EXIT
 # Create same skill "priority-test" in all three locations with different markers
 echo "Setting up priority test fixtures..."
 
-# 1. Create in superpowers location (lowest priority)
-mkdir -p "$SUPERPOWERS_SKILLS_DIR/priority-test"
-cat > "$SUPERPOWERS_SKILLS_DIR/priority-test/SKILL.md" <<'EOF'
+# 1. Create in sp-harness location (lowest priority)
+mkdir -p "$SP_HARNESS_SKILLS_DIR/priority-test"
+cat > "$SP_HARNESS_SKILLS_DIR/priority-test/SKILL.md" <<'EOF'
 ---
 name: priority-test
 description: SP Harness version of priority test skill
 ---
 # Priority Test Skill (SP Harness Version)
 
-This is the SUPERPOWERS version of the priority test skill.
+This is the SP_HARNESS version of the priority test skill.
 
-PRIORITY_MARKER_SUPERPOWERS_VERSION
+PRIORITY_MARKER_SP_HARNESS_VERSION
 EOF
 
 # 2. Create in personal location (medium priority)
@@ -65,7 +65,7 @@ echo "  Created priority-test skill in all three locations"
 echo ""
 echo "Test 1: Verifying test fixtures..."
 
-if [ -f "$SUPERPOWERS_SKILLS_DIR/priority-test/SKILL.md" ]; then
+if [ -f "$SP_HARNESS_SKILLS_DIR/priority-test/SKILL.md" ]; then
     echo "  [PASS] SP Harness version exists"
 else
     echo "  [FAIL] SP Harness version missing"
@@ -96,9 +96,9 @@ if ! command -v opencode &> /dev/null; then
     exit 0
 fi
 
-# Test 2: Test that personal overrides superpowers
+# Test 2: Test that personal overrides sp-harness
 echo ""
-echo "Test 2: Testing personal > superpowers priority..."
+echo "Test 2: Testing personal > sp-harness priority..."
 echo "  Running from outside project directory..."
 
 # Run from HOME (not in project) - should get personal version
@@ -112,19 +112,19 @@ output=$(timeout 60s opencode run --print-logs "Use the use_skill tool to load t
 }
 
 if echo "$output" | grep -qi "PRIORITY_MARKER_PERSONAL_VERSION"; then
-    echo "  [PASS] Personal version loaded (overrides superpowers)"
-elif echo "$output" | grep -qi "PRIORITY_MARKER_SUPERPOWERS_VERSION"; then
+    echo "  [PASS] Personal version loaded (overrides sp-harness)"
+elif echo "$output" | grep -qi "PRIORITY_MARKER_SP_HARNESS_VERSION"; then
     echo "  [FAIL] SP Harness version loaded instead of personal"
     exit 1
 else
     echo "  [WARN] Could not verify priority marker in output"
     echo "  Output snippet:"
-    echo "$output" | grep -i "priority\|personal\|superpowers" | head -10
+    echo "$output" | grep -i "priority\|personal\|sp-harness" | head -10
 fi
 
-# Test 3: Test that project overrides both personal and superpowers
+# Test 3: Test that project overrides both personal and sp-harness
 echo ""
-echo "Test 3: Testing project > personal > superpowers priority..."
+echo "Test 3: Testing project > personal > sp-harness priority..."
 echo "  Running from project directory..."
 
 # Run from project directory - should get project version
@@ -142,7 +142,7 @@ if echo "$output" | grep -qi "PRIORITY_MARKER_PROJECT_VERSION"; then
 elif echo "$output" | grep -qi "PRIORITY_MARKER_PERSONAL_VERSION"; then
     echo "  [FAIL] Personal version loaded instead of project"
     exit 1
-elif echo "$output" | grep -qi "PRIORITY_MARKER_SUPERPOWERS_VERSION"; then
+elif echo "$output" | grep -qi "PRIORITY_MARKER_SP_HARNESS_VERSION"; then
     echo "  [FAIL] SP Harness version loaded instead of project"
     exit 1
 else
@@ -153,7 +153,7 @@ fi
 
 # Test 4: Test explicit sp-harness: prefix bypasses priority
 echo ""
-echo "Test 4: Testing sp-harness: prefix forces superpowers version..."
+echo "Test 4: Testing sp-harness: prefix forces sp-harness version..."
 
 cd "$TEST_HOME/test-project"
 output=$(timeout 60s opencode run --print-logs "Use the use_skill tool to load sp-harness:priority-test specifically. Show me the exact content including any PRIORITY_MARKER text." 2>&1) || {
@@ -164,10 +164,10 @@ output=$(timeout 60s opencode run --print-logs "Use the use_skill tool to load s
     fi
 }
 
-if echo "$output" | grep -qi "PRIORITY_MARKER_SUPERPOWERS_VERSION"; then
-    echo "  [PASS] sp-harness: prefix correctly forces superpowers version"
+if echo "$output" | grep -qi "PRIORITY_MARKER_SP_HARNESS_VERSION"; then
+    echo "  [PASS] sp-harness: prefix correctly forces sp-harness version"
 elif echo "$output" | grep -qi "PRIORITY_MARKER_PROJECT_VERSION\|PRIORITY_MARKER_PERSONAL_VERSION"; then
-    echo "  [FAIL] sp-harness: prefix did not force superpowers version"
+    echo "  [FAIL] sp-harness: prefix did not force sp-harness version"
     exit 1
 else
     echo "  [WARN] Could not verify priority marker in output"

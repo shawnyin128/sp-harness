@@ -146,7 +146,7 @@ docs/
 Skip any directories that already exist. Do not overwrite existing content.
 
 If the project already has docs in a different structure (e.g.,
-`docs/superpowers/specs/`), leave them in place — the new structure
+`docs/sp-harness/specs/`), leave them in place — the new structure
 is for new documents going forward.
 
 ---
