@@ -2,193 +2,150 @@
 name: framework-check
 description: |
   Health check for the superpowers project framework. Verifies CLAUDE.md
-  structure, memory system, hooks, features.json, and git conventions.
-  Auto-fixes missing components by invoking relevant skills. Run on any
-  project to check compliance or migrate from an older setup.
+  content format (not just section names), memory system, hooks, docs
+  structure, features.json, and git conventions. Detects and migrates
+  old framework formats. Auto-fixes by rewriting CLAUDE.md from template.
 author: superpowers
-version: 1.0.0
+version: 2.0.0
 ---
 
 # framework-check
 
-Verify the current project follows the superpowers framework. Auto-fix
-anything missing.
+Verify the current project follows the superpowers framework. Detect old
+formats and migrate. Auto-fix anything wrong.
 
 ---
 
 ## Step 1: Run Checks
 
-Check each item independently. Record PASS or FAIL for each.
+### CLAUDE.md — Existence and Sections
 
-### CLAUDE.md Structure
+- [ ] `CLAUDE.md` exists
+- [ ] Has EXACTLY three sections: `First-Principles Standards`, `Context Management`, `Project Map`
+- [ ] Does NOT have old-format sections: `Language`, `Problem`, `Motivation`, `Method`, `Example`, `Architecture`, `Memory, Todo and Checklist`
+- [ ] Total length under 80 lines
 
-- [ ] `CLAUDE.md` exists in project root
-- [ ] Contains `## First-Principles Standards` section
-- [ ] Contains `## Context Management` section
-- [ ] Contains `## Project Map` section
-- [ ] Total length is under 80 lines
+### CLAUDE.md — Content Format
+
+- [ ] First-Principles Standards has exactly 4 numbered rules (Clarify, Shortest path, Root causes, Output)
+- [ ] Context Management mentions `.claude/mem/` (NOT `.claude/mem/checklist.md`)
+- [ ] Context Management has "Session start protocol" with 4 steps (memory.md, todo.md, git log, features.json)
+- [ ] Context Management mentions `[module]: description` commit convention
+- [ ] Project Map has `### Design Docs` subsection with docs/ tree
+- [ ] Project Map has `### Codebase` subsection with directory tree
+- [ ] Project Map does NOT use tables (no `|` table syntax)
+- [ ] No extra sections beyond the three standard ones
 
 ### Documentation Structure
 
-- [ ] `docs/` directory exists
-- [ ] `docs/design-docs/` directory exists
-- [ ] `docs/plans/active/` directory exists
-- [ ] `docs/plans/completed/` directory exists
-- [ ] `docs/reports/` directory exists
+- [ ] `docs/design-docs/` exists
+- [ ] `docs/plans/active/` exists
+- [ ] `docs/plans/completed/` exists
+- [ ] `docs/reports/` exists
 
 ### Memory System
 
-- [ ] `.claude/mem/` directory exists
-- [ ] `.claude/mem/memory.md` exists
-- [ ] `memory.md` has `## Current State` section
-- [ ] `memory.md` has `## Key Decisions` section
-- [ ] `memory.md` has `## Findings` section
+- [ ] `.claude/mem/memory.md` exists with `## Current State`, `## Key Decisions`, `## Findings`
+- [ ] `.claude/mem/memory.md` does NOT mention checklist.md
 - [ ] `.claude/mem/todo.md` exists
+- [ ] `.claude/mem/checklist.md` does NOT exist (old format — remove if found)
 
 ### Hooks
 
 - [ ] `.claude/hooks/update-mem-reminder.sh` exists and is executable
-- [ ] `.claude/settings.json` has `Stop` hook configured for update-mem
-- [ ] `.claude/settings.json` has `UserPromptSubmit` hook configured for update-mem
+- [ ] `.claude/settings.json` has Stop + UserPromptSubmit hooks
 
-### Features (only if project is past brainstorming)
+### Features (skip if no spec docs exist)
 
-- [ ] `docs/features.json` exists (skip if no spec docs exist yet)
-- [ ] features.json is valid JSON with `features` array
+- [ ] `docs/features.json` is valid JSON with `features` array
 - [ ] Each feature has: id, category, priority, description, steps, passes
 
 ### Git Conventions
 
-- [ ] Last 10 commits follow `[module]: description` format
-  (check with `git log --oneline -10` — warn on violations, don't fail
-  on pre-existing commits before framework adoption)
+- [ ] Last 10 commits follow `[module]: description` format (warn only)
 
 ---
 
 ## Step 2: Report
-
-Present results as a checklist:
 
 ```
 Framework Health Check
 ======================
 
 CLAUDE.md Structure
-  ✓ CLAUDE.md exists
-  ✓ First-Principles Standards
-  ✗ Context Management — MISSING
-  ✓ Project Map
-  ✓ Under 80 lines
+  ✓/✗ each check above
 
-Memory System
-  ✗ .claude/mem/ — MISSING
-  ...
+CLAUDE.md Content
+  ✓/✗ each check above
 
-Hooks
-  ✗ update-mem-reminder.sh — MISSING
-  ...
+Documentation / Memory / Hooks / Features / Git
+  ✓/✗ each check above
 
-Features
-  ⊘ Skipped (no spec docs found)
-
-Git Conventions
-  ⚠ 3/10 commits don't follow [module]: format (pre-existing)
-
-Result: 8/12 checks passed. 4 items need fixing.
+Result: X/Y passed. Z items need fixing.
 ```
 
 ---
 
 ## Step 3: Auto-Fix
 
-For each FAIL, apply the appropriate fix:
-
 ### CLAUDE.md missing entirely
-→ Invoke `init-project` skill (creates CLAUDE.md + docs + memory + hooks)
+→ Invoke `init-project` skill.
+
+### CLAUDE.md has old format (Language/Problem/Architecture/table-style map)
+→ **Rewrite CLAUDE.md from scratch using init-project template.**
+
+This is the critical fix. Do NOT try to patch the old format. Instead:
+1. Read the old CLAUDE.md to extract any project-specific info that should
+   be preserved (project name, any custom rules the user added)
+2. Run init-project's scan logic (Step 1) to get docs tree and codebase tree
+3. Generate a new CLAUDE.md using the EXACT init-project template
+4. Write the new CLAUDE.md, replacing the old one entirely
+
+The old format cannot be incrementally fixed — it has wrong sections,
+wrong structure, and wrong content. A clean rewrite is the only reliable fix.
 
 ### Documentation structure missing
-→ Create any missing directories:
-`docs/`, `docs/design-docs/`, `docs/plans/active/`, `docs/plans/completed/`, `docs/reports/`
+→ Create missing directories.
 
-### CLAUDE.md exists but missing sections
-→ Merge missing sections in place:
-
-**Missing First-Principles Standards:** Insert the standard FPS section
-(same content as init-project generates) after the title.
-
-**Missing Context Management:** Insert the standard Context Management
-section (with session start protocol) after FPS.
-
-**Missing Project Map:** Scan project and generate map section (same
-logic as init-project Step 1 + Step 2).
-
-### Memory system missing
-→ Create `.claude/mem/memory.md` with structured template:
-```markdown
-# Project Memory
-
-## Current State
-Project framework initialized. No work started yet.
-
-## Key Decisions
-
-## Findings
-```
-
-→ Create `.claude/mem/todo.md`:
-```markdown
-# Todo
-```
-
-### Memory exists but wrong structure
-→ Migrate: read existing content, restructure into Current State /
-Key Decisions / Findings format. Preserve all existing information.
+### Memory wrong format
+→ If memory.md lacks Current State / Key Decisions / Findings structure,
+migrate existing content into those three sections.
+→ If checklist.md exists, delete it (old format).
 
 ### Hooks missing
-→ Create hook script and configure settings.json (same logic as
-init-project Step 4). Merge with existing settings, do not overwrite.
+→ Create hook script + configure settings.json (same as init-project).
 
 ### Features.json invalid
-→ Report specific validation errors. Do not auto-create features.json
-(that comes from brainstorming).
+→ Report errors. Do not auto-create.
 
-### Git convention violations
-→ Do not rewrite git history. Only warn. Future commits will follow
-the convention via git-convention skill.
+### Git conventions
+→ Warn only. Do not rewrite history.
 
 ---
 
 ## Step 4: Re-check
 
-After fixes, re-run all checks to confirm everything passes.
+Re-run ALL checks after fixes. Report final result.
 
-Report:
-```
-Auto-fix complete. Re-check: 12/12 passed.
-```
-
-If any checks still fail after fix, report them and stop.
+If any still fail, report and stop.
 
 ---
 
-## Step 5: Update Memory
+## Step 5: Update Memory + Commit
 
-Update `.claude/mem/memory.md` Current State to note the framework check.
+Update `.claude/mem/memory.md` Current State.
 
-Commit all fixes:
+Commit:
 ```
-[framework]: auto-fix missing framework components
+[framework]: migrate to new framework format
 ```
 
 ---
 
 ## Rules
 
-1. Never delete existing content — only add missing parts
-2. When migrating old format memory.md, preserve all entries
-3. Do not rewrite git history for convention violations
+1. Old-format CLAUDE.md = full rewrite, not incremental patch
+2. Preserve project name and any user-added custom rules during rewrite
+3. Delete checklist.md if found (old format, no longer used)
 4. Do not create features.json — that is brainstorming's job
-5. If CLAUDE.md exists with custom content beyond the three sections,
-   preserve it (only add missing standard sections)
-6. This skill is idempotent — running it twice produces no changes
-   if everything is already correct
+5. Idempotent — running twice produces no changes if already correct
