@@ -17,7 +17,7 @@ Each agent delegates to existing superpowers skills — this skill only
 orchestrates the agent dispatch and iteration loop.
 
 ```
-Planner  → calls writing-plans    → task-plan.md + eval-criteria.md
+Planner  → calls writing-plans    → task-plan.md + eval-plan.md
 Generator → calls subagent-driven → implementation.md
 Evaluator → reads code + reports  → eval-report.md
                   ↕ iteration loop (ITERATE → Planner re-plans)
@@ -31,10 +31,10 @@ All agent communication goes through `.claude/agents/`. Create if missing.
 
 ```
 .claude/agents/
-├── task-plan.md       ← Planner output
-├── eval-criteria.md   ← Planner output
-├── implementation.md  ← Generator output
-└── eval-report.md     ← Evaluator output
+├── task-plan.md       ← Planner output: implementation plan for Generator
+├── eval-plan.md       ← Planner output: evaluation playbook for Evaluator
+├── implementation.md  ← Generator output: execution report
+└── eval-report.md     ← Evaluator output: assessment + iteration items
 ```
 
 ---
@@ -60,9 +60,15 @@ Dispatch using `./planner-prompt.md`. Use most capable model (e.g. Opus).
    the implementation plan. Follows all writing-plans conventions (TDD steps,
    file structure, no placeholders, fallback chain design).
 
-**Planner writes two files to `.claude/agents/`:**
-- `task-plan.md` — the plan from writing-plans, saved here instead of docs/plans/
-- `eval-criteria.md` — evaluation standards derived from the feature steps
+**Planner writes two paired files to `.claude/agents/`:**
+- `task-plan.md` — implementation plan (from writing-plans)
+- `eval-plan.md` — evaluation playbook: for each task, specifies the evaluation
+  method (spec-review / code-review / both), specific criteria, and exact
+  verification steps. Also includes feature-level cross-cutting criteria.
+
+**After writing both files, Planner presents a summary to the user.**
+The orchestrator waits for user acknowledgment before dispatching Generator.
+This ensures the user sees and approves the plan before code is written.
 
 ---
 
@@ -88,12 +94,12 @@ This runs the full existing task-level machinery:
 
 Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 
-**Evaluator operates at feature level** (not task level — that was already
-done by Generator's internal reviews). It:
-- Reads `eval-criteria.md` and `implementation.md`
-- Reads actual code changes (does NOT trust the report — reads code directly,
-  same principle as spec-reviewer-prompt.md)
-- Assesses whether the feature as a whole meets criteria
+**Evaluator follows the Planner's eval-plan.md task by task:**
+- For each task: uses the specified method (spec-review / code-review / both)
+  and follows the exact verification steps
+- Does NOT trust Generator's report — reads actual code and runs tests
+- After all tasks: evaluates feature-level cross-cutting criteria
+- Can adjust criteria if needed (must document why)
 
 **Evaluator writes one file to `.claude/agents/`:**
 - `eval-report.md` — verdict + iteration items if needed
@@ -111,7 +117,7 @@ done by Generator's internal reviews). It:
 ### ITERATE
 1. Read convergence assessment in eval-report.md
 2. **If converging** — dispatch Planner again with eval-report.md as input.
-   Planner reads Iteration Items, revises task-plan.md and eval-criteria.md.
+   Planner reads Iteration Items, revises task-plan.md and eval-plan.md.
 3. **If diverging** — escalate to REJECT
 4. Generator executes revised plan → Evaluator assesses again → loop
 
@@ -137,7 +143,7 @@ All intermediate files preserved for user diagnosis.
 
 1. Planner never sees implementation.md or eval-report.md (except when
    re-planning after ITERATE — then it reads eval-report.md only)
-2. Generator never sees eval-criteria.md or eval-report.md
+2. Generator never sees eval-plan.md or eval-report.md
 3. Evaluator never sees task-plan.md or the Planner's prompt
 4. All communication through `.claude/agents/` files only
 
