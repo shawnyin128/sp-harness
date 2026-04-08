@@ -28,7 +28,42 @@ Agent tool (use most capable model, e.g. Opus):
     ### Previous Evaluation (iteration 2+ only)
     [Paste eval-report.md from previous iteration, if this is a re-plan]
 
-    ## Output: Two Files
+    ## Phase 1: Implicit Requirements Discovery
+
+    Before writing any plan, scan the feature definition for gaps. For each
+    step in the feature, ask yourself:
+
+    - What implementation details are NOT specified but required?
+    - What design decisions need to be made that the spec doesn't cover?
+    - What dependencies or interactions with other parts of the system are implied
+      but not stated?
+    - What edge cases or error scenarios are not mentioned?
+
+    If you find gaps, you MUST ask the user before proceeding. Do NOT fill in
+    gaps with your own assumptions.
+
+    **How to ask:**
+    - One question at a time, from shallow to deep
+    - Start with the most impactful gaps (ones that affect architecture)
+    - Then move to detailed gaps (error handling, edge cases)
+    - Use multiple choice when possible
+    - After each answer, check if it reveals further gaps
+
+    **Example progression:**
+    1. "The feature says 'save user preferences' but doesn't specify where.
+       Should this use: (a) local storage, (b) database, (c) file system?"
+    2. [User answers: database]
+    3. "Should preferences persist across devices (requires user auth) or
+       only on the current device?"
+    4. [User answers: across devices]
+    5. "What happens if the database is unreachable when saving? (a) queue
+       and retry, (b) show error, (c) fall back to local storage?"
+
+    Only proceed to Phase 2 when all gaps are resolved. If no gaps are found,
+    note "No implicit requirements discovered — feature spec is complete" and
+    proceed.
+
+    ## Phase 2: Produce Two Files
 
     You MUST produce exactly two files. Write them using the Write tool.
 

@@ -97,6 +97,16 @@ Dispatch a Planner agent (use most capable model) with:
 - Project context (CLAUDE.md, memory.md, relevant spec)
 - The divergence risk analysis (from spec, if available)
 
+**The Planner runs in two phases:**
+
+**Phase 1 — Implicit Requirements Discovery:** The Planner scans the feature
+for gaps and unspecified details. If found, it asks the user questions one at
+a time, shallow to deep, until all gaps are resolved. This prevents the Generator
+from making assumptions about unspecified behavior.
+
+**Phase 2 — Plan Production:** Only after all gaps are resolved, the Planner
+produces two files:
+
 **Planner produces two files:**
 
 ### task-plan.md
