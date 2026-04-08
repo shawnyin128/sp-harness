@@ -118,59 +118,40 @@ misses. For each dimension, answer:
 
 ## Step 4: Produce Report
 
-Write `docs/reports/optimization-report.md` with this structure:
+Write `docs/reports/optimization-report.md` using this EXACT structure.
+Do not add or rename sections.
 
-```markdown
+````markdown
 # System Optimization Report
 
-## Date: YYYY-MM-DD
-## Scope: [feature set analyzed]
+## Date: {FILL}
+## Scope: {FILL: feature set analyzed}
 
 ## Summary
-[1-3 sentences: overall system health and top priorities]
+{FILL: 1-3 sentences — overall health + top priorities}
 
 ## Performance
-### Fixed Check Results
-- [P1] [file:function] — [issue] — [suggestion]
-- [P2] ...
-### Deep Analysis
-[Bottleneck analysis, scaling concerns]
+- [{P1}] {file:function} — {issue} — {suggestion}
+- [{P2}] ...
+- Deep: {FILL: bottleneck analysis, 2-3 sentences max}
 
 ## User Experience
-### Fixed Check Results
-- [UX1] [file:component] — [issue] — [suggestion]
-- [UX2] ...
-### Deep Analysis
-[User flow walkthrough findings]
+- [{UX1}] {file:component} — {issue} — {suggestion}
+- Deep: {FILL: user flow findings, 2-3 sentences max}
 
 ## Code Quality
-### Fixed Check Results
-- [CQ1] [file:function] — [issue] — [suggestion]
-- [CQ2] ...
-### Deep Analysis
-[Maintainability concerns, confusion points]
+- [{CQ1}] {file:function} — {issue} — {suggestion}
+- Deep: {FILL: maintainability concerns, 2-3 sentences max}
 
 ## Architecture
-### Fixed Check Results
-- [AR1] [file/module] — [issue] — [suggestion]
-- [AR2] ...
-### Deep Analysis
-[Structural concerns, simplification opportunities]
+- [{AR1}] {file/module} — {issue} — {suggestion}
+- Deep: {FILL: structural concerns, 2-3 sentences max}
 
 ## Recommended Priority
-
-Ordered by impact (highest first):
-
-1. [ID] [one-line description] — [why this matters most]
-2. [ID] [one-line description]
-3. [ID] [one-line description]
-...
-
-## Action
-These are recommendations, not mandates. Review with your human partner
-and decide which to pursue. Approved items can be added to docs/features.json
-as new optimization features and executed through the normal development flow.
-```
+1. {ID} {one-line description}
+2. {ID} {one-line description}
+3. {ID} {one-line description}
+````
 
 ---
 

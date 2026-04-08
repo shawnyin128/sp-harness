@@ -37,35 +37,32 @@ memory.md is NOT an append-only log. It is a living document that always
 reflects the current state of the project. Read it, update it in place,
 keep it tight.
 
-### Required structure
+### Required structure (EXACT — do not add, remove, or rename sections)
 
 ```markdown
 # Project Memory
 
 ## Current State
-<Where the project is right now. What was just completed, what is in progress,
-what is blocked. 1-3 sentences. Update this EVERY time.>
+{1-3 sentences: what was just done, what is in progress, what is blocked}
 
 ## Key Decisions
-- <decision> — <reason>
-- <decision> — <reason>
+- {decision} — {reason}
 
 ## Findings
-- <finding or discovery>
-- <finding or discovery>
+- {finding}
 ```
+
+**Do NOT add extra sections** (no "Open Questions", no "Architecture Notes",
+no "History"). Everything goes into one of the three sections above.
 
 ### Update rules
 
-**Current State** — rewrite entirely each time. This is a snapshot, not a log.
-It should answer: "What would a new agent need to know to continue this work?"
+**Current State** — rewrite entirely each time. Not a log. Answer:
+"What would a new agent need to know to continue this work?"
 
-**Key Decisions** — add new decisions, update decisions that changed, remove
-decisions that were reversed. Each entry: what was decided + why.
+**Key Decisions** — add, update, or remove. Each entry: what + why.
 
-**Findings** — add new discoveries, remove findings that are no longer relevant
-(e.g., a bug finding after the bug is fixed and the fix is trivial). Keep
-findings that inform future work.
+**Findings** — add or remove. Drop findings no longer relevant to future work.
 
 ### Compression
 
