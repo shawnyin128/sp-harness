@@ -28,6 +28,82 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 Thinking "skip TDD just this once"? Stop. That's rationalization.
 
+## Test Strategy Selection
+
+Before writing the first test, determine the right testing approach for this
+feature. The Red-Green-Refactor cycle applies to ALL test types — but the tools,
+scope, and verification method differ.
+
+### Thinking Path
+
+For each feature or task, answer these questions:
+
+**1. What is being tested?**
+- Pure logic (functions, algorithms) → unit tests
+- Component interactions (API calls, database queries) → integration tests
+- User-visible behavior (UI flows, CLI commands) → end-to-end tests
+- Visual appearance (layouts, responsive design) → visual/browser tests
+
+**2. What is the user's actual interaction?**
+- Calls a function → test the function
+- Sends an HTTP request → test the endpoint
+- Clicks a button in a browser → test in a browser
+- Runs a CLI command → test the command
+
+**3. Where can it break silently?**
+- Between components (API contract changes) → integration tests at boundaries
+- In the UI (renders wrong, layout broken) → browser automation tests
+- Under load (race conditions, timeouts) → concurrency/stress tests
+
+The test type should match how the feature will actually be used. Testing a
+UI button with a unit test on the click handler misses layout bugs, rendering
+issues, and interaction problems.
+
+### Common Scenarios Reference
+
+| Scenario | Primary Test Type | Tools (examples, not prescriptive) |
+|----------|------------------|------------------------------------|
+| Business logic, algorithms | Unit test | Language-native test runner (jest, pytest, go test) |
+| REST/GraphQL API endpoints | HTTP integration test | supertest, httpx, net/http/httptest |
+| Database operations | Integration test with real DB | testcontainers, in-memory DB, migrations |
+| Frontend UI components | Component test + browser test | Testing Library + Playwright/Cypress |
+| Full user flows (signup, checkout) | E2E browser test | Playwright, Cypress |
+| CLI tools | Functional test | Bash assertions, subprocess testing |
+| LLM-integrated features | Output validation test | Schema validation, boundary checks, retry verification |
+| WebSocket/real-time | Protocol test | ws client, socket assertions |
+| Visual design/layout | Visual regression test | Playwright screenshots, Percy |
+
+### Multi-Layer Testing
+
+Complex features need tests at multiple layers. Apply the testing pyramid:
+
+```
+    /  E2E / Browser  \      ← few, slow, high confidence
+   /  Integration       \    ← moderate, medium speed
+  /  Unit                 \  ← many, fast, focused
+```
+
+For each feature, determine which layers need tests. Don't test everything
+at every layer — test logic at the unit level, contracts at integration level,
+and critical user paths at E2E level.
+
+### Coverage Awareness
+
+When implementing a feature from docs/features.json, map each `step` in the
+feature to at least one test:
+
+```
+Feature step: "Click New Chat button, verify new conversation created"
+  → Browser test: click button, assert conversation element appears
+  → Integration test: verify API creates conversation record
+  → Unit test: verify conversation factory creates correct object
+
+Feature step: "Verify conversation appears in sidebar"
+  → Browser test: assert sidebar contains new entry
+```
+
+If a feature step has no corresponding test, that step is not verified.
+
 ## The Iron Law
 
 ```
