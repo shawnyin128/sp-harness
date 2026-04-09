@@ -32,7 +32,7 @@ You MUST create a task for each of these items and complete them in order:
 9. **User reviews written spec** — ask user to review the spec file (including divergence analysis) before proceeding
 10. **Update feature list** — extract features from the approved design into `docs/features.json` (see Feature List section below)
 11. **Update project map** — add the new spec and features.json to CLAUDE.md's Project Map (see Project Map Update section below)
-12. **Done** — brainstorming is complete. Tell the user to run `/feature-tracker` to start implementation.
+12. **Start implementation** — invoke `sp-harness:feature-tracker` to begin feature development.
 
 ## Process Flow
 
@@ -48,7 +48,7 @@ digraph brainstorming {
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Done — run /feature-tracker" [shape=doublecircle];
+    "Invoke feature-tracker" [shape=doublecircle];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -67,11 +67,11 @@ digraph brainstorming {
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
     "User reviews spec?" -> "Update docs/features.json" [label="approved"];
     "Update docs/features.json" -> "Update CLAUDE.md Project Map";
-    "Update CLAUDE.md Project Map" -> "Done — run /feature-tracker";
+    "Update CLAUDE.md Project Map" -> "Invoke feature-tracker";
 }
 ```
 
-**The terminal state is features.json + updated Project Map.** Do NOT invoke writing-plans, frontend-design, mcp-builder, or any other implementation skill. Brainstorming ends at design. Implementation starts when the user runs `/feature-tracker`.
+**The terminal state is invoking feature-tracker.** Do NOT invoke writing-plans, frontend-design, mcp-builder, or any other implementation skill directly. Brainstorming ends by handing off to feature-tracker, which handles the full implementation cycle.
 
 ## The Process
 
@@ -204,8 +204,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **After brainstorming:**
 
-Tell the user: "Design complete. Run `/feature-tracker` to start implementation."
-Do NOT invoke writing-plans or any implementation skill. Brainstorming ends here.
+Invoke `sp-harness:feature-tracker` to start implementation.
+Do NOT invoke writing-plans or any implementation skill directly.
 
 ## Feature List
 
