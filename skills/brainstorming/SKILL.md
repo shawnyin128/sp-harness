@@ -32,7 +32,7 @@ You MUST create a task for each of these items and complete them in order:
 9. **User reviews written spec** — ask user to review the spec file (including divergence analysis) before proceeding
 10. **Update feature list** — extract features from the approved design into `docs/features.json` (see Feature List section below)
 11. **Update project map** — add the new spec and features.json to CLAUDE.md's Project Map (see Project Map Update section below)
-12. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+12. **Done** — brainstorming is complete. Tell the user to run `/feature-tracker` to start implementation.
 
 ## Process Flow
 
@@ -48,7 +48,7 @@ digraph brainstorming {
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Done — run /feature-tracker" [shape=doublecircle];
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -67,11 +67,11 @@ digraph brainstorming {
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
     "User reviews spec?" -> "Update docs/features.json" [label="approved"];
     "Update docs/features.json" -> "Update CLAUDE.md Project Map";
-    "Update CLAUDE.md Project Map" -> "Invoke writing-plans skill";
+    "Update CLAUDE.md Project Map" -> "Done — run /feature-tracker";
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**The terminal state is features.json + updated Project Map.** Do NOT invoke writing-plans, frontend-design, mcp-builder, or any other implementation skill. Brainstorming ends at design. Implementation starts when the user runs `/feature-tracker`.
 
 ## The Process
 
@@ -192,7 +192,7 @@ implementation planning.
 **Step 4: Append to spec document.**
 
 Add the complete analysis (sources table, risk matrix, divergence trees) as the
-final section of the spec document. This becomes input for the writing-plans skill
+final section of the spec document. This becomes input for the Planner in three-agent-development
 which will design fallback chains for each identified risk.
 
 **User Review Gate:**
@@ -202,10 +202,10 @@ After the spec review loop passes, ask the user to review the written spec befor
 
 Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
 
-**Implementation:**
+**After brainstorming:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+Tell the user: "Design complete. Run `/feature-tracker` to start implementation."
+Do NOT invoke writing-plans or any implementation skill. Brainstorming ends here.
 
 ## Feature List
 
