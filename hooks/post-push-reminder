@@ -1,0 +1,37 @@
+#!/bin/bash
+# Post-push reminder: checks if branch work needs merge + version bump.
+# Triggered by PostToolUse hook on Bash commands containing "git push".
+# Input: CLAUDE_TOOL_INPUT (the bash command that was run)
+
+INPUT="${CLAUDE_TOOL_INPUT:-}"
+
+# Only fire on git push commands
+if ! echo "$INPUT" | grep -q "git push"; then
+  exit 0
+fi
+
+# Detect current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  # Pushed to main directly — just remind about version
+  echo "✅ Pushed to $BRANCH. Did you bump the version in plugin.json?"
+else
+  # Pushed a feature branch — remind about merge + version
+  cat <<MSG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ POST-PUSH CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Branch: $BRANCH
+
+□ Merge to main?
+  git checkout main && git merge $BRANCH
+
+□ Bump version in plugin.json?
+  Current: $(grep '"version"' .claude-plugin/plugin.json 2>/dev/null | head -1 | tr -d ' ",')
+
+□ Push main?
+  git push origin main
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MSG
+fi
