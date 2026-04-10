@@ -131,6 +131,21 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
+## Hybrid Boundary Awareness
+
+If the spec contains a `## Hybrid Boundary` section, apply these rules:
+
+**Task labeling:** Each task header MUST include its layer: `[code]`, `[agent]`, or `[interface]`.
+- `[code]` — deterministic logic, tested with standard assertions
+- `[agent]` — non-deterministic agent behavior, tested with behavioral checks
+- `[interface]` — the boundary between code and agent, tested with contract validation
+
+**Interface tasks come first.** Define the contract (schema, protocol, error types) before implementing either side. This prevents the most common hybrid bug: both sides assuming the other handles edge cases.
+
+**Fallback scope:** Fallback chains for `[agent]` tasks must address the failure asymmetry defined in the spec's Hybrid Boundary section. The code layer's response to agent failure (retry / degrade / stop) must appear as concrete code in the relevant `[interface]` task.
+
+If the spec has no `## Hybrid Boundary` section, skip this entirely.
+
 ## Fallback Chain Design
 
 If the spec contains a `## Divergence Risk Analysis` section, you MUST design

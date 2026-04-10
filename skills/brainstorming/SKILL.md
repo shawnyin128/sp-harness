@@ -23,7 +23,7 @@ You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits. If `PROPOSAL.md` exists, read it first as the primary input for understanding what this project is about.
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria. **MUST include architecture type question** (see Architecture Type Gate below).
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/design-docs/YYYY-MM-DD-<topic>-design.md` and commit
@@ -83,6 +83,10 @@ digraph brainstorming {
 - Check out the current project state (files, docs, recent commits)
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
+- **Architecture type (MUST ASK):** Before diving into feature details, ask:
+  > "What execution architecture does this system use? (a) Pure code — all logic is deterministic code, (b) Pure agent — agent handles end-to-end, code is just tooling, (c) Hybrid — some logic is code, some is agent decisions"
+  - If answer is *pure-code* or *pure-agent* → continue normally, no extra steps.
+  - If answer is *hybrid* → ask the 4 boundary questions (see Hybrid Boundary section below), then continue.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -194,6 +198,20 @@ implementation planning.
 Add the complete analysis (sources table, risk matrix, divergence trees) as the
 final section of the spec document. This becomes input for the Planner in three-agent-development
 which will design fallback chains for each identified risk.
+
+**Hybrid Boundary (only if architecture type = hybrid):**
+
+If the user identified a hybrid architecture in Step 3, append a `## Hybrid Boundary` section to the spec document. Ask these 4 questions during Step 3 (after the architecture type question), then write the answers into the spec:
+
+1. **Component ownership** — which components are deterministic code, which are agent? List each.
+2. **Interface contract** — how do code and agent communicate? (JSON files / function calls / stdin-stdout / API). Define the schema.
+3. **Orchestrator** — who controls the flow? (code calls agent / agent calls code / external orchestrator). Pick one. If unclear, that is the first design problem to solve.
+4. **Failure asymmetry** — agent failure ≠ code failure. When the agent fails, does code retry, degrade, or stop? Define per-interface.
+
+**Rules:**
+- If the user answered *pure-code* or *pure-agent*, this section does NOT exist in the spec. Zero overhead.
+- Do NOT add this section speculatively. Only add it when the user explicitly chose *hybrid*.
+- Downstream skills (writing-plans, evaluator) detect this section's presence to activate hybrid-aware logic.
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:
