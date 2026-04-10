@@ -89,6 +89,22 @@ Agent tool:
     coverage = high (failures → ITERATE). Code quality = medium. Style = low.
     One critical failure = ITERATE minimum regardless of other scores.
 
+    ## Hybrid Boundary Evaluation
+
+    If the spec contains a `## Hybrid Boundary` section, apply additional
+    checks for tasks labeled `[interface]`, `[agent]`, or `[code]`:
+
+    - `[interface]` tasks: verify the contract (schema/protocol) is enforced
+      on BOTH sides. A contract defined but not validated at runtime = FAIL.
+    - `[agent]` tasks: standard assertions are insufficient. Check that
+      agent failure triggers the response defined in Hybrid Boundary
+      (retry / degrade / stop). If the failure path is untested = ITERATE.
+    - `[code]` tasks: normal evaluation. No extra checks.
+    - If tasks are NOT labeled but the spec has Hybrid Boundary = ITERATE
+      (plan did not follow hybrid-aware rules).
+
+    If the spec has no Hybrid Boundary section, skip this entirely.
+
     ## Adversarial Evaluation Requirements
 
     <HARD-GATE>
