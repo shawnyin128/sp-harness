@@ -1,197 +1,123 @@
 ---
 name: system-feedback
 description: |
-  System-level optimization review after all features are complete. Analyzes
-  the entire codebase across four dimensions (performance, user experience,
-  code quality, architecture) and produces a file-level optimization report.
+  System-level optimization review after all features complete. Analyzes
+  performance, UX, code quality, architecture. File-level report.
   Triggered by feature-tracker when all features pass.
 author: sp-harness
-version: 1.0.0
+version: 1.1.0
 ---
 
 # system-feedback
 
-Comprehensive system-level review after all features are implemented and tested.
-This is NOT about whether features work (that is feature-tracker + tests).
-This is about making the system better: faster, cleaner, more maintainable.
+All features pass. Now find what's wrong underneath: performance, UX,
+code quality, architecture.
 
 <EXTREMELY-IMPORTANT>
-Your default stance is ADVERSARIAL. You are here to find problems that the
-development process missed. "Everything looks fine" is almost never true for
-a full system. If your first pass finds fewer than 3 issues total across
-all 4 dimensions, do a second pass — you are not looking hard enough.
-
-For every dimension where you find zero issues, you MUST document what you
-checked and why nothing was found. "No issues" without explanation is not
-acceptable.
-
-**Self-persuasion traps — if you catch yourself thinking any of these, STOP:**
-- "This is minor, not worth reporting" → report it, user decides severity
-- "It works for the common case" → untested edge cases are issues
-- "The tests pass so it's fine" → tests only cover what was thought of
-- "It's not perfect but good enough" → your job is to find flaws, not approve
-- "This would be caught later" → there is no later. You are it.
+Adversarial stance. Find problems the development process missed.
+Fewer than 3 total issues across 4 dimensions = scan again harder.
+Zero-issue dimensions must explain what was checked and why nothing found.
+If you think "minor" or "good enough" — report it anyway.
 </EXTREMELY-IMPORTANT>
 
-**Trigger:** feature-tracker invokes this when all features in docs/features.json
-pass. Can also be invoked manually at any time.
+---
+
+## Step 1: Context
+
+Read: `docs/features.json`, `.claude/mem/memory.md`, `CLAUDE.md`, spec docs,
+`git log --oneline -30`. List all changed source files from git.
 
 ---
 
-## Step 1: Gather Context
+## Step 2: Fixed Checks
 
-Read:
-1. `docs/features.json` — what was built
-2. `.claude/mem/memory.md` — key decisions and findings
-3. `CLAUDE.md` — project map, architecture
-4. The spec document(s) referenced in CLAUDE.md
-5. `git log --oneline -30` — recent change history
+Report findings at file:function level.
 
-Scan the codebase:
-- List all source files changed during this development cycle (from git)
-- Note file sizes, directory structure, dependency graph
+### Performance
+- [ ] Nested loops that could use dict/set lookup instead
+- [ ] Same calculation repeated (cache/memoize candidate)
+- [ ] DB/API calls inside loops (N+1)
+- [ ] Sync I/O on hot paths where async available
+- [ ] Oversized imports or unused dependencies
+- [ ] Unbounded growing collections
 
----
+### User Experience
+- [ ] Error paths show raw exception instead of meaningful message
+- [ ] Empty/zero-data states not handled
+- [ ] Long operations without progress feedback
+- [ ] Input validation missing or unclear error messages
+- [ ] Boundary values unhandled (empty string, max length, concurrent access)
 
-## Step 2: Run Fixed Checks
+### Code Quality
+- [ ] Duplicated blocks >10 lines across files
+- [ ] Functions >40 lines or >3 nesting levels
+- [ ] Naming inconsistency (camelCase/snake_case mix)
+- [ ] Dead code (unused functions, unreachable branches, commented-out code)
+- [ ] Circular or unused dependencies
 
-For each dimension, run these concrete checks. Report findings at file level.
-
-### Performance Checks
-
-- [ ] **Hot loops:** Any nested loops over collections that could be flattened
-      or indexed? (file + line)
-- [ ] **Redundant computation:** Same calculation done multiple times where
-      result could be cached or memoized? (file + function)
-- [ ] **N+1 patterns:** Database/API calls inside loops? (file + line)
-- [ ] **Blocking operations:** Synchronous I/O on hot paths where async is
-      available? (file + function)
-- [ ] **Bundle/payload size:** Large imports, unused dependencies, oversized
-      assets? (file + import)
-- [ ] **Memory patterns:** Large objects held longer than needed, growing
-      collections without bounds? (file + variable)
-
-### User Experience Checks
-
-- [ ] **Error states:** Every error path shows a meaningful message to the user,
-      not a raw exception or generic "something went wrong"? (file + error handler)
-- [ ] **Empty states:** UI/output handles zero-data gracefully (empty lists,
-      first-time use, no results)? (file + component/function)
-- [ ] **Loading states:** Long operations show progress or feedback? (file + operation)
-- [ ] **Input validation:** User input validated early with clear feedback on
-      what is wrong and how to fix it? (file + input handler)
-- [ ] **Edge cases:** Boundary values handled (empty string, max length, special
-      characters, concurrent access)? (file + function)
-
-### Code Quality Checks
-
-- [ ] **Duplication:** Similar code blocks (>10 lines) that should be extracted
-      to a shared function? (file A + file B + description)
-- [ ] **Complexity:** Functions over ~40 lines or with >3 levels of nesting
-      that should be decomposed? (file + function)
-- [ ] **Naming:** Inconsistent naming patterns across the codebase (camelCase
-      vs snake_case mix, unclear abbreviations)? (file + examples)
-- [ ] **Dead code:** Unused functions, unreachable branches, commented-out code
-      that should be removed? (file + symbol)
-- [ ] **Dependency hygiene:** Unused imports, circular dependencies, dependencies
-      that could be eliminated? (file + import)
-
-### Architecture Checks
-
-- [ ] **Single responsibility:** Any file/module doing more than one job? (file + description)
-- [ ] **Coupling:** Components that know too much about each other's internals?
-      (file A → file B, what is leaked)
-- [ ] **Interface clarity:** Public APIs that are hard to use correctly or easy
-      to misuse? (file + function signature)
-- [ ] **Spec alignment:** Implementation matches the original spec's architecture
-      design? Any drift? (spec section → actual implementation)
+### Architecture
+- [ ] File/module with multiple responsibilities
+- [ ] Components leaking internals to each other
+- [ ] Public APIs easy to misuse
+- [ ] Implementation drifted from spec design
 
 ---
 
-## Step 3: Run Deep Analysis
+## Step 3: Deep Analysis
 
-Beyond the fixed checks, apply analytical thinking to find issues the checklist
-misses. For each dimension, answer:
-
-**Performance:**
-- Where is the system's bottleneck? Trace the critical path from user action
-  to response. Which step is slowest?
-- If load doubles, what breaks first?
-
-**User Experience:**
-- Walk through the primary user flow end-to-end. Where does the user have to
-  think or wait? Where might they get confused?
-- What happens when things go wrong in the middle of a flow?
-
-**Code Quality:**
-- If a new developer reads this codebase tomorrow, where will they get confused?
-- Which file would you be most afraid to modify? Why?
-
-**Architecture:**
-- Does the current structure support the next likely changes? (Check todo.md
-  and any known future requirements)
-- Is there a simpler way to achieve the same result with fewer moving parts?
+For each dimension, one question:
+- **Performance**: If load doubles, what breaks first?
+- **UX**: Walk primary flow end-to-end — where does user think or wait?
+- **Code Quality**: Which file would you fear modifying? Why?
+- **Architecture**: Is there a simpler way with fewer moving parts?
 
 ---
 
-## Step 4: Produce Report
+## Step 4: Report
 
-Write `docs/reports/optimization-report.md` using this EXACT structure.
-Do not add or rename sections.
+Write `docs/reports/optimization-report.md`:
 
 ````markdown
 # System Optimization Report
 
 ## Date: {FILL}
-## Scope: {FILL: feature set analyzed}
+## Scope: {FILL}
 
 ## Summary
-{FILL: 1-3 sentences — overall health + top priorities}
+{1-3 sentences: health + priorities}
 
 ## Performance
 - [{P1}] {file:function} — {issue} — {suggestion}
-- [{P2}] ...
-- Deep: {FILL: bottleneck analysis, 2-3 sentences max}
+- Deep: {2-3 sentences}
 
 ## User Experience
 - [{UX1}] {file:component} — {issue} — {suggestion}
-- Deep: {FILL: user flow findings, 2-3 sentences max}
+- Deep: {2-3 sentences}
 
 ## Code Quality
 - [{CQ1}] {file:function} — {issue} — {suggestion}
-- Deep: {FILL: maintainability concerns, 2-3 sentences max}
+- Deep: {2-3 sentences}
 
 ## Architecture
 - [{AR1}] {file/module} — {issue} — {suggestion}
-- Deep: {FILL: structural concerns, 2-3 sentences max}
+- Deep: {2-3 sentences}
 
-## Recommended Priority
-1. {ID} {one-line description}
-2. {ID} {one-line description}
-3. {ID} {one-line description}
+## Priority
+1. {ID} {description}
+2. {ID} {description}
+3. {ID} {description}
 ````
 
 ---
 
-## Step 5: Update Memory
+## Step 5: Commit
 
-Update `.claude/mem/memory.md` Current State:
-- Note that system feedback review is complete
-- Reference the report location
-
-Commit:
-```
-[feedback]: system optimization report for [feature set]
-```
+Update memory.md. Commit: `[feedback]: system optimization report`
 
 ---
 
 ## Rules
 
-1. Every issue must reference a specific file (and function/line when applicable)
-2. Every issue must have a concrete suggestion, not just "improve this"
-3. Do not recommend changes that would break existing tests
-4. Do not recommend changes outside the scope of the current feature set
-5. The report is advisory — it does not trigger automatic changes
-6. Keep the report actionable: if an issue takes more than 2 sentences to
-   explain, it needs to be broken into smaller issues
+1. Every issue: specific file + concrete suggestion (not "improve this")
+2. Do not recommend changes that break tests or are out of scope
+3. Report is advisory — does not trigger automatic changes

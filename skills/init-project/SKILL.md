@@ -106,7 +106,7 @@ Commits use `[module]: description` format.
 
 ## Project Map
 
-{FILL: quick commands if detected, e.g. "build: npm run build | test: npm test", or omit if none}
+{FILL: commands from package.json/Makefile, e.g. "build: npm run build | test: npm test". Omit this line entirely if no build system found.}
 
 ### Design Docs
 {FILL: tree listing of docs/ showing every subdirectory and file, e.g.:
@@ -187,24 +187,14 @@ Create `.claude/hooks/update-mem-reminder.sh`:
 ```bash
 #!/bin/bash
 cat <<'EOF'
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MEMORY UPDATE CHECK
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-After this response:
-1. Did you make a design decision, find a root cause, or produce a result?
-   → Update .claude/mem/memory.md
-2. Did you find a new problem or resolve an existing one?
-   → Update .claude/mem/todo.md
-
-Skip if this was a trivial task (typo fix, formatting, single-line edit).
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MEMORY CHECK: Update .claude/mem/memory.md (decisions, findings) and
+todo.md (new/resolved problems) if this was a non-trivial task.
 EOF
 ```
 
-Make it executable: `chmod +x .claude/hooks/update-mem-reminder.sh`
+Make executable: `chmod +x .claude/hooks/update-mem-reminder.sh`
 
-Get the absolute path: `<project_root>/.claude/hooks/update-mem-reminder.sh`
+Get absolute path with `pwd`: `$(pwd)/.claude/hooks/update-mem-reminder.sh`
 
 Configure `.claude/settings.json` with both `Stop` and `UserPromptSubmit` hooks.
 If settings.json already exists, **merge** — do not overwrite existing hooks.
@@ -256,9 +246,5 @@ docs/                      ✓ directory structure created / ✓ already complet
 
 ## Notes
 
-- **Why both Stop AND UserPromptSubmit hooks?** Stop hook output goes to terminal
-  only. UserPromptSubmit output is injected into Claude's context as a system
-  reminder, which actually triggers the memory check.
-- If the project has a PROPOSAL.md (research project), the user should use the
-  research-specific init-project skill instead.
-- After init completes, the project is ready for development.
+- Stop hook: terminal display only. UserPromptSubmit hook: injected into agent context (this is what actually triggers memory checks).
+- After init, project is ready for brainstorming.

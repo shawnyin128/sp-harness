@@ -145,8 +145,7 @@ Commit:
 
 ## Rules
 
-1. Old-format CLAUDE.md = full rewrite, not incremental patch
-2. Preserve project name and any user-added custom rules during rewrite
-3. Delete checklist.md if found (old format, no longer used)
-4. Do not create features.json — that is brainstorming's job
-5. Idempotent — running twice produces no changes if already correct
+1. Old-format CLAUDE.md = full rewrite. Only project name transfers.
+2. Delete checklist.md if found (old format)
+3. Do not create features.json — that is brainstorming's job
+4. Idempotent — running twice produces no changes if already correct

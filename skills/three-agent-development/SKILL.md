@@ -43,7 +43,7 @@ All agent communication goes through `.claude/agents/`. Create if missing.
 
 Read the feature from `docs/features.json` (passed by feature-tracker,
 or specified by user). Read context: `.claude/mem/memory.md`, `CLAUDE.md`,
-relevant spec document.
+spec document referenced in CLAUDE.md's Design Docs section (if any).
 
 ---
 
@@ -201,10 +201,6 @@ All intermediate files preserved for user diagnosis.
 
 ---
 
-## Model Selection
+## Models
 
-| Agent | Model | Why |
-|-------|-------|-----|
-| Planner | Most capable (Opus) | Design decisions, requirement analysis |
-| Generator | Standard (Sonnet) | Execution — plan is already detailed |
-| Evaluator | Most capable (Opus) | Independent judgment, quality assessment |
+Planner + Evaluator: most capable (Opus). Generator: standard (Sonnet).

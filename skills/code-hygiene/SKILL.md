@@ -1,172 +1,102 @@
 ---
 name: code-hygiene
 description: |
-  Lightweight periodic code cleanup during feature development. Scans recently
-  changed files for code drift, bad patterns, and small debts. Fixes small
-  issues directly, escalates large ones to the user. Triggered by feature-tracker
-  every N features (default: 3). Like garbage collection — frequent small
-  cleanups prevent debt accumulation.
+  Lightweight periodic cleanup. Scans recently changed files for drift,
+  dead code, and small debts. Auto-fixes unambiguous issues, escalates
+  ambiguous ones. Triggered by feature-tracker every 3 features.
 author: sp-harness
-version: 1.0.0
+version: 1.1.0
 ---
 
 # code-hygiene
 
-Periodic lightweight cleanup of recently changed code. Prevents pattern drift
-and technical debt accumulation during active feature development.
-
-**Philosophy:** Technical debt is a high-interest loan. Frequent small repayments
-beat painful lump-sum settlements. Agents copy whatever patterns exist in the
-codebase — including bad ones. Catch drift early before it propagates.
+Scan recently changed code for drift and debt. Fix or escalate.
 
 <EXTREMELY-IMPORTANT>
-Your job is to FIND dirt, not to confirm cleanliness. Agent-generated code
-always has drift — naming inconsistencies, dead imports, debug leftovers.
-If you scan files and find zero issues, scan again more carefully. A clean
-bill of health for recently changed code is a sign you didn't look closely
-enough, not that the code is perfect.
-
-**Self-persuasion traps** — if you think "minor, not worth fixing" or
-"it works so it's fine": flag it anyway. Your job is finding dirt.
+Your job is finding dirt, not confirming cleanliness. Agent code always
+has drift. Zero issues on first pass = scan again harder. If you think
+"minor, not worth fixing" — flag it anyway.
 </EXTREMELY-IMPORTANT>
 
 ---
 
-## Step 1: Identify Scope
-
-Only scan files changed since the last hygiene run. Use git:
+## Step 1: Scope
 
 ```bash
-# Files changed in last N commits (since last hygiene)
 git diff --name-only HEAD~[N] HEAD -- '*.py' '*.ts' '*.js' '*.go' '*.rs' '*.java'
 ```
 
-If this is the first hygiene run, scan files changed since the first feature
-was marked `passes: true` in docs/features.json.
+First run: scan files changed since first feature passed in features.json.
 
-List the files. If more than ~20 files, prioritize by:
-1. Files with the most changes (git diff --stat)
-2. Files that are new (more likely to have drift)
-3. Files in core/shared modules (drift here propagates faster)
+If >20 files, prioritize: most changed → new files → core/shared modules.
 
 ---
 
-## Step 2: Quick Scan
+## Step 2: Scan
 
-For each file, check these specific items. These are fast, mechanical checks.
+Check each file for:
 
-### Pattern Drift
-- **Duplicated code blocks** (>5 lines similar to code elsewhere in the project)
-- **Inconsistent naming** (e.g., camelCase in a snake_case project, or mixed
-  conventions within the same file)
-- **Style inconsistency** with surrounding code (different error handling pattern,
-  different import organization)
+**Pattern drift:**
+- Duplicated blocks (>5 lines, >80% structural match with code elsewhere)
+- Naming inconsistency (camelCase in snake_case project, mixed in same file)
+- Style inconsistency with surrounding code
 
-### Dead Weight
-- **Unused imports** or requires
-- **Commented-out code** (should be deleted, git has history)
-- **Unused variables or functions** (no callers)
-- **Debug leftovers** (console.log, print statements, TODO comments from implementation)
+**Dead weight:**
+- Unused imports/variables/functions
+- Commented-out code (git has history)
+- Debug leftovers (console.log, print, TODO from implementation)
 
-### Small Debts
-- **Magic numbers/strings** that should be constants
-- **Functions over ~50 lines** that could be split
-- **Repeated error handling** that could be a shared utility
-- **Overly complex conditions** that could be simplified or named
+**Small debts:**
+- Magic numbers/strings → should be constants
+- Functions >50 lines → should be split
+- Repeated error handling → should be shared utility
 
 ---
 
-## Step 3: Triage and Act
+## Step 3: Triage
 
-Classify each finding:
+**Auto-fix** (unambiguous, no user confirmation):
+- Remove unused imports, commented-out code, debug leftovers
+- Fix naming to match surrounding code
+- Extract obvious magic numbers to constants
 
-### Auto-fix (do it now, no user confirmation needed)
-- Remove unused imports
-- Remove commented-out code
-- Remove debug leftovers (console.log, print)
-- Fix naming inconsistencies (match surrounding code)
-- Extract obvious magic numbers to named constants
+Run tests after auto-fixes. If tests fail, revert ALL auto-fixes and escalate.
 
-After auto-fixes, run tests to confirm nothing broke. If tests fail,
-revert and escalate to user.
+**Escalate** (ambiguous, ask user):
+- Duplicate extraction (changes interfaces)
+- Function decomposition (design judgment needed)
+- Multi-file pattern changes
 
-### Escalate (show to user, ask before acting)
-- Duplicate code extraction (might change interfaces)
-- Function decomposition (requires design judgment)
-- Pattern changes that affect multiple files
-- Anything where the "right" fix is ambiguous
+Format: `[file:line] issue → suggested fix`
 
-Present escalation items concisely:
-```
-Code hygiene found 2 items needing your input:
-
-1. [file.py:45] Duplicate validation logic also in [other.py:78]
-   → Extract to shared util? Or keep separate?
-
-2. [handler.ts] 85-line function doing auth + validation + response
-   → Split into 3 functions? Affects interface.
-```
-
-### Skip (not worth fixing now)
-- Style preferences that don't affect readability
-- Minor naming issues in test files
-- Patterns that are consistent within their module even if different from others
+**Skip** (cosmetic, module-internal consistency): don't report.
 
 ---
 
-## Step 4: Commit, Report, and Signal Completion
+## Step 4: Commit, Report, Signal
 
-Commit auto-fixes:
-```
-[hygiene]: periodic cleanup — remove dead code, fix naming, extract constants
-```
+Commit: `[hygiene]: remove dead code, fix naming, extract constants`
 
-Brief summary to user:
+Report:
 ```
-Code hygiene complete (scanned N files):
-  Auto-fixed: X items (unused imports, debug leftovers, naming)
-  Escalated: Y items (see above)
-  Skipped: Z items (minor, not worth fixing now)
+Hygiene complete (N files): auto-fixed X, escalated Y, skipped Z
 ```
 
-**Write completion signal** to `.claude/agents/hygiene-result.json`:
-
+Write `.claude/agents/hygiene-result.json`:
 ```json
-{
-  "status": "complete",
-  "auto_fixed": {number},
-  "escalated": {number},
-  "skipped": {number}
-}
+{"status": "complete", "auto_fixed": N, "escalated": N, "skipped": N}
 ```
 
-Feature-tracker reads this file to confirm hygiene succeeded before
-updating `last_hygiene_at_completed` in features.json. If hygiene
-fails or is interrupted, do NOT write this file.
+Do NOT write this file if hygiene fails or is interrupted.
 
-Update `.claude/mem/memory.md` if any significant patterns were found
-(e.g., "drift toward inconsistent error handling — watch for this").
-
----
-
-## Configuration
-
-Feature-tracker triggers this skill based on a configurable interval.
-
-**Default:** Every 3 features completed.
-
-To change, the user can specify when feature-tracker asks. The interval
-is not stored in a config file — feature-tracker simply counts completed
-features since last hygiene run.
+Update memory.md if recurring patterns found (signals systemic issue).
 
 ---
 
 ## Rules
 
-1. Never break existing tests. Run tests after every auto-fix batch.
-2. Never refactor code that is not in the scan scope (recently changed files only)
-3. Auto-fix only when the fix is unambiguous. When in doubt, escalate.
-4. Keep hygiene runs fast — this should take minutes, not an hour.
-5. Do not use this as an opportunity to rewrite or redesign. Only clean.
-6. If the same issue keeps appearing across hygiene runs, note it in memory.md
-   as a recurring pattern — this signals a systemic problem for system-feedback.
+1. Run tests after every auto-fix. Revert all if tests fail.
+2. Only scan recently changed files. Never refactor out-of-scope code.
+3. Ambiguous fix = escalate, never guess.
+4. Keep runs fast (minutes, not hours).
+5. Same issue appearing across runs → note in memory.md for system-feedback.
