@@ -48,11 +48,11 @@ Report findings at file:function level.
 - [ ] Input validation missing or unclear error messages
 - [ ] Boundary values unhandled (empty string, max length, concurrent access)
 
-### Code Quality
-- [ ] Duplicated blocks >10 lines across files
-- [ ] Functions >40 lines or >3 nesting levels
-- [ ] Naming inconsistency (camelCase/snake_case mix)
-- [ ] Dead code (unused functions, unreachable branches, commented-out code)
+### Code Quality (cross-feature patterns code-hygiene missed)
+- [ ] Duplicated blocks >5 lines across files (same threshold as code-hygiene, but cross-feature scope)
+- [ ] Functions >50 lines or >3 nesting levels
+- [ ] Naming inconsistency (camelCase/snake_case mix) across module boundaries
+- [ ] Dead code from removed/changed features (not just per-file — cross-feature)
 - [ ] Circular or unused dependencies
 
 ### Architecture

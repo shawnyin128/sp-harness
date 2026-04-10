@@ -186,6 +186,8 @@ Show the actual detection logic, recovery code, and safe-stop behavior.
 
 ## Execution Handoff
 
+**If invoked by a Planner subagent** (inside three-agent-development pipeline): skip this section entirely. The orchestrator handles execution dispatch.
+
 After saving the plan, offer execution choice:
 
 **"Plan complete and saved to `docs/plans/active/<filename>.md`. Two execution options:**
