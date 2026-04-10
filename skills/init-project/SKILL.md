@@ -63,8 +63,8 @@ If `CLAUDE.md` does not exist, create it using the EXACT template below.
 **STRICT RULES — read before writing:**
 - Copy the template EXACTLY. Do not rearrange, rename, or add sections.
 - The ONLY parts you fill in are marked with `{FILL}`. Everything else is literal.
-- Do NOT add: Key References, tables, extra headings, summaries, or any
-  content not in the template.
+- Do NOT add: Key References, tables, extra headings, summaries, language
+  preferences, "respond in X language", or ANY content not in the template.
 - Total CLAUDE.md MUST stay under 80 lines.
 - If you are tempted to "improve" the template — stop. Use it as-is.
 
