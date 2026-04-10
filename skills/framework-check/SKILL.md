@@ -95,11 +95,12 @@ Result: X/Y passed. Z items need fixing.
 → **Rewrite CLAUDE.md from scratch using init-project template.**
 
 This is the critical fix. Do NOT try to patch the old format. Instead:
-1. Read the old CLAUDE.md to extract any project-specific info that should
-   be preserved (project name, any custom rules the user added)
+1. Read the old CLAUDE.md to extract project name only
 2. Run init-project's scan logic (Step 1) to get docs tree and codebase tree
 3. Generate a new CLAUDE.md using the EXACT init-project template
 4. Write the new CLAUDE.md, replacing the old one entirely
+5. Do NOT carry over Language preferences, Problem/Motivation sections,
+   or any other old-format content. Only the project name transfers.
 
 The old format cannot be incrementally fixed — it has wrong sections,
 wrong structure, and wrong content. A clean rewrite is the only reliable fix.
