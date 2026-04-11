@@ -85,8 +85,18 @@ digraph brainstorming {
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - **Architecture type (MUST ASK):** Before diving into feature details, ask:
   > "What execution architecture does this system use? (a) Pure code — all logic is deterministic code, (b) Pure agent — agent handles end-to-end, code is just tooling, (c) Hybrid — some logic is code, some is agent decisions"
-  - If answer is *pure-code* or *pure-agent* → continue normally, no extra steps.
-  - If answer is *hybrid* → ask the 4 boundary questions (see Hybrid Boundary section below), then continue.
+  - If answer is *pure-code* → continue normally, no extra steps.
+  - If answer is *pure-agent* or *hybrid* → ask the agent implementation question (see below), then continue.
+  - If answer is *hybrid* → ALSO ask the 4 boundary questions (see Hybrid Boundary section below).
+- **Agent implementation (only if pure-agent or hybrid):** After architecture type, ask:
+  > "How should the agent components be implemented? (a) Blank session — agent starts fresh each time, no persistent definition, (b) CC subagent — defined as `.claude/agents/` files with frontmatter (model, tools, memory, isolation)"
+  - If *blank session* → note in spec: "Agent components start from blank session each run." No further questions.
+  - If *CC subagent* → for EACH agent role identified in the design, ask these 4 questions to build the frontmatter:
+    1. "What tools does this agent need?" (read-only / all / specific list)
+    2. "What model?" (opus / sonnet / haiku / inherit)
+    3. "Does it need cross-session memory?" (none / project / user / local)
+    4. "Does it need an isolated worktree?" (yes / no)
+  - Record answers in the spec's `## Agent Definitions` section (see below).
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -209,9 +219,32 @@ If the user identified a hybrid architecture in Step 3, append a `## Hybrid Boun
 4. **Failure asymmetry** — agent failure ≠ code failure. When the agent fails, does code retry, degrade, or stop? Define per-interface.
 
 **Rules:**
-- If the user answered *pure-code* or *pure-agent*, this section does NOT exist in the spec. Zero overhead.
+- If the user answered *pure-code*, this section does NOT exist in the spec. Zero overhead.
+- If the user answered *pure-agent*, this section does NOT exist — but `## Agent Definitions` may.
 - Do NOT add this section speculatively. Only add it when the user explicitly chose *hybrid*.
 - Downstream skills (writing-plans, evaluator) detect this section's presence to activate hybrid-aware logic.
+
+**Agent Definitions (only if pure-agent or hybrid AND user chose CC subagent):**
+
+If the user chose CC subagent implementation, append a `## Agent Definitions` section to the spec document. For each agent role, include the frontmatter built from the Q&A:
+
+```markdown
+## Agent Definitions
+
+### {agent-role-name}
+- **purpose**: {one-line description}
+- **model**: {opus | sonnet | haiku | inherit}
+- **tools**: {tool list or "all"}
+- **memory**: {none | project | user | local}
+- **isolation**: {worktree | none}
+- **skills**: {list of sp-harness skills to preload, if any}
+```
+
+**Rules:**
+- Do NOT pre-fill agent definitions. Every field comes from user answers.
+- If user chose *blank session*, this section does NOT exist.
+- If user chose *pure-code*, this section does NOT exist.
+- writing-plans detects this section and generates `.claude/agents/{name}.md` creation tasks.
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:

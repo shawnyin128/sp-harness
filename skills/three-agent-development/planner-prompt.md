@@ -20,7 +20,7 @@ Agent tool:
     [Paste CLAUDE.md, memory.md, relevant spec]
 
     ### Previous Evaluation (iteration 2+ only)
-    Read `.claude/agents/eval-report.json` if re-planning after ITERATE.
+    Read `.claude/agents/state/eval-report.json` if re-planning after ITERATE.
     Key fields to check:
     - `verdict` — should be "ITERATE" (if "REJECT", do not re-plan)
     - `iteration_items[]` — the specific issues to address in this iteration
@@ -48,7 +48,7 @@ Agent tool:
     steps as requirements. writing-plans produces TDD steps, file structure,
     fallback design, no placeholders.
 
-    Then save as `.claude/agents/task-plan.json` with this EXACT schema:
+    Then save as `.claude/agents/state/task-plan.json` with this EXACT schema:
 
     ```json
     {
@@ -77,7 +77,7 @@ Agent tool:
     ## Phase 3: Write Evaluation Plan
 
     For EACH task in task-plan.json, specify how the Evaluator should
-    assess it. Save as `.claude/agents/eval-plan.json`:
+    assess it. Save as `.claude/agents/state/eval-plan.json`:
 
     ```json
     {

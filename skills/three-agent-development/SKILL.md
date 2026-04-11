@@ -4,7 +4,7 @@ description: |
   Feature-level orchestration with three independent agents: Planner (design),
   Generator (execution), and Evaluator (quality assessment). Each agent
   delegates to existing sp-harness skills internally. Agents communicate
-  through files in .claude/agents/. Explicitly triggered by feature-tracker
+  through files in .claude/agents/state/. Explicitly triggered by feature-tracker
   or user.
 author: sp-harness
 version: 2.0.0
@@ -27,10 +27,10 @@ Evaluator → reads code + reports  → eval-report.json
 
 ## File Structure
 
-All agent communication goes through `.claude/agents/`. Create if missing.
+All agent communication goes through `.claude/agents/state/`. Create if missing.
 
 ```
-.claude/agents/
+.claude/agents/state/
 ├── task-plan.json     ← Planner output: implementation plan (Generator reads)
 ├── eval-plan.json     ← Planner output: evaluation playbook (Evaluator reads)
 ├── implementation.md  ← Generator output: execution report
@@ -49,18 +49,19 @@ spec document referenced in CLAUDE.md's Design Docs section (if any).
 
 ## Step 2: Dispatch Planner
 
-Dispatch using `./planner-prompt.md`. Use most capable model (e.g. Opus).
+Dispatch the `sp-planner` subagent (`@agent sp-planner`). It runs as Opus
+with writing-plans pre-loaded and project memory enabled.
 
 **Planner does two things internally:**
 
 1. **Implicit requirements discovery** — scans feature for gaps, asks user
-   questions one-at-a-time until resolved. (Logic in planner-prompt.md.)
+   questions one-at-a-time until resolved.
 
 2. **Plan production** — invokes `sp-harness:writing-plans` to generate
    the implementation plan. Follows all writing-plans conventions (TDD steps,
    file structure, no placeholders, fallback chain design).
 
-**Planner writes two JSON files to `.claude/agents/`:**
+**Planner writes two JSON files to `.claude/agents/state/`:**
 - `task-plan.json` — implementation plan (from writing-plans, serialized as JSON)
 - `eval-plan.json` — evaluation playbook: for each task, specifies method
   (spec-review / code-review / both), quantifiable criteria, and verify commands.
@@ -69,7 +70,7 @@ Dispatch using `./planner-prompt.md`. Use most capable model (e.g. Opus).
 MUST do the following before dispatching Generator:
 
 <HARD-GATE>
-1. Read `.claude/agents/task-plan.json` and `.claude/agents/eval-plan.json`
+1. Read `.claude/agents/state/task-plan.json` and `.claude/agents/state/eval-plan.json`
 2. Print a merged summary table to the user:
 
 ```
@@ -92,25 +93,28 @@ Threshold: {acceptance_threshold}
 
 ## Step 3: Dispatch Generator
 
-Dispatch using `./generator-prompt.md`. Use standard model (e.g. Sonnet).
+Dispatch the `sp-generator` subagent (`@agent sp-generator`). It runs as
+Sonnet in an isolated worktree with subagent-driven-development and TDD
+pre-loaded.
 
 **Generator does one thing internally:**
 
 Invokes `sp-harness:subagent-driven-development` to execute task-plan.json.
 This runs the full existing task-level machinery:
-- Fresh implementer subagent per task (using implementer-prompt.md)
-- Spec compliance review after each task (using spec-reviewer-prompt.md)
-- Code quality review after each task (using code-quality-reviewer-prompt.md)
+- Fresh implementer subagent per task
+- Spec compliance review after each task
+- Code quality review after each task
 - TDD cycle for each step
 
-**Generator writes one file to `.claude/agents/`:**
+**Generator writes one file to `.claude/agents/state/`:**
 - `implementation.md` — execution report
 
 ---
 
 ## Step 4: Dispatch Evaluator
 
-Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
+Dispatch the `sp-evaluator` subagent (`@agent sp-evaluator`). It runs as
+Opus with read-only + Bash tools and project memory enabled.
 
 **Evaluator parses eval-plan.json and follows it task by task:**
 - For each `task_evaluations` entry: uses the specified `method`, checks
@@ -120,7 +124,7 @@ Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 - Checks against `acceptance_threshold`
 - Can adjust criteria if needed (must document why)
 
-**Evaluator writes one JSON file to `.claude/agents/`:**
+**Evaluator writes one JSON file to `.claude/agents/state/`:**
 - `eval-report.json` — structured report with per-task `criteria_results[]`,
   `verify_results[]`, `iteration_items[]`, and `convergence` status.
   Planner reads this JSON to decide whether and how to iterate.
@@ -132,7 +136,7 @@ Dispatch using `./evaluator-prompt.md`. Use most capable model (e.g. Opus).
 <HARD-GATE>
 **Before handling the verdict, you MUST print the evaluation summary to the user.**
 
-Read `.claude/agents/eval-report.json` and print:
+Read `.claude/agents/state/eval-report.json` and print:
 
 ```
 Evaluation Results (iteration {N}): {VERDICT}
@@ -174,7 +178,7 @@ reason and location. The user needs this to understand what is happening.
    **ITERATE is not a shortcut. It is a full cycle through Steps 2-5.**
 
 ### REJECT
-1. Stop. Preserve all files in `.claude/agents/`
+1. Stop. Preserve all files in `.claude/agents/state/`
 2. Update `.claude/mem/memory.md` — note rejection and reason
 3. Report to user: what was attempted, why it failed, full evaluator assessment
 
@@ -197,10 +201,16 @@ All intermediate files preserved for user diagnosis.
    re-planning after ITERATE — then it reads eval-report.json only)
 2. Generator never sees eval-plan.json or eval-report.json
 3. Evaluator never sees task-plan.json or the Planner's prompt
-4. All communication through `.claude/agents/` files only
+4. All communication through `.claude/agents/state/` files only
 
 ---
 
-## Models
+## Subagent Definitions
 
-Planner + Evaluator: most capable (Opus). Generator: standard (Sonnet).
+Agents are defined as native CC subagent files in `agents/`:
+- `agents/sp-planner.md` — Opus, skills: writing-plans, memory: project
+- `agents/sp-generator.md` — Sonnet, skills: subagent-driven-dev + TDD, isolation: worktree
+- `agents/sp-evaluator.md` — Opus, tools: read-only + Bash, memory: project
+
+Legacy prompt templates (`planner-prompt.md`, `generator-prompt.md`,
+`evaluator-prompt.md`) are kept for reference but no longer used for dispatch.

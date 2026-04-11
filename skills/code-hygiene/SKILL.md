@@ -82,7 +82,7 @@ Report:
 Hygiene complete (N files): auto-fixed X, escalated Y, skipped Z
 ```
 
-Write `.claude/agents/hygiene-result.json`:
+Write `.claude/agents/state/hygiene-result.json`:
 ```json
 {"status": "complete", "auto_fixed": N, "escalated": N, "skipped": N}
 ```

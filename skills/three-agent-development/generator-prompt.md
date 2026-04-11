@@ -12,7 +12,7 @@ Agent tool:
 
     ## Input
 
-    Read `.claude/agents/task-plan.json`. This JSON contains the tasks
+    Read `.claude/agents/state/task-plan.json`. This JSON contains the tasks
     you must implement, each with files to create/modify and TDD steps.
 
     ## Execution
@@ -30,7 +30,7 @@ Agent tool:
 
     ## Output
 
-    After all tasks complete, write `.claude/agents/implementation.md`:
+    After all tasks complete, write `.claude/agents/state/implementation.md`:
 
     ```markdown
     # Implementation Report

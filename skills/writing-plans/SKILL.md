@@ -146,6 +146,52 @@ If the spec contains a `## Hybrid Boundary` section, apply these rules:
 
 If the spec has no `## Hybrid Boundary` section, skip this entirely.
 
+## Agent Definition Tasks
+
+If the spec contains a `## Agent Definitions` section, add a task (typically Task 1) that creates the subagent definition files:
+
+**For each agent defined in the spec:**
+- Create `.claude/agents/{agent-role-name}.md` with YAML frontmatter + system prompt
+- Frontmatter fields come directly from the spec: `name`, `description`, `model`, `tools`, `memory`, `isolation`, `skills`
+- System prompt body describes the agent's role and behavior
+
+**Task structure:**
+```markdown
+### Task 1: Create agent definitions [agent]
+
+**Files:**
+- Create: `.claude/agents/{name}.md`
+
+- [ ] **Step 1: Write {name} subagent definition**
+
+\`\`\`markdown
+---
+name: {name}
+description: {purpose from spec}
+model: {from spec}
+tools: {from spec}
+memory: {from spec, omit if none}
+isolation: {from spec, omit if none}
+skills:
+  - {from spec, omit if empty}
+---
+
+{System prompt describing the agent's role, inputs, outputs, and rules.}
+\`\`\`
+
+- [ ] **Step 2: Verify agent loads**
+
+Run: `claude agents` (or restart session)
+Expected: {name} appears in agent list
+```
+
+**Rules:**
+- Agent definition tasks come BEFORE implementation tasks (the agents need to exist first)
+- System prompts must be complete — not "fill in later"
+- Do NOT invent fields not in the spec's Agent Definitions section
+
+If the spec has no `## Agent Definitions` section, skip this entirely.
+
 ## Fallback Chain Design
 
 If the spec contains a `## Divergence Risk Analysis` section, you MUST design

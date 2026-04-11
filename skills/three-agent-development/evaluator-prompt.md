@@ -21,8 +21,8 @@ Agent tool:
     ## Input
 
     Read these files:
-    - `.claude/agents/eval-plan.json` — the Planner's evaluation playbook
-    - `.claude/agents/implementation.md` — the Generator's execution report
+    - `.claude/agents/state/eval-plan.json` — the Planner's evaluation playbook
+    - `.claude/agents/state/implementation.md` — the Generator's execution report
 
     ## CRITICAL: Do Not Trust the Report
 
@@ -137,7 +137,7 @@ Agent tool:
 
     ## Output
 
-    Write `.claude/agents/eval-report.json` with this EXACT schema:
+    Write `.claude/agents/state/eval-report.json` with this EXACT schema:
 
     ```json
     {

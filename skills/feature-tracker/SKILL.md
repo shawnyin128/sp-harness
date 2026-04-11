@@ -134,11 +134,11 @@ Without it, the session start protocol's git log step is useless.
    a. Print: "Hygiene threshold reached (delta={delta}). Running code-hygiene now."
    b. Invoke `sp-harness:code-hygiene` IMMEDIATELY. Do NOT ask "should I run
       hygiene?" or "would you like me to clean up?". This is automatic. Just do it.
-   c. Read `.claude/agents/hygiene-result.json`
+   c. Read `.claude/agents/state/hygiene-result.json`
    d. **If file exists AND `status` is `"complete"`:**
       - Set `last_hygiene_at_completed` to `completed_count` in features.json
       - Write features.json to disk
-      - Delete `.claude/agents/hygiene-result.json`
+      - Delete `.claude/agents/state/hygiene-result.json`
       - Report: "Hygiene complete. Counter updated to {completed_count}."
    e. **If file missing OR status is NOT `"complete"`:**
       - Do NOT update the counter
