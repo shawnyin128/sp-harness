@@ -58,7 +58,9 @@ formats and migrate. Auto-fix anything wrong.
 ### Features (skip if no spec docs exist)
 
 - [ ] `.claude/features.json` is valid JSON with `features` array
-- [ ] Each feature has: id, category, priority, description, steps, passes
+- [ ] Each feature has: id, category, priority, depends_on, description, steps, passes
+- [ ] All IDs in `depends_on` arrays reference existing feature IDs (no dangling refs)
+- [ ] No circular dependencies in `depends_on` chains
 
 ### Harness Config
 

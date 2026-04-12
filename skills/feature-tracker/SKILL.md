@@ -81,15 +81,24 @@ Remaining (by priority):
 
 ## Step 3: Pick next feature
 
-Select the highest-priority feature where `passes: false`.
+**Selection algorithm (topological order first, then priority):**
 
-Priority order: high → medium → low. Within the same priority, use array order.
+1. Filter: `passes: false`
+2. Filter: all IDs in `depends_on` have `passes: true` (dependencies satisfied)
+3. Sort candidates: high → medium → low priority
+4. Within same priority: array order
+5. Pick first candidate
+
+If no candidate is available (all remaining features have unsatisfied dependencies),
+report a **dependency deadlock** and print the blocked features with their unmet
+dependencies. STOP and ask user to resolve.
 
 Present the selected feature to the user:
 
 ```
 Next: [feature-id] — description
 Priority: high
+Depends on: [list of depends_on IDs, or "none"]
 Steps:
   1. step one
   2. step two

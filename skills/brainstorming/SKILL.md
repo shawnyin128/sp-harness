@@ -274,6 +274,7 @@ Each feature follows this structure:
   "id": "short-kebab-case-id",
   "category": "functional|ui|infrastructure|testing",
   "priority": "high|medium|low",
+  "depends_on": ["other-feature-id"],
   "description": "One-line description of what this feature does",
   "steps": [
     "Implementation step or verification criterion",
@@ -285,8 +286,9 @@ Each feature follows this structure:
 
 **Rules:**
 - `id` must be unique across the file
+- `depends_on` lists feature IDs that must pass before this feature can start. Use `[]` if no dependencies. Every ID in `depends_on` must exist in the features array.
 - `steps` serve as both implementation guidance and verification criteria
-- `priority` reflects implementation order: high features should be done first (foundations, core functionality), low features are nice-to-haves
+- `priority` is a tiebreaker within the same dependency layer — features are selected in topological order first, then by priority (high → medium → low)
 - Set `passes: false` for all new features — feature-tracker skill handles verification and updating
 - One feature per testable behavior — if a feature has two independent parts, split it
 - Commit the updated features.json alongside the design doc
