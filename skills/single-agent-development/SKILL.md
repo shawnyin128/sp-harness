@@ -56,7 +56,10 @@ to the Generator role. Produce plans only.
 </EXTREMELY-IMPORTANT>
 
 **Phase 1: Implicit requirements discovery.**
-Scan the feature for gaps. Ask user one question at a time until resolved.
+First: if the spec has a `## Codebase Context` section, use it as ground truth.
+If no Codebase Context but existing code exists, check the modules this feature
+touches for variants (v1/v2, old/new). If found, ask user which to use FIRST.
+Then: scan the feature for gaps. Ask user one question at a time until resolved.
 
 **Phase 2: Write implementation plan.**
 Follow sp-harness:writing-plans conventions (TDD steps, file structure,

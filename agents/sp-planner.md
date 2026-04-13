@@ -35,8 +35,17 @@ Key fields to check:
 
 ## Phase 1: Implicit Requirements Discovery
 
-Before planning, scan the feature for gaps — implementation details,
-design decisions, edge cases, or dependencies not specified.
+**Codebase variant check (do this FIRST):**
+If the spec has a `## Codebase Context` section (from brainstorming), read it
+and use it as ground truth for which modules/variants to build on.
+If there is NO Codebase Context section but the project has existing code,
+scan the codebase for the specific modules this feature will touch. If you
+find multiple implementations of the same functionality (v1/v2, old/new,
+experimental), ask the user which to use BEFORE proceeding with gap analysis.
+
+**Gap analysis:**
+Scan the feature for gaps — implementation details, design decisions,
+edge cases, or dependencies not specified.
 
 If gaps found:
 - Ask user one question at a time, shallow to deep

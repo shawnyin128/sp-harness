@@ -22,6 +22,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits. If `PROPOSAL.md` exists, read it first as the primary input for understanding what this project is about.
+1b. **Codebase understanding (if existing code)** — if the project has substantial existing code, do a deep scan and present your understanding to the user for confirmation BEFORE asking any design questions. See Codebase Understanding section below.
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria. **MUST include architecture type question** (see Architecture Type Gate below).
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
@@ -50,7 +51,13 @@ digraph brainstorming {
     "User reviews spec?" [shape=diamond];
     "Invoke feature-tracker" [shape=doublecircle];
 
-    "Explore project context" -> "Visual questions ahead?";
+    "Has existing codebase?" [shape=diamond];
+    "Codebase understanding\n(present + confirm)" [shape=box];
+
+    "Explore project context" -> "Has existing codebase?";
+    "Has existing codebase?" -> "Codebase understanding\n(present + confirm)" [label="yes"];
+    "Has existing codebase?" -> "Visual questions ahead?" [label="no"];
+    "Codebase understanding\n(present + confirm)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
@@ -81,6 +88,49 @@ digraph brainstorming {
   project vision and serves as the primary input for brainstorming. Use it to
   inform your questions and proposals rather than starting from scratch.
 - Check out the current project state (files, docs, recent commits)
+
+**Codebase Understanding (MANDATORY if existing code):**
+
+If the project has substantial existing code (not just scaffolding), you MUST
+do a deep scan and present your understanding BEFORE asking any design questions.
+This is not optional — skipping this step causes designs based on wrong assumptions.
+
+**Step 1: Deep scan.** Go beyond directory listing. For each major module:
+- Read key source files (not just file names)
+- Identify what each module does and how it relates to others
+- Look for variants: same functionality implemented differently in different
+  locations (v1/v2 directories, old/new files, experimental branches, deprecated modules)
+- Check git log for activity: which modules are actively developed vs stale
+
+**Step 2: Present understanding.** Print a structured summary and ask user to confirm:
+
+```
+Codebase Understanding:
+
+Core modules:
+  {path} — {what it does} [{active | stale | deprecated}]
+  {path} — {what it does} [{active | stale | deprecated}]
+
+Variants found (same functionality, different implementations):
+  {functionality}: {path-A} vs {path-B} — {key difference}
+
+Dependencies between modules:
+  {module-A} depends on {module-B} for {reason}
+
+Is this understanding correct? Which modules/variants should the new
+feature build on?
+```
+
+**Step 3: Wait for user confirmation.** Do NOT proceed to design questions
+until user confirms or corrects your understanding. If user corrects you,
+update your understanding and re-present.
+
+The confirmed understanding becomes a **design constraint** — all subsequent
+design decisions must be consistent with it. Record it in the spec document
+as a `## Codebase Context` section.
+
+If the project is empty or has no substantial code, skip this entirely.
+
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - **Architecture type (MUST ASK):** Before diving into feature details, ask:
