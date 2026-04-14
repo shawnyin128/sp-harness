@@ -131,7 +131,11 @@ active patterns to avoid re-asking the same questions or repeating past gaps.
 
 ### When you are dispatched to APPEND a pattern
 
-You receive a candidate insight. Run the **Append Checklist** — all YES required:
+Not every finding deserves memory. Memory costs context budget on every
+future invocation. Only patterns that would affect multiple future
+decisions qualify. Run BOTH gates below.
+
+**Gate 1 — Structural (MUST pass ALL 5):**
 
 1. **Specificity** — Is `Rule` phrased as an actionable check?
    - Good: "Verify asyncio.gather results contain no exceptions before use"
@@ -139,13 +143,30 @@ You receive a candidate insight. Run the **Append Checklist** — all YES requir
 2. **Deduplication** — Is there already an active pattern covering the same situation?
    - If yes → do NOT add. Update existing pattern's `Observed in` instead.
 3. **Reusability** — Does this apply to future work, or only to completed features?
-   - Historical-only → do NOT add. (Optional: one-line archive entry.)
+   - Historical-only → do NOT add.
 4. **Evidence** — Does `Observed in` reference at least 2 concrete feature-ids?
    - Single instance = anecdote → do NOT add.
 5. **Verifiability** — Can violations of this rule be detected in future work?
    - Unfalsifiable ("stay simple") → do NOT add.
 
-Any NO → reject. Report the rejection reason to the dispatcher.
+**Gate 2 — Value (MUST pass AT LEAST 2 of 3):**
+
+6. **Non-obviousness** — Would a competent Planner without this memory
+   likely miss this check or make this mistake?
+   - Fail: "dereferencing null crashes" — every agent knows this
+   - Pass: "In this project, auth-related features always need idempotency
+     check because retry middleware duplicates requests silently"
+7. **Non-derivability** — Can this pattern be inferred by reading the
+   codebase or spec directly?
+   - Fail: "This project uses FastAPI" — visible in imports
+   - Pass: "The feature tracker expects depends_on to be populated even
+     for standalone features to avoid deadlock warnings"
+8. **Cost-of-rediscovery** — How expensive was it to learn this?
+   - Fail: Came from docs / obvious after 1 read
+   - Pass: Required multiple iterations, dead ends, or domain knowledge
+
+Gate 1 all YES + Gate 2 at least 2/3 → append.
+Either gate fails → reject. Report rejection reason to dispatcher.
 
 ### When you are dispatched to COMPACT your memory
 

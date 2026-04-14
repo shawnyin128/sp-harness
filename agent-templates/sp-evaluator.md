@@ -118,7 +118,11 @@ checks) to your evaluation.
 
 ### When you are dispatched to APPEND a pattern
 
-You receive a candidate insight. Run the **Append Checklist** — all YES required:
+Not every finding deserves memory. Memory costs context budget on every
+future invocation. Only patterns that would affect multiple future
+evaluations qualify. Run BOTH gates below.
+
+**Gate 1 — Structural (MUST pass ALL 5):**
 
 1. **Specificity** — Is `Rule` phrased as an actionable check?
    - Good: "Flag functions >3 nesting levels as ITERATE"
@@ -132,7 +136,24 @@ You receive a candidate insight. Run the **Append Checklist** — all YES requir
 5. **Verifiability** — Can you mechanically check this rule in future evaluations?
    - Unfalsifiable → do NOT add.
 
-Any NO → reject. Report the rejection reason to the dispatcher.
+**Gate 2 — Value (MUST pass AT LEAST 2 of 3):**
+
+6. **Non-obviousness** — Would a competent Evaluator without this memory
+   likely miss this issue or approve this?
+   - Fail: "Tests should exist" — standard practice, always checked
+   - Pass: "In this project, async handlers must verify event loop is not
+     closed before scheduling callbacks, otherwise silent drop"
+7. **Non-derivability** — Can this check be inferred by reading the
+   codebase or eval-plan?
+   - Fail: "Check test coverage" — implied by eval-plan
+   - Pass: "The singleton cache layer has a known false positive when
+     test fixtures reset state — skip checking cache invalidation in tests"
+8. **Cost-of-rediscovery** — How expensive was it to learn this?
+   - Fail: Obvious from one inspection
+   - Pass: Required cross-referencing multiple iterations or tracing obscure failure modes
+
+Gate 1 all YES + Gate 2 at least 2/3 → append.
+Either gate fails → reject. Report rejection reason to dispatcher.
 
 ### When you are dispatched to COMPACT your memory
 

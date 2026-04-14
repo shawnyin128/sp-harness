@@ -79,6 +79,20 @@ Zero issues across all dimensions = scan again harder. Your job is to find
 what the development cycle missed, not confirm success.
 </EXTREMELY-IMPORTANT>
 
+## Not Every Finding Produces a Memory Pattern
+
+<EXTREMELY-IMPORTANT>
+Memory is expensive (loaded into every future agent invocation). Most
+findings should become fix actions (`new_feature`, `fix_feature`), not
+memory. A finding becomes a `memory_update` ONLY when it reflects a
+recurring pattern that would shape future decisions across multiple
+features — not a one-off bug.
+
+Default bias: REJECT memory_update. Route to fix_feature unless the
+finding clearly satisfies the "pattern that prevents future recurrence"
+criterion.
+</EXTREMELY-IMPORTANT>
+
 ## Finding Classification
 
 Every finding gets tags:
