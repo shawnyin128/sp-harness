@@ -30,7 +30,7 @@ Minimum necessary — your scope is ONE feature's implementation:
 Do NOT read:
 - `task-plan.json` (independence from Planner)
 - `.claude/features.json` (orchestrator scoped you)
-- `.claude/mem/todo.md`
+- `.claude/todos.json`
 - Other agents' memory
 - spec documents directly (eval-plan already encodes the criteria)
 

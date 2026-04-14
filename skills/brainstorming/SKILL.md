@@ -21,6 +21,7 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
+0. **Check todo backlog** — read `.claude/todos.json`. If pending todos exist, list them to the user and ask: "Start from one of these, or new idea?". If user picks a todo, invoke `sp-harness:manage-todos` to mark it `in_brainstorm` and use its description+notes as the seed for the discussion. If user opts for a new idea, proceed normally (may add new todos during brainstorming).
 1. **Explore project context** — check files, docs, recent commits. If `PROPOSAL.md` exists, read it first as the primary input for understanding what this project is about.
 1b. **Codebase understanding (if existing code)** — if the project has substantial existing code, do a deep scan and present your understanding to the user for confirmation BEFORE asking any design questions. See Codebase Understanding section below.
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
@@ -325,6 +326,7 @@ Each feature follows this structure:
   "category": "functional|ui|infrastructure|testing",
   "priority": "high|medium|low",
   "depends_on": ["other-feature-id"],
+  "from_todo": "todo-id or null",
   "description": "One-line description of what this feature does",
   "steps": [
     "Implementation step or verification criterion",
@@ -337,6 +339,7 @@ Each feature follows this structure:
 **Rules:**
 - `id` must be unique across the file
 - `depends_on` lists feature IDs that must pass before this feature can start. Use `[]` if no dependencies. Every ID in `depends_on` must exist in the features array.
+- `from_todo` references the origin todo in `.claude/todos.json`. If this brainstorming session started from a selected todo, set this to the todo's id. Features created without a todo origin (direct user request, or legacy) use `null`.
 - `steps` serve as both implementation guidance and verification criteria
 - `priority` is a tiebreaker within the same dependency layer — features are selected in topological order first, then by priority (high → medium → low)
 - Set `passes: false` for all new features — feature-tracker skill handles verification and updating
@@ -344,6 +347,11 @@ Each feature follows this structure:
 - Commit the updated features.json alongside the design doc
 
 **Decomposition guideline:** A feature should be completable in a single session. If a feature feels too large, break it into sub-features.
+
+**Link features back to todo:** If this brainstorming session started from
+a todo (Step 0), after writing features.json invoke `sp-harness:manage-todos`
+Link features operation with the todo id + list of new feature ids. This
+transitions the todo's status to `in_feature` and records the linkage.
 
 ## Project Map Update
 

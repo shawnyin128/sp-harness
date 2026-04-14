@@ -6,7 +6,7 @@ description: |
   invoke this to have sp-feedback diagnose and route the fix back into the
   pipeline. Asks clarifying questions before analysis.
 author: sp-harness
-version: 2.0.0
+version: 3.0.0
 ---
 
 # feedback
@@ -60,28 +60,33 @@ checklists. Details auditable in memory-ops-log.json.
 
 ## Step 5: Per-batch confirmation (HARD-GATE for remaining actions)
 
-For actions that DO require user input (new_feature, fix_feature, manual):
+For actions that require user input (`new_todo`, `fix_feature`, `manual`):
 
-- "Append N new features / M fix features to features.json?"
-- "Manual items: {list} — review yourself later"
+- "Add N new todos to idea backlog? (feature ideas that need brainstorming)"
+- "Append M fix features to features.json? (bugs ready for direct development)"
+- "Manual items: {list} — spec/architecture concerns for your review"
 
-Wait for confirmation before applying.
+Wait for confirmation per batch before applying.
 
 ## Step 6: Execute approved actions
 
 For confirmed batches:
-- **new_feature**: append to `.claude/features.json` with `passes: false`.
-  Suggest user run `/brainstorming` to flesh out design.
-- **fix_feature**: append to `.claude/features.json`. Will be picked up by
-  feature-tracker on next loop.
+
+- **new_todo**: for each approved item, invoke `sp-harness:manage-todos` Add
+  with description, category (mapped from root_cause), and notes. The todos
+  sit in `pending` state awaiting future brainstorming.
+- **fix_feature**: append to `.claude/features.json` with `passes: false`,
+  `from_todo: null`. Will be picked up by feature-tracker on next loop.
 - **manual**: print to user, no automated action.
 
 ## Rules
 
 1. Never skip the clarifying questions phase — user complaints are often vague.
 2. Memory operations auto-execute before user gates. No confirmation needed.
-3. new_feature / fix_feature / manual require per-batch confirmation.
+3. new_todo / fix_feature / manual require per-batch confirmation.
 4. Never write directly to another agent's MEMORY.md — always dispatch with
    the Append/Compact Checklist context.
-5. After execution, summarize what was auto-executed, what was confirmed,
+5. Never auto-append to features.json without design — use new_todo for ideas
+   that need brainstorming, fix_feature only for clearly scoped bugs.
+6. After execution, summarize what was auto-executed, what was confirmed,
    and what was deferred.

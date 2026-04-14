@@ -28,8 +28,8 @@ formats and migrate. Auto-fix anything wrong.
 ### CLAUDE.md — Content Format
 
 - [ ] First-Principles Standards has exactly 4 numbered rules (Clarify, Shortest path, Root causes, Output)
-- [ ] Context Management mentions `.claude/mem/todo.md`
-- [ ] Context Management has "Session start protocol" listing: CLAUDE.md, .claude/features.json, .claude/sp-harness.json, .claude/mem/todo.md, git log, git status
+- [ ] Context Management mentions `.claude/todos.json`
+- [ ] Context Management has "Session start protocol" listing: CLAUDE.md, .claude/features.json, .claude/sp-harness.json, .claude/todos.json, git log, git status
 - [ ] Context Management does NOT mention `memory.md` (deprecated in v0.3.0)
 - [ ] Context Management mentions `[module]: description` commit convention
 - [ ] Project Map has `### Design Docs` subsection with docs/ tree
@@ -44,11 +44,20 @@ formats and migrate. Auto-fix anything wrong.
 - [ ] `docs/plans/completed/` exists
 - [ ] `docs/reports/` exists
 
-### Memory System
+### State Sources
 
-- [ ] `.claude/mem/todo.md` exists
-- [ ] `.claude/mem/memory.md` does NOT exist (deprecated in v0.3.0; warn if found, suggest migration)
+- [ ] `.claude/todos.json` exists with valid schema (`{"todos": [...]}`)
+- [ ] Every todo has required fields: id, description, category, status, created_at, linked_feature_ids, archived_feature_paths
+- [ ] All `linked_feature_ids` reference existing entries in `.claude/features.json`
+- [ ] `.claude/features.json` entries with `from_todo` reference existing todo ids
+- [ ] No duplicate todo ids
+
+### Legacy files (warn, do not auto-delete)
+
+- [ ] `.claude/mem/memory.md` does NOT exist (deprecated in v0.3.0)
+- [ ] `.claude/todos.json` does NOT exist (deprecated in v0.4.0; replaced by `.claude/todos.json`)
 - [ ] `.claude/mem/checklist.md` does NOT exist (old format)
+- [ ] If `.claude/mem/` exists but is empty, suggest removing it
 
 ### Agent State
 
@@ -128,13 +137,26 @@ wrong structure, and wrong content. A clean rewrite is the only reliable fix.
 → Create missing directories.
 
 ### Legacy memory.md present
-→ memory.md was deprecated in v0.3.0. Do NOT auto-migrate or delete —
-its content may have value. Print the file to the user and suggest:
+→ memory.md was deprecated in v0.3.0. Do NOT auto-migrate or delete.
+Print the file and suggest:
 - Design decisions → move to appropriate `docs/design-docs/` file
-- Open problems / next actions → move to `.claude/mem/todo.md`
-- Recurring patterns → agent will accumulate into agent-memory naturally
-→ After user migrates content, they can delete memory.md manually.
-→ If checklist.md exists, delete it (old format).
+- Ideas / directional thoughts → add to `.claude/todos.json` via manage-todos
+- Recurring patterns → agent-memory accumulates naturally
+→ User deletes memory.md after migration.
+
+### Legacy todo.md present
+→ todo.md was replaced by `.claude/todos.json` in v0.4.0. Do NOT auto-migrate.
+Print the file and suggest:
+- Markdown todos that represent ideas → add as new todos via manage-todos
+- Markdown todos that represent session-level notes → inspect git status;
+  if stale, discard
+→ User deletes todo.md after migration.
+
+### Missing .claude/todos.json
+→ Create with `{"todos": []}` (empty backlog).
+
+### Legacy checklist.md present
+→ Delete it (old format, no migration needed).
 
 ### Hooks missing
 → Create hook script + configure settings.json (same as init-project).

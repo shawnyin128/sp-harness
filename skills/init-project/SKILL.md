@@ -22,7 +22,7 @@ Check the following independently. Record results to skip completed steps.
 
 - **A**: Does `CLAUDE.md` exist with all three required sections?
   Look for: `First-Principles`, `Context Management`, `Project Map`.
-- **B**: Does `.claude/mem/todo.md` exist? (memory.md is deprecated in v0.3.0 — should NOT exist in new projects)
+- **B**: Does `.claude/todos.json` exist? (replaces `.claude/mem/todo.md` from v0.4.0 — old markdown todo file is deprecated)
 - **C**: Are Stop and UserPromptSubmit hooks configured in `.claude/settings.json`?
 - **D**: Does `.claude/sp-harness.json` exist with `dev_mode`?
 - **E**: Does `.claude/agents/sp-feedback.md` exist? If dev_mode is three-agent, also check sp-planner.md, sp-generator.md, sp-evaluator.md.
@@ -99,13 +99,14 @@ State lives in structured files — each concern has one authoritative source.
 1. `CLAUDE.md` — this file (map + principles)
 2. `.claude/features.json` — feature list and status
 3. `.claude/sp-harness.json` — dev mode + hygiene counter (if exists)
-4. `.claude/mem/todo.md` — open problems and next actions
+4. `.claude/todos.json` — idea backlog (high-level ideas awaiting brainstorming)
 5. `git log --oneline -20` — recent activity
 6. `git status` — uncommitted work (where you physically left off)
 
-**Rules:** commits use `[module]: description` format. Keep todo.md under
-~50 lines — project-level todos go in `.claude/features.json` as features,
-not todos. Design rationale goes in `docs/design-docs/`, not todo.md.
+**Rules:** commits use `[module]: description` format. Ideas and directional
+thoughts go in `.claude/todos.json` via `sp-harness:manage-todos` — they are
+seeds for brainstorming. Decided requirements go in `.claude/features.json`.
+Design rationale goes in `docs/design-docs/`.
 
 ---
 
@@ -155,34 +156,33 @@ is for new documents going forward.
 
 ---
 
-## Step 4: Create `.claude/mem/todo.md`
+## Step 4: Create `.claude/todos.json`
 
-If `.claude/mem/todo.md` already exists (check B), skip this step.
+If `.claude/todos.json` already exists (check B), skip this step.
 
-Create `.claude/mem/todo.md`:
+Create `.claude/todos.json` with empty backlog:
 
-```markdown
-# Todo
-
-Open problems and next actions for the main session. Project-level features
-belong in `.claude/features.json`, not here. Design rationale belongs in
-`docs/design-docs/`, not here.
-
-## Format
-
-- [ ] Short imperative title
-- [x] Completed — one-line resolution
-
-Keep under ~50 lines. Remove completed items beyond the last 10 unless
-they have reference value.
+```json
+{
+  "todos": []
+}
 ```
 
-Do not overwrite existing files.
+`todos.json` holds high-level ideas/directions that need brainstorming to
+scope into concrete features. Schema and operations are defined by
+`sp-harness:manage-todos` — don't hand-edit this file in ways that break
+the schema.
 
-**If `.claude/mem/memory.md` exists (legacy from pre-0.3.0):** do NOT delete.
-Report to user: "Legacy memory.md detected. Review contents and migrate:
-design decisions → docs/, open problems → todo.md, patterns → agent-memory
-will accumulate naturally. Delete memory.md when migration done."
+**Legacy cleanup (pre-0.4.0 projects):**
+
+- If `.claude/mem/todo.md` exists: do NOT delete. Report to user:
+  "Legacy todo.md detected. Its content may be ideas worth tracking.
+  Review and transfer worthwhile items to `.claude/todos.json` via
+  `sp-harness:manage-todos` (main session will invoke it for you)."
+- If `.claude/mem/memory.md` exists: report as before —
+  "Legacy memory.md detected. Migrate: design decisions → docs/,
+  ideas → todos.json, patterns accumulate to agent-memory naturally."
+- If `.claude/mem/` becomes empty after user migrates, they can remove it.
 
 ---
 
@@ -195,8 +195,9 @@ Create `.claude/hooks/update-todo-reminder.sh`:
 ```bash
 #!/bin/bash
 cat <<'EOF'
-TODO CHECK: If this was a non-trivial task and produced a new open problem
-or a natural next action, update .claude/mem/todo.md before proceeding.
+TODO CHECK: If this task surfaced a new idea, direction, or out-of-scope
+item worth exploring later, invoke sp-harness:manage-todos to add it to
+.claude/todos.json before proceeding.
 EOF
 ```
 
@@ -305,7 +306,7 @@ Report a status line for each action:
 ```
 CLAUDE.md                  ✓ created / ✓ updated / ✓ already complete
 docs/                      ✓ directory structure created / ✓ already complete
-.claude/mem/               ✓ initialized / ✓ already complete
+.claude/todos.json         ✓ initialized (empty backlog) / ✓ already complete
 .claude/settings.json      ✓ hooks configured / ✓ already complete
 .claude/sp-harness.json    ✓ dev_mode={mode} / ✓ already complete
 .claude/agents/            ✓ sp-feedback.md + {3 dev agents if three-agent}

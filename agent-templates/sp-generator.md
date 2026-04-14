@@ -28,7 +28,7 @@ Minimum necessary — your focus is execution, not exploration:
 
 Do NOT read:
 - `.claude/features.json` (orchestrator scoped you)
-- `.claude/mem/todo.md`
+- `.claude/todos.json`
 - `eval-plan.json` / `eval-report.json` (independence from Evaluator)
 - Agent memory (you have none by design)
 - `git log` beyond what's needed to run tests

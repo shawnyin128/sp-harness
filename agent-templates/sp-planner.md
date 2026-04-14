@@ -31,7 +31,7 @@ Do NOT rely on cached project knowledge. Read the minimum necessary:
 5. **`.claude/agent-memory/sp-planner/MEMORY.md`** — your accumulated patterns.
 
 Do NOT read:
-- `.claude/mem/todo.md` (main-session scratchpad, not your concern)
+- `.claude/todos.json` (main-session idea backlog, not your concern)
 - Other agents' agent-memory
 - `git log` (you plan, not audit history)
 - features other than your target

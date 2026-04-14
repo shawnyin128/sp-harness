@@ -28,7 +28,7 @@ Read these in order:
 
 1. `.claude/features.json` — the feature list and status
 2. `.claude/sp-harness.json` — harness configuration (dev_mode, hygiene counter)
-3. `.claude/mem/todo.md` — open problems / next actions
+3. `.claude/todos.json` — idea backlog (check for pending todos)
 4. `git log --oneline -20` — recent commits
 5. `git status` — uncommitted work (if any, someone was in the middle of something)
 
@@ -95,6 +95,7 @@ Present the selected feature to the user:
 Next: [feature-id] — description
 Priority: high
 Depends on: [list of depends_on IDs, or "none"]
+From todo: [todo-id, if any]
 Steps:
   1. step one
   2. step two
@@ -141,16 +142,26 @@ If REJECT, feature-tracker stops and reports to user.
 The dev skill (three-agent or single-agent) already archived state files
 to `.claude/agents/state/archive/<feature-id>/` on PASS.
 
+**MUST: Check originating todo completion.**
+
+Read the completed feature from `.claude/features.json`. If it has a
+non-null `from_todo` field:
+1. Invoke `sp-harness:manage-todos` **Check done** operation with the todo id
+   and the current `features.json` contents.
+2. If the operation returns `done=true`, the todo was automatically transitioned
+   to `status: done` (manage-todos handles it). Include `.claude/todos.json`
+   in the upcoming commit.
+3. If `done=false`, remaining features are listed — no action beyond noting
+   the remaining list for context.
+
 **MUST: Commit feature completion — do NOT skip:**
 ```
-git add .claude/features.json .claude/sp-harness.json .claude/agents/state/archive/
+git add .claude/features.json .claude/sp-harness.json \
+        .claude/agents/state/archive/ .claude/todos.json
 git commit -m "[features]: mark {feature-id} as complete"
 ```
 This commit is how new sessions know which features are done via `git log`.
 Without it, the session start protocol's git log step is useless.
-
-If there's a next-action or follow-up note worth preserving, the main session
-may append to `.claude/mem/todo.md` before committing (include it in the add).
 
 **MUST: Hygiene cleanup — AUTOMATIC, do NOT ask the user for permission.**
 
@@ -186,7 +197,7 @@ e. **If delta < 3:** continue
      user confirmation and action execution (see sp-feedback's definition
      for the protocol).
 
-     **If sp-feedback results in new_feature or fix_feature actions** that
+     **If sp-feedback results in new_todo or fix_feature actions** that
      the user approves → append to features.json and re-enter the loop
      at Step 2 to develop them.
 

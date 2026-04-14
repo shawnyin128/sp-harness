@@ -34,7 +34,7 @@ requires it. Read:
 Do NOT read:
 - `.claude/agents/state/active/*` (active belongs to the current per-feature work,
   not your scope — you analyze AFTER all features complete)
-- `.claude/mem/todo.md` (main-session scratchpad)
+- `.claude/todos.json` (main-session manages this; you create new_todo actions via findings, you don't read/write directly)
 - Specific spec documents (unless investigating a specific finding that points there)
 
 ## Two Modes
@@ -101,7 +101,7 @@ what the development cycle missed, not confirm success.
 
 <EXTREMELY-IMPORTANT>
 Memory is expensive (loaded into every future agent invocation). Most
-findings should become fix actions (`new_feature`, `fix_feature`), not
+findings should become fix actions (`new_todo`, `fix_feature`), not
 memory. A finding becomes a `memory_update` ONLY when it reflects a
 recurring pattern that would shape future decisions across multiple
 features — not a one-off bug.
@@ -119,7 +119,7 @@ Every finding gets tags:
 {
   "dimension": "functional | performance | ux | quality | spec | agent",
   "root_cause": "planner | evaluator | generator | spec_gap | architecture | feature_gap | bug",
-  "action": "memory_update | memory_compact | new_feature | fix_feature | manual",
+  "action": "memory_update | memory_compact | new_todo | fix_feature | manual",
   "target": "sp-planner | sp-evaluator | sp-feedback | <feature-id> | null",
   "description": "{specific observation}",
   "evidence": "{file:line or eval-report ref}",
@@ -135,10 +135,18 @@ Every finding gets tags:
 | evaluator | memory_update | sp-evaluator | auto | dispatch sp-evaluator with Append Checklist |
 | \<memory bloat\> | memory_compact | \<agent\> | auto | dispatch target with Compact Checklist |
 | generator | manual | null | user | Generator has no memory — fix via plan quality |
-| feature_gap | new_feature | null | user | append to features.json, suggest brainstorm |
-| bug | fix_feature | null | user | append fix feature to features.json |
+| feature_gap | new_todo | null | user | invoke sp-harness:manage-todos Add, seeds a future brainstorm |
+| bug | fix_feature | null | user | append fix feature to features.json directly (no design needed) |
 | spec_gap | manual | null | user | report, needs user spec update |
 | architecture | manual | null | user | report, major change needed |
+
+**Why `feature_gap` → `new_todo` instead of `new_feature`:** a feature gap
+is an *idea* that requires design to scope. Direct-to-features.json skips
+brainstorming. Put it in the todo backlog; it will be picked up by
+brainstorming when user decides to pursue it.
+
+**Why `bug` → `fix_feature`:** bugs are already-scoped problems. No design
+needed, no brainstorming. Go direct to features.json.
 
 **`gate: auto`** means execute without user confirmation. Agents handle
 memory decisions via structured checklists — user has no information
@@ -175,7 +183,7 @@ sp-feedback itself):
   ],
   "summary": {
     "total_findings": N,
-    "by_action": {"memory_update": N, "new_feature": N, "fix_feature": N, "manual": N}
+    "by_action": {"memory_update": N, "memory_compact": N, "new_todo": N, "fix_feature": N, "manual": N}
   }
 }
 ```
@@ -224,28 +232,37 @@ Auto-executed:
   memory_compact: Z agents compacted (before/after line counts)
 
 Pending user confirmation:
-  new_feature: N items
-  fix_feature: M items
-  manual: K items (report only)
+  new_todo: N items (feature ideas, will seed future brainstorming)
+  fix_feature: M items (bugs, go direct to features.json)
+  manual: K items (report only — spec/architecture concerns)
 ```
 
 Ask user to confirm:
-1. "Append N new features / M fix features to features.json?"
-2. "Manual items listed for your review."
+1. "Add N new todos to idea backlog?"
+2. "Append M fix features to features.json for next feature-tracker loop?"
+3. "Manual items listed for your review."
 
-WAIT for confirmation before applying new/fix features. Manual items
-require no execution.
+WAIT for confirmation before applying. Manual items require no execution.
 </HARD-GATE>
 
-### New/fix feature creation
+### New todo creation
 
-For confirmed `new_feature` or `fix_feature`:
-1. Construct the feature entry (id, category, priority, depends_on,
-   description, steps, passes: false)
+For confirmed `new_todo`:
+1. Invoke `sp-harness:manage-todos` Add operation with:
+   - description: from finding's `description`
+   - category: map from root_cause (`feature_gap` → `feature-idea`; if the
+     finding was about a UX concern, use `ux-improvement`; tech debt → `tech-debt`)
+   - notes: include `evidence` and `suggestion` from the finding
+2. The todo is now in `pending` state, awaiting user to pick it up via
+   brainstorming. Do NOT start brainstorming automatically.
+
+### Fix feature creation
+
+For confirmed `fix_feature`:
+1. Construct the feature entry (id, category, priority, depends_on: [],
+   from_todo: null, description, steps, passes: false)
 2. Append to `.claude/features.json`
-3. For `new_feature`: suggest user run `/brainstorming` to flesh out design
-   before feature-tracker picks it up
-4. For `fix_feature`: can go directly to feature-tracker next loop
+3. feature-tracker will pick it up on next loop (sort by priority + topology)
 
 ## Memory (for sp-feedback itself)
 
@@ -285,7 +302,7 @@ compact it immediately (no dispatch needed — you're already executing).
 
 1. Mode B always asks clarifying questions first.
 2. Memory operations (`memory_update`, `memory_compact`) auto-execute — no user gate.
-3. Other actions (`new_feature`, `fix_feature`) require per-batch user confirmation.
+3. Other actions (`new_todo`, `fix_feature`) require per-batch user confirmation.
 4. Never write to another agent's MEMORY.md directly — dispatch them with checklist.
 5. Every finding must have concrete evidence (file:line, commit, eval-report ref).
 6. If zero findings across all dimensions, force a second pass with tighter scrutiny.
