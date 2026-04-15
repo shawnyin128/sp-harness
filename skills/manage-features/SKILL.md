@@ -41,6 +41,7 @@ deterministic and tested.
       "category": "functional | ui | infrastructure | testing",
       "priority": "high | medium | low",
       "depends_on": ["other-feature-id"],
+      "supersedes": ["old-feature-id"],
       "from_todo": "todo-id or null",
       "description": "One-line description",
       "steps": ["Implementation step 1", "step 2"],
@@ -49,6 +50,11 @@ deterministic and tested.
   ]
 }
 ```
+
+`supersedes` is an array of feature ids this feature replaces. When set,
+writing-plans generates mandatory cleanup tasks, sp-evaluator adds supersession
+verification criteria, and sp-feedback tracks artifact staleness. See the
+brainstorming skill's Supersession Plan section for how this is declared.
 
 ## Operations (query.py)
 
@@ -109,10 +115,12 @@ python3 "..." mutate.py add \
   --description="One-line description" \
   --steps="step 1;;step 2;;step 3" \
   [--depends-on=id1,id2] \
+  [--supersedes=id1,id2] \
   [--from-todo=todo-id]
 ```
 Steps separated by `;;` (double semicolon — `;` too common in shell).
-Validates category/priority, depends_on existence, no cycles, unique id.
+Validates category/priority, depends_on existence, no cycles, unique id,
+supersedes ids exist and are not self-reference.
 from_todo validated against `.claude/todos.json` if present.
 
 ### mark-passing

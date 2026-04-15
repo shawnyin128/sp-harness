@@ -79,6 +79,7 @@ def find_next(features):
 
 def format_feature_table(f):
     deps = ", ".join(f.get("depends_on") or []) or "none"
+    supersedes = ", ".join(f.get("supersedes") or []) or "none"
     from_todo = f.get("from_todo") or "(none)"
     steps_list = f.get("steps") or []
     steps_str = "\n".join(f"  {i+1}. {s}" for i, s in enumerate(steps_list))
@@ -88,6 +89,7 @@ def format_feature_table(f):
         f"Category: {f.get('category', '')}\n"
         f"Priority: {f.get('priority', '')}\n"
         f"Depends on: {deps}\n"
+        f"Supersedes: {supersedes}\n"
         f"From todo: {from_todo}\n"
         f"Passes: {f.get('passes', False)}\n"
         f"Steps:\n{steps_str}"
@@ -126,6 +128,11 @@ def validate(features):
         for dep in f.get("depends_on") or []:
             if dep not in id_set:
                 errors.append(f"{f['id']}: depends_on references missing id '{dep}'")
+        for sup in f.get("supersedes") or []:
+            if sup not in id_set:
+                errors.append(f"{f['id']}: supersedes references missing id '{sup}'")
+            if sup == f.get("id"):
+                errors.append(f"{f['id']}: cannot supersede itself")
 
     # Circular deps (topological sort attempt)
     by_id = {f["id"]: f for f in features}

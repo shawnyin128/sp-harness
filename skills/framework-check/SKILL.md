@@ -93,8 +93,14 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" validate
 ```
 
 The script checks: valid JSON, unique ids, required fields, dangling
-depends_on refs, circular dependencies. Exit 1 with errors listed in
-JSON output if any found.
+depends_on refs, circular dependencies, dangling supersedes refs, no
+self-supersession. Exit 1 with errors listed in JSON output if any found.
+
+**Supersession archive integrity:**
+- [ ] For each feature with non-empty `supersedes` and `passes=true`,
+      `.claude/agents/state/archive/<feature-id>/supersession.json` exists
+      and is valid JSON. Missing → warn, the feature completed without
+      cleanup audit trail.
 
 ### Harness Config
 

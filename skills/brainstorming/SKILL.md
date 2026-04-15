@@ -126,6 +126,49 @@ feature build on?
 until user confirms or corrects your understanding. If user corrects you,
 update your understanding and re-present.
 
+**Step 4: Supersession check (MANDATORY).** After understanding is confirmed,
+ask:
+
+> "Will this new feature REPLACE any existing feature / module / code path?
+>  (If yes, the old code AND its runtime artifacts need a cleanup plan.
+>  This prevents stale code or stale data from polluting the new feature.)"
+
+If yes, fill the **Supersession Plan** section in the spec document:
+
+```markdown
+## Supersession Plan
+
+### Superseded: <feature-id or module-name>
+
+**Source files to remove:**
+- <path>
+- <path>
+
+**Runtime artifacts to handle** (knowledge bases, caches, DB tables, indexes,
+model files, config keys, scheduled jobs, etc.):
+- <path or key> → DELETE | MIGRATE to <new path> | KEEP (justify)
+- ...
+
+**Migration plan** (if any MIGRATE above): <one-paragraph description>
+
+**Verification:**
+- grep patterns to confirm no stale references after cleanup
+- runtime checks (e.g., "inference pipeline no longer loads old model file")
+```
+
+**HARD RULE: runtime artifact paths are MANDATORY.** If the user/agent can't
+enumerate them, stop and investigate — the reason you missed them is the
+reason the stale-data bug will happen. Common artifact classes to probe:
+- Generated data files (`data/`, `storage/`)
+- Caches and indexes
+- ML model checkpoints / embeddings
+- Database migrations or tables
+- Config file keys that reference the old module
+- Scheduled jobs / cron entries tied to the old code
+- Knowledge bases / compiled artifacts
+
+If no supersession → skip this section entirely. Don't add it speculatively.
+
 The confirmed understanding becomes a **design constraint** — all subsequent
 design decisions must be consistent with it. Record it in the spec document
 as a `## Codebase Context` section.
@@ -318,20 +361,21 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
   --description="One-line description" \
   --steps="step 1;;step 2;;step 3" \
   [--depends-on=id1,id2] \
+  [--supersedes=old-feature-id,another-old-id] \
   [--from-todo=<todo-id>]
 ```
 
 Steps are separated by `;;` (double semicolon). The script validates
-schema, dependency references, and rejects cycles on every add.
+schema, dependency references, supersedes references, and rejects cycles on every add.
 
 **Rules:**
 - `id` must be unique (script enforces)
 - `depends_on` only references features already added (add in dependency order)
-- `from_todo` is the id from Step 0's selected todo, if any. Omit or set to
-  null if this brainstorming didn't start from a todo.
+- `supersedes` references features this one replaces — set if the spec has
+  a `## Supersession Plan` section. Listed feature ids must exist in features.json.
+- `from_todo` is the id from Step 0's selected todo, if any.
 - `steps` serve as both implementation guidance and verification criteria
-- `priority` is a tiebreaker within the same dependency layer — features
-  are selected in topological order first, then by priority
+- `priority` is a tiebreaker within the same dependency layer
 - All new features start with `passes: false` (script default)
 - One feature per testable behavior — if a feature has two independent parts, split it
 - Commit the updated features.json alongside the design doc

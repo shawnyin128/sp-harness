@@ -5,10 +5,11 @@ Mutate .claude/features.json via structured operations.
 Usage:
   mutate.py add --id=<id> --category=<c> --priority=<p> \\
             --description=<d> --steps=<s1>;;<s2>;;<s3> \\
-            [--depends-on=<a>,<b>] [--from-todo=<todo-id>]
+            [--depends-on=<a>,<b>] [--from-todo=<todo-id>] \\
+            [--supersedes=<a>,<b>]
   mutate.py mark-passing <id>
   mutate.py update <id> [--description=<d>] [--priority=<p>] \\
-            [--steps=<s1>;;<s2>] [--depends-on=<a>,<b>]
+            [--steps=<s1>;;<s2>] [--depends-on=<a>,<b>] [--supersedes=<a>,<b>]
 
 Validates schema on every write. Rejects dangling depends_on refs and
 circular dependencies.
@@ -118,6 +119,14 @@ def op_add(args):
         if dep not in existing_ids:
             sys.exit(f"error: depends_on references missing feature '{dep}'")
 
+    supersedes = parse_list(args.supersedes) if args.supersedes else []
+    # Validate supersedes: must exist
+    for sup in supersedes:
+        if sup not in existing_ids:
+            sys.exit(f"error: supersedes references missing feature '{sup}'")
+        if sup == args.id:
+            sys.exit(f"error: feature cannot supersede itself")
+
     steps = parse_steps(args.steps)
     if not steps:
         sys.exit("error: at least one step required (use ;; as separator)")
@@ -133,6 +142,7 @@ def op_add(args):
         "category": args.category,
         "priority": args.priority,
         "depends_on": depends_on,
+        "supersedes": supersedes,
         "from_todo": from_todo,
         "description": args.description,
         "steps": steps,
@@ -198,6 +208,17 @@ def op_update(args):
             sys.exit(f"error: depends_on update would create cycle: {' → '.join(cycle)}")
         updates["depends_on"] = True
 
+    if args.supersedes is not None:
+        sups = parse_list(args.supersedes)
+        existing_ids = {f["id"] for f in data["features"]}
+        for sup in sups:
+            if sup not in existing_ids:
+                sys.exit(f"error: supersedes references missing feature '{sup}'")
+            if sup == args.id:
+                sys.exit(f"error: feature cannot supersede itself")
+        feature["supersedes"] = sups
+        updates["supersedes"] = True
+
     if not updates:
         sys.exit("error: provide at least one field to update")
 
@@ -216,6 +237,7 @@ def main():
     p_add.add_argument("--description", required=True)
     p_add.add_argument("--steps", required=True, help="Steps separated by `;;`")
     p_add.add_argument("--depends-on", help="Comma-separated list")
+    p_add.add_argument("--supersedes", help="Comma-separated list of feature ids this replaces")
     p_add.add_argument("--from-todo")
     p_add.set_defaults(func=op_add)
 
@@ -229,6 +251,7 @@ def main():
     p_update.add_argument("--priority", choices=sorted(VALID_PRIORITIES))
     p_update.add_argument("--steps")
     p_update.add_argument("--depends-on")
+    p_update.add_argument("--supersedes")
     p_update.set_defaults(func=op_update)
 
     args = parser.parse_args()

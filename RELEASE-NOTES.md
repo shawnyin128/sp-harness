@@ -1,5 +1,66 @@
 # SP Harness Release Notes
 
+## v0.5.0 (2026-04-14)
+
+**NEW MECHANISM**: Supersession tracking. When a feature replaces
+existing code, sp-harness now forces explicit declaration of what to
+clean up (source + runtime artifacts) and verifies it through multiple
+pipeline checkpoints. Prevents the "new code reads old knowledge base"
+class of bug.
+
+### Motivation
+
+Real harness failure: a developer built feature-v2 to replace feature-v1,
+but v1's knowledge base (generated data file) was never cleaned up.
+Inference pipeline under v2 kept reading the stale knowledge, producing
+wrong results. This was not caught by code-hygiene (knowledge file is
+not dead code — it's live data from dead code). Not caught by sp-evaluator
+(checks v2's correctness, not v1's absence). Not caught by sp-feedback
+(no mechanism to track supersession relationships).
+
+Root cause in sp-harness design: supersession as a concept was never modeled.
+Every actor assumed someone else handled cleanup.
+
+### What's new
+
+- **Schema change**: features.json entries gain `supersedes: [feature-id]`
+  array (optional, default empty). Validated by manage-features:
+  referenced ids must exist; no self-supersession.
+- **brainstorming Step 1b adds Supersession Question**: "Will this new
+  feature REPLACE any existing feature/module?" If yes, fills the
+  **mandatory** `## Supersession Plan` spec section listing source files
+  AND runtime artifacts with HANDLE action (DELETE | MIGRATE | KEEP).
+- **writing-plans Supersession Cleanup Tasks**: If spec has Supersession
+  Plan, writing-plans generates cleanup tasks FIRST (before implementation
+  tasks): remove source, handle artifacts, verify no stale references,
+  runtime sanity check.
+- **sp-evaluator Supersession Evaluation**: auto criteria — source paths
+  absent, artifacts DELETE'd or MIGRATE'd correctly, grep verification
+  patterns empty, runtime checks pass. Single failure = ITERATE minimum.
+- **PASS archival**: on PASS, three/single-agent-development serializes
+  Supersession Plan to `archive/<feature-id>/supersession.json` for
+  future audit.
+- **sp-feedback Mode A 7th dimension** (Supersession artifact staleness):
+  reads all archived supersession.json records, re-verifies artifacts
+  are still gone (catches drift — someone re-introduced the old path).
+- **framework-check**: validates supersedes refs + supersession.json
+  archive integrity.
+
+### Intentional boundaries
+
+- Artifact paths are **mandatory** in Supersession Plan (HARD-GATE).
+  If agent can't enumerate them, stop and investigate — that's why the
+  bug happens.
+- Only triggered on **explicit supersession declaration**. Regular
+  features that modify existing code don't trigger this heavy machinery
+  (would be noise).
+
+## v0.4.4 (2026-04-14)
+
+sp-feedback self-health calibration. Tracks precision/recall via
+`.claude/sp-feedback-calibration.json`. New internal skill `audit-feedback`
+computes stats. Addresses single-point-of-failure for feedback loop.
+
 ## v0.4.3 (2026-04-14)
 
 Short-term memory reintroduced with tightened scope. Pre-triage

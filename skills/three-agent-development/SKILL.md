@@ -187,8 +187,22 @@ reason and location. The user needs this to understand what is happening.
    - Move `active/eval-report.json` → `archive/<feature-id>/iter-<N>-eval-report.json`
    - Copy final iteration's eval-report to `archive/<feature-id>/final-eval-report.json`
    - `active/` directory ends empty
-3. Commit: `[features]: mark {feature-id} as complete` (include features.json + archive/)
-4. Return to feature-tracker
+3. **If feature has `supersedes` non-empty** (check via manage-features query get):
+   extract the spec's `## Supersession Plan` section and save to
+   `archive/<feature-id>/supersession.json` with structure:
+   ```json
+   {
+     "superseded_features": ["..."],
+     "source_paths_removed": ["..."],
+     "artifacts_handled": [
+       {"path": "...", "action": "DELETE|MIGRATE", "destination": "..."}
+     ],
+     "verification_patterns": ["grep pattern 1", "..."]
+   }
+   ```
+   This is what sp-feedback Mode A reads to audit stale artifacts later.
+4. Commit: `[features]: mark {feature-id} as complete` (include features.json + archive/)
+5. Return to feature-tracker
 
 ### ITERATE
 1. Check `convergence.status` from the printed results

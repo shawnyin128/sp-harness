@@ -175,8 +175,10 @@ or skip.
    - Move `active/*` files → `archive/<feature-id>/iter-<N>-*`
    - Copy final iteration's eval-report to `archive/<feature-id>/final-eval-report.json`
    - `active/` ends empty
-3. Commit: `[features]: mark {feature-id} as complete`
-4. Return to feature-tracker
+3. **If feature has `supersedes` non-empty**, save spec's Supersession Plan
+   to `archive/<feature-id>/supersession.json` (same structure as three-agent-development's PASS handler).
+4. Commit: `[features]: mark {feature-id} as complete`
+5. Return to feature-tracker
 
 ### ITERATE
 1. Check `convergence.status`

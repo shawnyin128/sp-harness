@@ -147,6 +147,72 @@ If the spec contains a `## Hybrid Boundary` section, apply these rules:
 
 If the spec has no `## Hybrid Boundary` section, skip this entirely.
 
+## Supersession Cleanup Tasks
+
+If the spec contains a `## Supersession Plan` section (set by brainstorming
+when the feature replaces an existing one), the plan MUST include cleanup
+tasks generated from that section. These tasks run FIRST (before any new
+feature implementation tasks) — clean before building.
+
+**Required cleanup tasks (one per entry in Supersession Plan):**
+
+### Task 1: Remove superseded source files [cleanup]
+
+**Files:**
+- Delete: `<path from Supersession Plan>`
+
+- [ ] **Step 1: Remove files**
+```bash
+git rm -r <path>
+```
+
+- [ ] **Step 2: Verify no references remain**
+```bash
+! grep -rn "<module name or import path>" src/ tests/
+```
+
+- [ ] **Step 3: Commit**
+```bash
+git commit -m "[supersession]: remove <old-feature-id> source code"
+```
+
+### Task 2: Handle runtime artifacts [cleanup]
+
+For each artifact listed in Supersession Plan:
+
+- [ ] **Step N: <DELETE | MIGRATE> <artifact path>**
+
+If DELETE:
+```bash
+rm <path>  # or equivalent for DB tables, config keys, etc.
+```
+
+If MIGRATE: show the exact migration command (script to transform old
+artifact to new format; or SQL to migrate a table).
+
+- [ ] **Step N+1: Verify artifact absent / migrated**
+```bash
+test ! -e <old-path>  # or check new path exists and loads correctly
+```
+
+### Task 3: Verify no stale references [cleanup]
+
+Run every grep pattern from the Supersession Plan's Verification section:
+```bash
+! grep -rn "<stale-pattern>" <scope>
+```
+
+### Task 4+: Runtime sanity check [cleanup]
+
+If the Supersession Plan specified runtime checks (e.g., "inference
+pipeline no longer loads old model file"), add a task that runs them.
+
+---
+
+**Only after ALL cleanup tasks pass, proceed to new-feature implementation tasks.**
+
+If the spec has no `## Supersession Plan` section, skip this entirely.
+
 ## Agent Definition Tasks
 
 If the spec contains a `## Agent Definitions` section, add a task (typically Task 1) that creates the subagent definition files:

@@ -99,6 +99,25 @@ Then proceed to clarifying questions + scoped checklist.
       internalize)
 - [ ] Recurring gaps Planner re-asked (pattern Planner should remember)
 
+### 7. Supersession artifact staleness (bug-class prevention)
+
+For every feature in `.claude/features.json` where `supersedes` is non-empty
+AND its archive directory contains a `supersession.json`:
+
+1. Read `.claude/agents/state/archive/<feature-id>/supersession.json` — lists
+   source paths and artifact paths that were supposed to be cleaned up
+2. For each listed path:
+   - Source files: verify absent on disk (evaluator should have caught if not,
+     but re-verify — drift may have re-created)
+   - Artifacts marked DELETE: verify absent
+   - Artifacts marked MIGRATE: verify the destination exists AND grep for
+     the original path in active code — should be zero hits
+3. Any failure → `harness_detected_stale_artifact` finding with action
+   `fix_feature` (immediate cleanup) or `manual` (if unclear how)
+
+This catches drift after cleanup (e.g., someone re-introduced the old
+artifact by accident, or a new feature started writing to the old path).
+
 ## Adversarial Stance
 
 <EXTREMELY-IMPORTANT>
