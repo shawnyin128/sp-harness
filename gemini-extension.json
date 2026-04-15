@@ -1,6 +1,6 @@
 {
   "name": "sp-harness",
   "description": "Harness engineering skills library: structured memory, three-agent development, feature tracking, and systematic quality control",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "contextFileName": "GEMINI.md"
 }
