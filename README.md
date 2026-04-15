@@ -79,6 +79,51 @@ claude
 # (c) feedback action batches (at the end).
 ```
 
+## Choosing the dev mode
+
+sp-harness runs features through a Planner → Generator → Evaluator pipeline.
+Two ways to run this pipeline:
+
+| Mode | How it runs | Token cost | Evaluation rigor | Best for |
+|------|------------|-----------:|-----------------:|----------|
+| **three-agent** | 3 separate subagents (Opus + Sonnet + Opus), each with its own context | Higher | Stronger (independent evaluator) | Complex projects, production code, long-lived codebases |
+| **single-agent** | Main session plays all 3 roles sequentially | Lower | Weaker (self-persuasion risk, mitigated by explicit protocol) | Simple projects, quick iterations, token-constrained work |
+
+### When you choose
+
+**At project init:**
+```
+/init-project
+```
+Step 6 asks: "Which development mode? (a) three-agent, (b) single-agent"
+
+This writes `dev_mode` to `.claude/sp-harness.json`. `feature-tracker`
+reads this field on every invocation and dispatches the right skill.
+
+**To switch later:**
+```
+/switch-dev-mode
+```
+What it does:
+- Reads current `dev_mode` from `.claude/sp-harness.json`
+- Prints current mode
+- Asks: "Switch to <other mode>? (yes/no)"
+- On yes, updates `dev_mode`
+- **If switching to three-agent**: checks if `.claude/agents/sp-planner.md`,
+  `sp-generator.md`, `sp-evaluator.md` exist. If missing, generates them
+  from plugin templates with project-adapted context. Asks if you want to
+  customize frontmatter (model, tools, memory, isolation) per agent.
+- **If switching to single-agent**: leaves any existing agent files in
+  place (they're simply unused). No reconfiguration needed.
+
+`sp-feedback.md` is present in both modes — it's the feedback agent, not
+a dev-role agent.
+
+**Rule of thumb:** start with three-agent if you're unsure. Switching to
+single-agent later is free (no file cleanup needed). Switching from
+single-agent to three-agent requires generating the 3 dev-agent files
+(automatic via switch-dev-mode).
+
 ## Tutorial A — Three-agent mode (default)
 
 Best for: complex projects, production-quality code, hardening against
