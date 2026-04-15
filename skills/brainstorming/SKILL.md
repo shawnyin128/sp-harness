@@ -182,14 +182,20 @@ If the project is empty or has no substantial code, skip this entirely.
   - If answer is *pure-code* → continue normally, no extra steps.
   - If answer is *pure-agent* or *hybrid* → ask the agent implementation question (see below), then continue.
   - If answer is *hybrid* → ALSO ask the 4 boundary questions (see Hybrid Boundary section below).
+  - If the design has multiple agents/components collaborating → also
+    consider raising role separation: is there one orchestrator coordinating
+    others, or do they coordinate peer-to-peer? Unclear coordination is a
+    common source of race conditions and deadlocks.
 - **Agent implementation (only if pure-agent or hybrid):** After architecture type, ask:
   > "How should the agent components be implemented? (a) Blank session — agent starts fresh each time, no persistent definition, (b) CC subagent — defined as `.claude/agents/` files with frontmatter (model, tools, memory, isolation)"
   - If *blank session* → note in spec: "Agent components start from blank session each run." No further questions.
-  - If *CC subagent* → for EACH agent role identified in the design, ask these 4 questions to build the frontmatter:
+  - If *CC subagent* → for EACH agent role identified in the design, ask these 5 questions to build the frontmatter:
     1. "What tools does this agent need?" (read-only / all / specific list)
     2. "What model?" (opus / sonnet / haiku / inherit)
     3. "Does it need cross-session memory?" (none / project / user / local)
     4. "Does it need an isolated worktree?" (yes / no)
+    5. "What does this agent read on every invocation?" (list the specific
+       files/state sources; missing this leads to stale cached context)
   - Record answers in the spec's `## Agent Definitions` section (see below).
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
@@ -210,13 +216,41 @@ involve the concern, or if the user has already addressed it.
 - **Knowledge retention** — if the design accumulates knowledge over
   time (learned rules, historical findings, memory of past work), consider
   asking: what's the bar for adding an entry, and how does stale content
-  get removed? Without explicit rules, agent-written knowledge grows unbounded.
+  get removed? Bar questions that help: is this non-obvious to the system
+  without this memory? Can it be derived from code/spec directly? Was it
+  expensive to learn? If any yes, worth keeping. Without explicit rules,
+  agent-written knowledge grows unbounded.
 
 - **Automation boundaries** — if the design produces automated actions
   (routing, applying changes, triggering workflows), consider asking:
   which actions are safe to auto-execute vs need user confirmation?
   Actions modifying persistent state or with side effects usually warrant
   explicit user review.
+
+- **Active vs archive** — if the design has work moving through stages
+  (in-progress → completed, draft → published, active → historical),
+  consider asking: where does "current" state live vs "completed"?
+  Conflating the two makes it hard to tell what needs attention. Typical
+  pattern: `active/` directory for in-flight, `archive/<id>/` for finished.
+
+- **Audit integrity** — if the design needs traceability (who did what
+  when, or why the system produced a given output), consider asking:
+  which records should be append-only and never deleted, even if stale?
+  Confusing "cleanup" with "audit erasure" removes the ability to
+  reconstruct past decisions. Separate ephemeral state from audit logs.
+
+- **Pre-triage vs decided layer** — if the design captures observations
+  that later become decisions (bug reports, proposals, ideas), consider
+  asking: is there a separation between "observed, not yet decided" and
+  "decided to track"? Mixing them means undecided items pollute the
+  decided backlog. A staging layer that clears on triage keeps the
+  authoritative list clean.
+
+- **Predictive system calibration** — if the design makes predictions,
+  classifications, or flags findings that might be wrong, consider asking:
+  how will the system know whether its predictions were correct? Without
+  a feedback loop, accuracy silently drifts. Simple calibration logs
+  (predicted / actual outcome) enable later precision/recall audit.
 
 **Exploring approaches:**
 

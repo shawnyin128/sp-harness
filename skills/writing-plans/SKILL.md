@@ -142,6 +142,18 @@ structure alone.
   Loose use of HARD-GATE dilutes its signal. Reserve for actual user-input
   barriers. Skip if plan output is code, not instructions.
 
+- **Batched confirmation** — if a task produces multiple similar user-input
+  gates (e.g., N items each needing approval), consider batching them: one
+  HARD-GATE showing all items grouped, not N sequential prompts. Repeated
+  micro-confirmations cause rubber-stamp fatigue and defeat the gate's purpose.
+  Skip if items genuinely require independent judgment.
+
+- **Dependency-ordered tasks** — if tasks have dependencies (task B uses
+  output from task A, or B modifies something A created), order them
+  topologically first, priority second. Priority within a dependency layer
+  is a tiebreaker, not an override. Getting this wrong produces plans where
+  later tasks can't run because earlier tasks weren't finished.
+
 ## Self-Review
 
 After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
