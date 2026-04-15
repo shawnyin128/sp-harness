@@ -25,7 +25,7 @@ Check the following independently. Record results to skip completed steps.
 - **B**: Does `.claude/todos.json` exist? (replaces `.claude/mem/todo.md` from v0.4.0)
 - **B2**: Does `.claude/memory.md` exist? (short-term session memory, reintroduced in v0.4.3 with tightened scope)
 - **C**: Are Stop and UserPromptSubmit hooks configured in `.claude/settings.json`?
-- **D**: Does `.claude/sp-harness.json` exist with `dev_mode`?
+- **D**: Does `.claude/sp-harness.json` exist with `dev_mode` AND `external_codebase`?
 - **E**: Does `.claude/agents/sp-feedback.md` exist? If dev_mode is three-agent, also check sp-planner.md, sp-generator.md, sp-evaluator.md.
 
 If all are done, report "All steps already complete." and stop.
@@ -99,11 +99,12 @@ State lives in structured files — each concern has one authoritative source.
 **Session start — read in order:**
 1. `CLAUDE.md` — this file (map + principles)
 2. `.claude/features.json` — feature list and status
-3. `.claude/sp-harness.json` — dev mode + hygiene counter (if exists)
-4. `.claude/todos.json` — idea backlog
-5. `.claude/memory.md` — short-term session memory (undecided observations)
-6. `git log --oneline -20` — recent activity
-7. `git status` — uncommitted work (where you physically left off)
+3. `.claude/sp-harness.json` — config (dev_mode, hygiene counter, external_codebase flag)
+4. `.claude/codebase-context.md` — only if sp-harness.json has `external_codebase: true`
+5. `.claude/todos.json` — idea backlog
+6. `.claude/memory.md` — short-term session memory (undecided observations)
+7. `git log --oneline -20` — recent activity
+8. `git status` — uncommitted work (where you physically left off)
 
 **Rules:**
 - commits use `[module]: description` format
@@ -346,10 +347,51 @@ Default three-agent configuration (from agent-templates/):
   Read template, override frontmatter fields with user answers, fill context,
   write to `.claude/agents/{name}.md`.
 
-### Step 6c: Write config
+### Step 6c: External codebase question
+
+> "Is this project an existing codebase that wasn't built through sp-harness?
+>  (e.g., legacy code, third-party integration, or a project predating
+>  your sp-harness adoption.)
+>  - Yes → I'll scan the codebase once and save the structured understanding
+>    to `.claude/codebase-context.md` as ground truth for downstream skills.
+>  - No → skip; design docs from brainstorming will be the source of truth.
+>    You can re-run `init-project` later if external code gets added."
+
+If **Yes** → run a deep scan now (read key source files, identify modules,
+find variants, check git activity for active vs stale). Save to
+`.claude/codebase-context.md` with this structure:
+
+```markdown
+# Codebase Context (external, pre-sp-harness)
+
+Generated: <ISO date> by init-project
+Scope: <directories scanned>
+
+## Core modules
+- <path> — <what it does> [active|stale|deprecated]
+
+## Variants found
+- <functionality>: <path A> vs <path B> — <key difference>
+
+## Module dependencies
+- <module A> → <module B> for <reason>
+
+## Notes
+<anything else worth recording>
+```
+
+Set `external_codebase: true` in sp-harness.json (next step).
+
+If **No** → skip scan, do not create the file. Set `external_codebase: false`.
+
+### Step 6d: Write config
 
 ```json
-{"dev_mode": "three-agent" | "single-agent", "last_hygiene_at_completed": 0}
+{
+  "dev_mode": "three-agent" | "single-agent",
+  "last_hygiene_at_completed": 0,
+  "external_codebase": true | false
+}
 ```
 
 to `.claude/sp-harness.json`.
@@ -371,7 +413,8 @@ docs/                      ✓ directory structure created / ✓ already complet
 .claude/memory.md          ✓ initialized (template) / ✓ already complete
 .claude/settings.json      ✓ hooks configured / ✓ already complete
 .claude/sp-feedback-calibration.json  (auto-created on first sp-feedback run)
-.claude/sp-harness.json    ✓ dev_mode={mode} / ✓ already complete
+.claude/sp-harness.json    ✓ dev_mode={mode}, external_codebase={true|false}
+.claude/codebase-context.md  ✓ generated (only if external_codebase=true) / — skipped
 .claude/agents/            ✓ sp-feedback.md + {3 dev agents if three-agent}
 ```
 

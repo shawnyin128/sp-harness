@@ -38,11 +38,14 @@ Do NOT read:
 
 ## Phase 1: Implicit Requirements Discovery
 
-**Codebase variant check (FIRST):**
-If the spec has a `## Codebase Context` section, use it as ground truth.
-If no Codebase Context but existing code exists, scan for variants
-(v1/v2, old/new) in the modules this feature will touch. If found,
-ask the user which to use BEFORE proceeding.
+**Codebase context (if external code is in scope):**
+If `.claude/sp-harness.json` has `external_codebase: true`, read
+`.claude/codebase-context.md` for the cached external code structure
+(modules, variants, dependencies). Use it as ground truth — do NOT
+re-scan. If `external_codebase: false` or absent, skip; the spec's
+design docs are sufficient. On-demand exception: if you need to
+understand a specific external module not in codebase-context.md, do
+a targeted read of just that module.
 
 **Gap analysis:**
 Scan the feature for gaps — implementation details, design decisions,

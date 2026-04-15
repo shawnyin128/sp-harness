@@ -107,6 +107,9 @@ self-supersession. Exit 1 with errors listed in JSON output if any found.
 - [ ] `.claude/sp-harness.json` exists
 - [ ] Has `dev_mode` field (`"three-agent"` or `"single-agent"`)
 - [ ] Has `last_hygiene_at_completed` field (number)
+- [ ] Has `external_codebase` field (boolean)
+- [ ] If `external_codebase: true`, `.claude/codebase-context.md` exists
+- [ ] If `external_codebase: false` (or absent), `.claude/codebase-context.md` should NOT exist (warn if found — flag mismatch)
 
 ### Project-level Agents
 
@@ -197,8 +200,9 @@ remove the other.
 → Report errors. Do not auto-create.
 
 ### sp-harness.json missing or incomplete
-→ Create with defaults: `{"dev_mode": "three-agent", "last_hygiene_at_completed": 0}`
+→ Create with defaults: `{"dev_mode": "three-agent", "last_hygiene_at_completed": 0, "external_codebase": false}`
 → If exists but missing fields, add defaults for missing fields only.
+→ If `external_codebase: true` but `codebase-context.md` missing, suggest re-running init-project to scan and save it.
 
 ### Project-level agents missing
 → Read templates from `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill

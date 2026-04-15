@@ -27,7 +27,7 @@ You do NOT stop after one feature unless ALL features pass or the user tells you
 Read these in order:
 
 1. `.claude/features.json` — the feature list and status
-2. `.claude/sp-harness.json` — harness configuration (dev_mode, hygiene counter)
+2. `.claude/sp-harness.json` — harness configuration (dev_mode, hygiene counter, external_codebase flag)
 3. `.claude/todos.json` — idea backlog (check for pending todos)
 4. `git log --oneline -20` — recent commits
 5. `git status` — uncommitted work (if any, someone was in the middle of something)
@@ -40,12 +40,13 @@ brainstorming first to create one. STOP.
 1. **If `.claude/sp-harness.json` does not exist:**
    - Create it with default values:
      ```json
-     {"dev_mode": "three-agent", "last_hygiene_at_completed": 0}
+     {"dev_mode": "three-agent", "last_hygiene_at_completed": 0, "external_codebase": false}
      ```
-   - Report: "Created sp-harness.json with defaults (three-agent mode, hygiene counter 0)"
-2. **If it exists:** read `dev_mode` and `last_hygiene_at_completed`
+   - Report: "Created sp-harness.json with defaults (three-agent mode, hygiene counter 0, no external codebase)"
+2. **If it exists:** read `dev_mode`, `last_hygiene_at_completed`, `external_codebase`
 3. **If `dev_mode` is missing:** set to `"three-agent"`, write to disk
 4. **If `last_hygiene_at_completed` is missing:** set to `0`, write to disk
+5. **If `external_codebase` is missing:** set to `false`, write to disk
 
 **MUST: Hygiene counter validation — ONLY validates. Does NOT trigger cleanup.**
 

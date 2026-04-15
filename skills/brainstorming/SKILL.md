@@ -22,8 +22,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 0. **Check todo backlog** — read `.claude/todos.json`. If pending todos exist, list them to the user and ask: "Start from one of these, or new idea?". If user picks a todo, invoke `sp-harness:manage-todos` to mark it `in_brainstorm` and use its description+notes as the seed for the discussion. If user opts for a new idea, proceed normally (may add new todos during brainstorming).
-1. **Explore project context** — check files, docs, recent commits. If `PROPOSAL.md` exists, read it first as the primary input for understanding what this project is about.
-1b. **Codebase understanding (if existing code)** — if the project has substantial existing code, do a deep scan and present your understanding to the user for confirmation BEFORE asking any design questions. See Codebase Understanding section below.
+1. **Explore project context** — check files, docs, recent commits. If `PROPOSAL.md` exists, read it first as the primary input for understanding what this project is about. If `.claude/sp-harness.json` has `external_codebase: true`, also read `.claude/codebase-context.md` for the pre-sp-harness code structure (no re-scan needed; that file is the cached understanding from init-project).
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria. **MUST include architecture type question** (see Architecture Type Gate below).
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
@@ -52,13 +51,10 @@ digraph brainstorming {
     "User reviews spec?" [shape=diamond];
     "Invoke feature-tracker" [shape=doublecircle];
 
-    "Has existing codebase?" [shape=diamond];
-    "Codebase understanding\n(present + confirm)" [shape=box];
+    "Read codebase-context.md\n(if external_codebase=true)" [shape=box];
 
-    "Explore project context" -> "Has existing codebase?";
-    "Has existing codebase?" -> "Codebase understanding\n(present + confirm)" [label="yes"];
-    "Has existing codebase?" -> "Visual questions ahead?" [label="no"];
-    "Codebase understanding\n(present + confirm)" -> "Visual questions ahead?";
+    "Explore project context" -> "Read codebase-context.md\n(if external_codebase=true)";
+    "Read codebase-context.md\n(if external_codebase=true)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
@@ -90,44 +86,28 @@ digraph brainstorming {
   inform your questions and proposals rather than starting from scratch.
 - Check out the current project state (files, docs, recent commits)
 
-**Codebase Understanding (MANDATORY if existing code):**
+**Codebase context (when external code is present):**
 
-If the project has substantial existing code (not just scaffolding), you MUST
-do a deep scan and present your understanding BEFORE asking any design questions.
-This is not optional — skipping this step causes designs based on wrong assumptions.
+If `.claude/sp-harness.json` has `external_codebase: true`, read
+`.claude/codebase-context.md` (saved by init-project's one-time scan).
+Use it as ground truth for pre-sp-harness module structure, variants,
+and dependencies. Do NOT re-scan the codebase here — the cached
+understanding is sufficient. If the user reports the cache is stale,
+suggest re-running `init-project`.
 
-**Step 1: Deep scan.** Go beyond directory listing. For each major module:
-- Read key source files (not just file names)
-- Identify what each module does and how it relates to others
-- Look for variants: same functionality implemented differently in different
-  locations (v1/v2 directories, old/new files, experimental branches, deprecated modules)
-- Check git log for activity: which modules are actively developed vs stale
+If `external_codebase: false` (or the field is absent), skip — design
+docs in `docs/design-docs/` are the source of truth for sp-harness-built
+features. Don't scan or ask about codebase structure unless the user
+brings it up.
 
-**Step 2: Present understanding.** Print a structured summary and ask user to confirm:
+**On-demand scan exception:** If during clarifying questions you discover
+the design will touch a specific module not covered in codebase-context.md
+(or no codebase-context.md exists), do a targeted read of that module
+only. Do NOT trigger a full project scan.
 
-```
-Codebase Understanding:
+**Supersession check (MANDATORY when feature replaces existing code):**
 
-Core modules:
-  {path} — {what it does} [{active | stale | deprecated}]
-  {path} — {what it does} [{active | stale | deprecated}]
-
-Variants found (same functionality, different implementations):
-  {functionality}: {path-A} vs {path-B} — {key difference}
-
-Dependencies between modules:
-  {module-A} depends on {module-B} for {reason}
-
-Is this understanding correct? Which modules/variants should the new
-feature build on?
-```
-
-**Step 3: Wait for user confirmation.** Do NOT proceed to design questions
-until user confirms or corrects your understanding. If user corrects you,
-update your understanding and re-present.
-
-**Step 4: Supersession check (MANDATORY).** After understanding is confirmed,
-ask:
+Ask:
 
 > "Will this new feature REPLACE any existing feature / module / code path?
 >  (If yes, the old code AND its runtime artifacts need a cleanup plan.
