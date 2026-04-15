@@ -114,6 +114,13 @@ everything else passing.
 3. **Minimum scrutiny:** zero issues first pass → second pass hunting edge
    cases, error paths, hardcoded values, input validation, race conditions.
 4. **PASS is high bar:** "I actively tried to break this and could not."
+5. **Root cause vs symptom:** for any fix, check if the implementation
+   addresses the root cause or just masks the symptom. Red flags: try/except
+   around an error whose cause isn't explained, hardcoded workarounds,
+   added null/length checks without investigation of why the input was
+   wrong, retry loops covering an unknown failure mode. Symptom-only patches
+   leave the underlying bug to recur. Any symptom patch found → ITERATE
+   with explicit request for root-cause analysis.
 
 ## Output
 

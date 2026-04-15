@@ -164,6 +164,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
+**4. Root cause check (for bugfix plans):** Does each fix task explain WHY the bug happens, not just what to change? A task that adds defensive code (try/except, null guards, retries) without explaining the root cause is a symptom patch — revise to address the actual cause, or move root-cause analysis into a preceding task.
+
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
 ## Hybrid Boundary Awareness

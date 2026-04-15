@@ -51,6 +51,13 @@ edge cases, dependencies not specified.
 If gaps found: ask user one question at a time, architecture-impacting
 first, then edge cases. Only proceed when all resolved.
 
+**Root cause check (when feature is a bugfix):**
+Before planning, ask: "What's the hypothesized root cause of this bug?"
+If the user/spec doesn't know, recommend running `sp-harness:systematic-debugging`
+to diagnose first. Planning a fix without root-cause understanding tends
+to produce defensive patches (try/except, null guards) that mask but
+don't solve. Skip this check for non-bugfix features.
+
 ## Phase 2: Write Implementation Plan
 
 Invoke sp-harness:writing-plans. Save as `.claude/agents/state/active/task-plan.json`:
