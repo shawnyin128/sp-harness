@@ -196,6 +196,28 @@ If the project is empty or has no substantial code, skip this entirely.
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
 - Focus on understanding: purpose, constraints, success criteria
 
+**Design-time concerns (consider when applicable, not required):**
+
+These are prompts to raise with the user during clarifying discussion
+if the design naturally touches the concern. Skip if the project doesn't
+involve the concern, or if the user has already addressed it.
+
+- **State ownership** — if the design evolves toward multiple persistent
+  stores (config, data files, caches), consider asking: do any stores
+  risk overlapping content? Is each piece of state owned by one source?
+  Drift between duplicated stores is a common long-term bug.
+
+- **Knowledge retention** — if the design accumulates knowledge over
+  time (learned rules, historical findings, memory of past work), consider
+  asking: what's the bar for adding an entry, and how does stale content
+  get removed? Without explicit rules, agent-written knowledge grows unbounded.
+
+- **Automation boundaries** — if the design produces automated actions
+  (routing, applying changes, triggering workflows), consider asking:
+  which actions are safe to auto-execute vs need user confirmation?
+  Actions modifying persistent state or with side effects usually warrant
+  explicit user review.
+
 **Exploring approaches:**
 
 - Propose 2-3 different approaches with trade-offs

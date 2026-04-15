@@ -120,6 +120,28 @@ Every step must contain the actual content an engineer needs. These are **plan f
 - Exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
 
+## Plan design concerns (consider when applicable, not required)
+
+Prompts to consider while writing the plan. Apply only where the concern
+genuinely fits. These surface common pitfalls that aren't caught by task
+structure alone.
+
+- **Structured data CRUD** — if tasks involve agents repeatedly reading
+  or writing a schema-enforced file (JSON config, state file, structured
+  log), consider bundling a CLI helper script for the operations rather
+  than having agents parse the file each invocation. Schema validation
+  becomes mechanical, tokens are saved, state transitions deterministic.
+  Skip if operations are one-off or the file has no enforced schema.
+
+- **Wait vs must distinction** — when writing tasks whose output is
+  instructions for others (skills, agent prompts, playbooks), be precise
+  about "wait" / "required" semantics:
+  - Waiting for user input → HARD-GATE
+  - Agent must do this without user input → MUST
+  - Informational → plain statement
+  Loose use of HARD-GATE dilutes its signal. Reserve for actual user-input
+  barriers. Skip if plan output is code, not instructions.
+
 ## Self-Review
 
 After writing the complete plan, look at the spec with fresh eyes and check the plan against it. This is a checklist you run yourself — not a subagent dispatch.
