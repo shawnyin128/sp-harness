@@ -71,10 +71,15 @@ formats and migrate. Auto-fix anything wrong.
 
 ### Features (skip if no spec docs exist)
 
-- [ ] `.claude/features.json` is valid JSON with `features` array
-- [ ] Each feature has: id, category, priority, depends_on, description, steps, passes
-- [ ] All IDs in `depends_on` arrays reference existing feature IDs (no dangling refs)
-- [ ] No circular dependencies in `depends_on` chains
+Run the validator script:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" validate
+```
+
+The script checks: valid JSON, unique ids, required fields, dangling
+depends_on refs, circular dependencies. Exit 1 with errors listed in
+JSON output if any found.
 
 ### Harness Config
 

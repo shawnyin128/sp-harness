@@ -60,51 +60,50 @@ brainstorming first to create one. STOP.
 
 ## Step 2: Show progress summary
 
-Present a brief status to the user:
+Get stats via script:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" stats
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" list --passes=false
+```
+
+Present a brief status to the user combining the outputs:
 
 ```
-Feature Progress: X/Y completed
+Feature Progress: <passed>/<total> completed
 Dev Mode: {dev_mode}
 Hygiene: last at {last_hygiene_at_completed}, next at {last_hygiene_at_completed + 3}
 
-Remaining (by priority):
-  [high]   feature-id — description
-  [medium] feature-id — description
-  [low]    feature-id — description
+Remaining (from script output):
+  [priority] feature-id — description
+  ...
 ```
 
 ---
 
 ## Step 3: Pick next feature
 
-**Selection algorithm (topological order first, then priority):**
+Use `sp-harness:manage-features` (invoked via its bundled script) to pick:
 
-1. Filter: `passes: false`
-2. Filter: all IDs in `depends_on` have `passes: true` (dependencies satisfied)
-3. Sort candidates: high → medium → low priority
-4. Within same priority: array order
-5. Pick first candidate
-
-If no candidate is available (all remaining features have unsatisfied dependencies),
-report a **dependency deadlock** and print the blocked features with their unmet
-dependencies. STOP and ask user to resolve.
-
-Present the selected feature to the user:
-
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" next --format=table
 ```
-Next: [feature-id] — description
-Priority: high
-Depends on: [list of depends_on IDs, or "none"]
-From todo: [todo-id, if any]
-Steps:
-  1. step one
-  2. step two
-  ...
-```
+
+**Exit behavior:**
+- **Exit 0, feature printed** → proceed, present feature to user (the script
+  output already includes all fields: id, description, priority, depends_on,
+  from_todo, steps)
+- **Exit 0, `{"all_done": true}`** → jump to Step 5's "ALL features pass" branch
+  (dispatch sp-feedback)
+- **Exit 1, `{"deadlock": true, ...}`** → print the blocked features and their
+  unmet dependencies. STOP and ask user to resolve.
 
 Ask: "Ready to start this feature, or do you want to pick a different one?"
 
 Wait for user confirmation before proceeding.
+
+**Do NOT hand-implement the selection algorithm.** The script is the
+authoritative implementation.
 
 ---
 
@@ -144,15 +143,24 @@ to `.claude/agents/state/archive/<feature-id>/` on PASS.
 
 **MUST: Check originating todo completion.**
 
-Read the completed feature from `.claude/features.json`. If it has a
-non-null `from_todo` field:
-1. Invoke `sp-harness:manage-todos` **Check done** operation with the todo id
-   and the current `features.json` contents.
-2. If the operation returns `done=true`, the todo was automatically transitioned
-   to `status: done` (manage-todos handles it). Include `.claude/todos.json`
-   in the upcoming commit.
-3. If `done=false`, remaining features are listed — no action beyond noting
-   the remaining list for context.
+Get the feature's `from_todo` field via script:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" \
+  get <feature-id>
+```
+
+Read the `from_todo` field from the output. If non-null:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-todos/scripts/mutate.py" \
+  check-done <todo-id>
+```
+
+If the result shows `done=true`, the todo auto-transitioned to done
+(manage-todos handled it). Include `.claude/todos.json` in the upcoming
+commit. If `done=false`, remaining features are listed — no further
+action needed.
 
 **MUST: Commit feature completion — do NOT skip:**
 ```

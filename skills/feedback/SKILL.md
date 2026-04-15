@@ -75,8 +75,13 @@ For confirmed batches:
 - **new_todo**: for each approved item, invoke `sp-harness:manage-todos` Add
   with description, category (mapped from root_cause), and notes. The todos
   sit in `pending` state awaiting future brainstorming.
-- **fix_feature**: append to `.claude/features.json` with `passes: false`,
-  `from_todo: null`. Will be picked up by feature-tracker on next loop.
+- **fix_feature**: invoke `sp-harness:manage-features` Add operation:
+  ```bash
+  python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
+    --id=<kebab-id> --category=functional --priority=<high|medium|low> \
+    --description="<from finding>" --steps="<from suggestion>"
+  ```
+  Will be picked up by feature-tracker on next loop.
 - **manual**: print to user, no automated action.
 
 ## Rules

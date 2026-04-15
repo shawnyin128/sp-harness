@@ -306,52 +306,47 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 ## Feature List
 
-After the user approves the spec, extract discrete features into `.claude/features.json`.
+After the user approves the spec, extract discrete features using
+`sp-harness:manage-features`. **Do NOT hand-write the JSON file.** For
+each feature, invoke:
 
-**If `.claude/features.json` does not exist**, create it with this top-level structure:
-
-```json
-{
-  "features": [...]
-}
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
+  --id=kebab-case-id \
+  --category=functional|ui|infrastructure|testing \
+  --priority=high|medium|low \
+  --description="One-line description" \
+  --steps="step 1;;step 2;;step 3" \
+  [--depends-on=id1,id2] \
+  [--from-todo=<todo-id>]
 ```
 
-**If it exists**, append new features to the `features` array — do not overwrite existing entries.
-
-Each feature follows this structure:
-
-```json
-{
-  "id": "short-kebab-case-id",
-  "category": "functional|ui|infrastructure|testing",
-  "priority": "high|medium|low",
-  "depends_on": ["other-feature-id"],
-  "from_todo": "todo-id or null",
-  "description": "One-line description of what this feature does",
-  "steps": [
-    "Implementation step or verification criterion",
-    "Another step"
-  ],
-  "passes": false
-}
-```
+Steps are separated by `;;` (double semicolon). The script validates
+schema, dependency references, and rejects cycles on every add.
 
 **Rules:**
-- `id` must be unique across the file
-- `depends_on` lists feature IDs that must pass before this feature can start. Use `[]` if no dependencies. Every ID in `depends_on` must exist in the features array.
-- `from_todo` references the origin todo in `.claude/todos.json`. If this brainstorming session started from a selected todo, set this to the todo's id. Features created without a todo origin (direct user request, or legacy) use `null`.
+- `id` must be unique (script enforces)
+- `depends_on` only references features already added (add in dependency order)
+- `from_todo` is the id from Step 0's selected todo, if any. Omit or set to
+  null if this brainstorming didn't start from a todo.
 - `steps` serve as both implementation guidance and verification criteria
-- `priority` is a tiebreaker within the same dependency layer — features are selected in topological order first, then by priority (high → medium → low)
-- Set `passes: false` for all new features — feature-tracker skill handles verification and updating
+- `priority` is a tiebreaker within the same dependency layer — features
+  are selected in topological order first, then by priority
+- All new features start with `passes: false` (script default)
 - One feature per testable behavior — if a feature has two independent parts, split it
 - Commit the updated features.json alongside the design doc
 
 **Decomposition guideline:** A feature should be completable in a single session. If a feature feels too large, break it into sub-features.
 
 **Link features back to todo:** If this brainstorming session started from
-a todo (Step 0), after writing features.json invoke `sp-harness:manage-todos`
-Link features operation with the todo id + list of new feature ids. This
-transitions the todo's status to `in_feature` and records the linkage.
+a todo (Step 0), after adding all features invoke:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-todos/scripts/mutate.py" \
+  link-features <todo-id> <feat-id-1> <feat-id-2> ...
+```
+
+This transitions the todo's status to `in_feature` and records the linkage.
 
 ## Project Map Update
 

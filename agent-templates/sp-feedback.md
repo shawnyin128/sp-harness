@@ -258,11 +258,17 @@ For confirmed `new_todo`:
 
 ### Fix feature creation
 
-For confirmed `fix_feature`:
-1. Construct the feature entry (id, category, priority, depends_on: [],
-   from_todo: null, description, steps, passes: false)
-2. Append to `.claude/features.json`
-3. feature-tracker will pick it up on next loop (sort by priority + topology)
+For confirmed `fix_feature`, the main session (orchestrator) invokes:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
+  --id=<kebab-id> --category=functional --priority=<p> \
+  --description="<from finding>" --steps="<from suggestion>"
+```
+feature-tracker picks it up on next loop (per topology + priority algorithm).
+
+You (sp-feedback) do NOT invoke the script directly — you output `fix_feature`
+actions in feedback-actions.json. The main session executes them after
+user confirmation.
 
 ## Memory (for sp-feedback itself)
 

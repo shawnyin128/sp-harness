@@ -164,7 +164,12 @@ evaluation summary (same format as three-agent-development). Do NOT summarize
 or skip.
 
 ### PASS
-1. Update `.claude/features.json` — set `passes: true`
+1. Mark feature passing via script:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" \
+     mark-passing <feature-id>
+   ```
+   Do NOT edit features.json directly.
 2. **Archive state files:**
    - Create `.claude/agents/state/archive/<feature-id>/` if missing
    - Move `active/*` files → `archive/<feature-id>/iter-<N>-*`
