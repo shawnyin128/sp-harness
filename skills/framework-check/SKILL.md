@@ -17,7 +17,7 @@ to fix issues.
 
 ---
 
-## Check Categories (7)
+## Check Categories (8)
 
 Each category groups related checks. Every issue found is tagged with:
 
@@ -139,6 +139,38 @@ Severity: 🟡. Fixability: `manual`.
 Checks:
 - [ ] Last 10 commits match `[module]: description` format (warn only; never rewrite history)
 
+### 8. Language consistency
+
+Severity: 🟡. Fixability: `manual`.
+
+sp-harness content is English-only. Agent prompts, skill docs, and schema
+must be in English regardless of the user's interaction language. User
+conversations in other languages are fine — but anything written into
+`skills/`, `agent-templates/`, `docs/`, or top-level docs like `README.md`
+and `CHANGELOG.md` must be English.
+
+Detection (run from repo root):
+
+```bash
+grep -rP '[\x{4e00}-\x{9fff}]' skills/ agent-templates/ docs/ README.md CHANGELOG.md 2>/dev/null
+```
+
+Any hit → violation. Report each file + line number.
+
+Checks:
+- [ ] No CJK characters in `skills/**/*.md`
+- [ ] No CJK characters in `agent-templates/*.md`
+- [ ] No CJK characters in `docs/**/*.md`
+- [ ] No CJK characters in `README.md`, `CHANGELOG.md`
+
+Fix path: `manual`. Auto-translation is lossy and would risk changing
+intent. The user (or Claude in a separate pass) must translate each
+occurrence to English, preserving the semantics and formatting.
+
+Rationale: the plugin is distributed to users whose interaction language
+is unknown. Agent prompts in mixed language degrade model behavior and
+break grep-based tooling that assumes English tokens.
+
 ### Features validator (runs independently)
 
 Run:
@@ -172,31 +204,34 @@ Always use this exact format. Same every run.
 ```
 🔍 Framework Check (v<plugin version>)
 
-[1/7] CLAUDE.md
+[1/8] CLAUDE.md
     <status line: ✅ pass | ⚠️ N warn | ❌ M fail>
     <for each issue:>
     - <description>  (<severity><fixability>: <one-line fix>)
 
-[2/7] Docs structure
+[2/8] Docs structure
     ...
 
-[3/7] State sources
+[3/8] State sources
     ...
 
-[4/7] Agent templates
+[4/8] Agent templates
     ...
 
-[5/7] Agent state
+[5/8] Agent state
     ...
 
-[6/7] Hooks & config
+[6/8] Hooks & config
     ...
 
-[7/7] Git conventions
+[7/8] Git conventions
+    ...
+
+[8/8] Language consistency
     ...
 
 ---
-Summary: 7 categories · <P> pass · <W> warn · <F> fail
+Summary: 8 categories · <P> pass · <W> warn · <F> fail
 Severity: 🔴 <C> critical · 🟡 <D> degraded
 Fixability: <A> auto-fixable · <N> need-confirm · <M> manual
 ```
@@ -205,34 +240,37 @@ Example:
 ```
 🔍 Framework Check (v<CURRENT>)
 
-[1/7] CLAUDE.md
+[1/8] CLAUDE.md
     ✅ pass
 
-[2/7] Docs structure
+[2/8] Docs structure
     ⚠️ 1 warn (auto-fixable)
     - docs/reports/ missing (🟡auto: mkdir)
 
-[3/7] State sources
+[3/8] State sources
     ✅ pass
 
-[4/7] Agent templates
+[4/8] Agent templates
     ❌ 3 fail (🔴 blocks runtime)
     - sp-planner.md contains task-plan.json (🔴needs-confirm: regenerate from template)
     - sp-generator.md contains implementation.md (🔴needs-confirm: regenerate)
     - sp-evaluator.md missing plan.yaml marker (🔴needs-confirm: regenerate)
 
-[5/7] Agent state
+[5/8] Agent state
     ✅ pass
 
-[6/7] Hooks & config
+[6/8] Hooks & config
     ⚠️ 1 warn
     - settings.json missing Stop hook (🟡auto: add hook config)
 
-[7/7] Git conventions
+[7/8] Git conventions
     ⚠️ 2/10 commits off-format (🟡manual: review recent commits)
 
+[8/8] Language consistency
+    ✅ pass
+
 ---
-Summary: 7 categories · 3 pass · 2 warn · 2 fail
+Summary: 8 categories · 4 pass · 2 warn · 2 fail
 Severity: 🔴 3 critical · 🟡 3 degraded
 Fixability: 2 auto-fixable · 3 need-confirm · 3 manual
 ```
