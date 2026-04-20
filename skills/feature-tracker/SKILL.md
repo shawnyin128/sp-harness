@@ -116,11 +116,11 @@ Read `dev_mode` from `.claude/sp-harness.json` and dispatch accordingly:
 Invoke `sp-harness:three-agent-development` with the selected feature.
 
 This skill will:
-1. Dispatch sp-planner subagent → produces task-plan.json + eval-plan.json
-2. **Print plan summary table to you and wait for your confirmation**
-3. Dispatch sp-generator subagent → executes via subagent-driven-development
-4. Dispatch sp-evaluator subagent → produces eval-report.json
-5. Handle PASS/ITERATE/REJECT
+1. Dispatch sp-planner subagent → writes `<feature-id>.plan.yaml` (problem, steps, decisions)
+2. **Print condensed plan summary and ask for decisions needing user input**
+3. Dispatch sp-generator subagent → appends execution sections to plan YAML (no terminal output)
+4. Dispatch sp-evaluator subagent → appends `eval.rounds[]` with per-round verdict
+5. Handle Round-based iteration (fix / force-merge / replan) or optimization pass on PASS
 
 **If `dev_mode` is `"single-agent"`:**
 Invoke `sp-harness:single-agent-development` with the selected feature.

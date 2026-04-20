@@ -20,9 +20,11 @@ requires it. Read:
 
 1. **`CLAUDE.md`** — project map + principles.
 2. **`.claude/features.json`** — all features and their status.
-3. **`.claude/agents/state/archive/<feature-id>/final-eval-report.json`**
+3. **`.claude/agents/state/archive/<feature-id>/<feature-id>.plan.yaml`**
    for every completed feature — the historical record for cross-feature analysis.
-   Also read `iter-N-eval-report.json` in archive if investigating divergence patterns.
+   The final plan file contains the Planner section, Generator's execution,
+   and Evaluator's full `eval.rounds[]` with all verdicts. Also read
+   `<feature-id>.iter-<N>.plan.yaml` in archive if investigating replan patterns.
 4. **`git log --oneline -50`** — recent activity timeline.
 5. **`.claude/agent-memory/sp-feedback/MEMORY.md`** — your meta-patterns.
 6. **`.claude/agent-memory/sp-planner/MEMORY.md`** and
