@@ -176,14 +176,14 @@ Loop begins. For each feature:
 1. Feature picked via topological + priority algorithm (from manage-features)
 2. Confirm with user (HARD-GATE)
 3. Invokes `three-agent-development` which dispatches:
-   - `@agent sp-planner` → produces `task-plan.json` + `eval-plan.json`
-   - Orchestrator prints plan table (HARD-GATE)
-   - `@agent sp-generator` → runs TDD per task in isolated worktree, produces `implementation.md`
-   - `@agent sp-evaluator` → adversarial evaluation, produces `eval-report.json`
-4. Orchestrator prints eval results (HARD-GATE → user confirms verdict handling)
-5. On PASS: `mark-passing` via manage-features, archive state, commit
-6. On ITERATE: back to Planner (reads eval-report for next iteration)
-7. On REJECT: stop, report
+   - `@agent sp-planner` → writes `<feature-id>.plan.yaml` (problem, steps, decisions)
+   - Orchestrator prints condensed plan + asks for low-confidence decisions (HARD-GATE)
+   - `@agent sp-generator` → appends execution sections to plan YAML (no terminal output)
+   - `@agent sp-evaluator` → appends `eval.rounds[]`, designs/runs unit tests, prints closure + tests + blockers
+4. Per-round user choice: fix (→ Generator Round N+1) / force-merge / replan
+5. On PASS: Evaluator runs optimization pass → user picks merge or optimize
+6. On merge: `mark-passing` via manage-features, archive plan YAML, commit
+7. On replan: archive current iter, restart from Planner with iteration N+1
 
 Every 3 passed features: `code-hygiene` auto-triggered. All features done:
 `sp-feedback` Mode A auto-triggered, runs 7-dimension checklist, routes
