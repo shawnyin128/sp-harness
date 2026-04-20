@@ -36,8 +36,10 @@ already exist.
 
 Check if `.claude/agents/sp-planner.md`, `sp-generator.md`, `sp-evaluator.md` exist:
 
-- **All three exist:** print their current configs (model, tools, memory,
-  isolation). Ask: "Use existing configuration, or reconfigure?"
+- **All three exist:** check for **template drift** first (see below).
+  If drift detected, warn and offer regenerate before asking about
+  configuration. Otherwise print their current configs (model, tools,
+  memory, isolation). Ask: "Use existing configuration, or reconfigure?"
   - If reconfigure: for each agent, ask model / tools / memory / isolation
     and rewrite the file using the template + user answers.
 
@@ -45,6 +47,39 @@ Check if `.claude/agents/sp-planner.md`, `sp-generator.md`, `sp-evaluator.md` ex
   replace `{PROJECT_NAME}` and `{PROJECT_CONTEXT}` from CLAUDE.md, write to
   `.claude/agents/{name}.md`. Ask if user wants to customize; if yes, run
   the 4-question flow.
+
+### Template drift detection (v0.7.0+)
+
+For each existing agent file, check these markers to detect stale copies:
+
+| Agent file | Old-format marker (BAD) | New-format marker (EXPECTED) |
+|---|---|---|
+| `sp-planner.md` | `task-plan.json` or `eval-plan.json` | `<feature-id>.plan.yaml` |
+| `sp-generator.md` | `implementation.md` | `<feature-id>.plan.yaml` |
+| `sp-evaluator.md` | `eval-report.json` | `eval.rounds[]` or `<feature-id>.plan.yaml` |
+
+If ANY agent has an old marker OR lacks its new marker → **stale**.
+
+Report which agents are stale:
+```
+⚠️ Stale agent templates detected:
+  - sp-planner.md (contains task-plan.json, missing plan.yaml)
+  - sp-evaluator.md (contains eval-report.json)
+
+The current plugin expects new-format agents. Running three-agent mode
+with stale files will fail.
+```
+
+Then ask: `Regenerate from current templates? (yes / no / diff)`
+
+- `yes`: for each stale agent, read
+  `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill `{PROJECT_NAME}`
+  and `{PROJECT_CONTEXT}` from CLAUDE.md, **overwrite** the deployed file.
+  Warn first: "Any hand customization will be lost. Continue?"
+- `no`: keep stale. Advise the user to run framework-check later or
+  manually reconcile before running features.
+- `diff`: print diff between deployed and template for each stale agent,
+  then re-ask yes/no.
 
 **Note:** `.claude/agents/sp-feedback.md` should already exist from init-project.
 If it's missing, generate it from the template regardless of dev mode.

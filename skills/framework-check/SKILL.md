@@ -123,6 +123,30 @@ self-supersession. Exit 1 with errors listed in JSON output if any found.
 - [ ] If `dev_mode` is `"three-agent"`: `.claude/agents/sp-planner.md`, `sp-generator.md`, `sp-evaluator.md` all exist
 - [ ] No plugin-level `agents/sp-planner.md`, `sp-generator.md`, `sp-evaluator.md` in plugin source (legacy — all dev agents are project-level now)
 
+### Agent Template Drift (v0.7.0+)
+
+Deployed agent files in `.claude/agents/sp-*.md` are copies made at init
+time. When the plugin updates its `agent-templates/`, deployed copies
+become stale and may reference formats the orchestrator no longer produces.
+
+Check each deployed agent file for **old-format markers** (pre-0.7.0):
+
+- [ ] `.claude/agents/sp-planner.md` does NOT contain `task-plan.json` or `eval-plan.json`
+- [ ] `.claude/agents/sp-generator.md` does NOT contain `implementation.md` (as output filename)
+- [ ] `.claude/agents/sp-evaluator.md` does NOT contain `eval-report.json`
+
+Any old-format marker → agent is stale. Report to user and offer to
+regenerate via `sp-harness:switch-dev-mode` (force-regenerate mode).
+
+Check for **new-format markers** (present on current templates):
+
+- [ ] `.claude/agents/sp-planner.md` contains `<feature-id>.plan.yaml`
+- [ ] `.claude/agents/sp-generator.md` contains `<feature-id>.plan.yaml`
+- [ ] `.claude/agents/sp-evaluator.md` contains `eval.rounds[]` or `<feature-id>.plan.yaml`
+
+Missing new-format marker → stale regardless of whether old markers are
+absent (agent may have been hand-edited to a partial state).
+
 ### Git Conventions
 
 - [ ] Last 10 commits follow `[module]: description` format (warn only)
@@ -215,6 +239,24 @@ remove the other.
   `{PROJECT_NAME}` and `{PROJECT_CONTEXT}`, write to `.claude/agents/{name}.md`.
 → Always generate `sp-feedback.md`.
 → If `dev_mode` is three-agent, also generate sp-planner, sp-generator, sp-evaluator.
+
+### Agent template drift detected (stale copies)
+→ An agent file exists but contains old-format markers (pre-0.7.0) or
+  lacks new-format markers. The orchestrator expects the new format;
+  running with stale agents will fail at runtime.
+→ Print which agent(s) are stale and which markers triggered the detection.
+→ Ask user: "Regenerate from current templates? This overwrites the
+  deployed file. (yes / no / diff)"
+  - `yes`: read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill
+    `{PROJECT_NAME}` and `{PROJECT_CONTEXT}` from CLAUDE.md, overwrite
+    `.claude/agents/{name}.md`. Any user customization is lost — warn
+    before doing it.
+  - `no`: keep stale. Warn that feature development will likely fail
+    until regenerated.
+  - `diff`: show the diff between deployed file and current template,
+    then re-ask.
+→ Alternative: user may invoke `sp-harness:switch-dev-mode` with
+  force-regenerate option directly (same effect).
 
 ### Git conventions
 → Warn only. Do not rewrite history.
