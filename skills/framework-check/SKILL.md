@@ -141,35 +141,57 @@ Checks:
 
 ### 8. Language consistency
 
-Severity: 🟡. Fixability: `manual`.
+Severity: 🔴 for deployed agents (prompt pollution breaks model behavior);
+🟡 for plugin source / project docs.
 
-sp-harness content is English-only. Agent prompts, skill docs, and schema
-must be in English regardless of the user's interaction language. User
-conversations in other languages are fine — but anything written into
-`skills/`, `agent-templates/`, `docs/`, or top-level docs like `README.md`
-and `CHANGELOG.md` must be English.
+Files written into the agent pipeline must be English — regardless of
+the user's interaction language. User conversations in any language are
+fine, but anything that becomes part of an agent's system prompt, a
+skill definition, or project-level config must be English.
 
-Detection (run from repo root):
+Detection — run the correct grep for the current context:
 
+**User-project context** (run inside a project using sp-harness):
+```bash
+grep -rP '[\x{4e00}-\x{9fff}]' .claude/agents/ CLAUDE.md 2>/dev/null
+```
+
+**Plugin-dev context** (run inside the sp-harness repo itself):
 ```bash
 grep -rP '[\x{4e00}-\x{9fff}]' skills/ agent-templates/ docs/ README.md CHANGELOG.md 2>/dev/null
 ```
 
 Any hit → violation. Report each file + line number.
 
-Checks:
+Checks (run the subset that applies to the current directory):
+
+Always check:
+- [ ] No CJK characters in `.claude/agents/*.md` (deployed agents — critical)
+- [ ] No CJK characters in `CLAUDE.md`
+
+Plugin-dev only (check if directory exists):
 - [ ] No CJK characters in `skills/**/*.md`
 - [ ] No CJK characters in `agent-templates/*.md`
 - [ ] No CJK characters in `docs/**/*.md`
 - [ ] No CJK characters in `README.md`, `CHANGELOG.md`
 
-Fix path: `manual`. Auto-translation is lossy and would risk changing
-intent. The user (or Claude in a separate pass) must translate each
-occurrence to English, preserving the semantics and formatting.
+Fixability:
 
-Rationale: the plugin is distributed to users whose interaction language
-is unknown. Agent prompts in mixed language degrade model behavior and
-break grep-based tooling that assumes English tokens.
+- **`.claude/agents/*.md`**: `needs-confirm` — if Chinese is present AND
+  the plugin's `${CLAUDE_PLUGIN_ROOT}/agent-templates/` is English (the
+  v0.7.4+ templates are), regenerate from template (same path as agent
+  drift detection). This auto-replaces the Chinese with the English
+  source of truth. Warn user about lost customization first.
+
+- **`CLAUDE.md` and other files**: `manual`. Auto-translation is lossy
+  and risks changing intent. User or Claude in a separate pass must
+  translate.
+
+Rationale: mixed-language agent prompts degrade model behavior. Users
+on older versions inherited Chinese templates from 0.7.0–0.7.3 — those
+deployed copies need either regeneration (automatic) or translation
+(manual). framework-check's category 4 (agent drift) handles the former;
+category 8 adds coverage for any stragglers drift missed.
 
 ### Features validator (runs independently)
 
@@ -189,7 +211,7 @@ brainstorming's job).
 ## Step 1: Run all checks
 
 Execute every check above. Record each finding with:
-- category (1–7)
+- category (1–8)
 - description (short)
 - severity (🔴 / 🟡 / ✅)
 - fixability (auto / needs-confirm / manual)
