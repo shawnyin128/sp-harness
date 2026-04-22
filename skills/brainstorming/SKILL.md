@@ -376,15 +376,65 @@ If the user chose CC subagent implementation, append a `## Agent Definitions` se
 - If user chose *pure-code*, this section does NOT exist.
 - writing-plans detects this section and generates `.claude/agents/{name}.md` creation tasks.
 
-**User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+**User Review Gate — Decision brief (NOT "please read the spec"):**
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+After the spec review loop passes, DO NOT ask the user to open and read
+the spec file. The spec is for future-session agents (Planner); the user
+reviews a condensed terminal brief instead.
 
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+Print a brief in this exact structure (≤ 30 lines):
 
-**Before the gate, write an in-flight block to `.claude/memory.md`.** This
-lets a later session auto-resume if the user pauses here. Use the schema
+```
+📐 Design ready: <topic>
+
+Spec saved: <spec path>
+
+Problem:
+  <1-2 sentences, natural language, paraphrased — NOT copied from user's
+  original wording>
+
+Approach:
+  <1-2 sentences describing the chosen approach at a high level>
+
+Key decisions made:
+  D1 · <question> → <choice> (<confidence>%)
+  D2 · <question> → <choice> (<confidence>%)
+  ⚠️ D3 · <question> — open (<confidence>%)
+    alternatives: (a) ... (b) ... (c) ...
+  ...
+  (⚠️ marks open questions the spec couldn't resolve without user input;
+  ⚠️ only for confidence < 70 OR decisions the spec explicitly deferred.)
+
+Divergence risks:
+  <1-3 line summary of the biggest non-deterministic risks from the
+  Divergence Risk Analysis section>
+
+Scope:
+  <N> features will be extracted · <files/modules touched or created>
+
+→ Your call:
+  [IF any ⚠️ open]
+    Resolve Q1 (confidence <N>%):
+      (a) <option a>
+      (b) <option b>
+      (c) <option c>
+  [IF all resolved]
+    (a) Approve → extract features + dispatch feature-tracker
+    (b) Edit spec — tell me what to change
+    (c) Discard — cancel this brainstorm
+```
+
+Rules:
+- NEVER say "please review the spec file." The user reads only the brief.
+- If the user wants to see the spec, they open the file themselves. The
+  brief is the authoritative review artifact.
+- If multiple ⚠️ open decisions exist, ask them one at a time (ask the
+  one with lowest confidence first). Do not bundle open decisions.
+- When the user picks an option or approves, update the spec file
+  accordingly BEFORE moving to feature extraction.
+
+**Before printing the brief, write an in-flight block to `.claude/memory.md`.**
+This lets a later session auto-resume if the user pauses. Use the schema
 defined in `.claude/memory.md`'s `## In-flight` section:
 
 ```markdown
@@ -400,7 +450,7 @@ defined in `.claude/memory.md`'s `## In-flight` section:
   via manage-features, dispatch feature-tracker.
 ```
 
-Write the block BEFORE asking the review question — so even if the user
+Write the block BEFORE printing the brief — so even if the user
 closes the session without replying, next session can resume.
 
 Once the user approves and you move on (extract features, dispatch
