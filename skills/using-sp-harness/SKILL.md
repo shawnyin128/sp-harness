@@ -174,6 +174,54 @@ through its own skill triggers, unaffected.
 
 The skill itself tells you which.
 
+## Memory Discipline (sp-harness override)
+
+The default system prompt defines MEMORY.md as long-term cross-session
+memory. **sp-harness overrides this.** Long-term memory lives in:
+
+- **Design documents** — decisions with rationale
+- **CLAUDE.md** — enduring preferences, conventions, project rules
+- **git log** — commit messages carry the "why"
+- **`.claude/todos.json`** (via manage-todos) — reminders, pending tasks
+- **`.claude/features.json`** (via manage-features) — feature-scale ideas
+
+MEMORY.md is a **last-resort short-term buffer**: mid-session investigation
+traces, in-flight reasoning — content that has no long-term home AND will
+be resolved and cleaned up in the next session.
+
+### Decision order
+
+1. Design document? → write/propose there
+2. Enduring user preference, convention, or project rule? → propose CLAUDE.md edit
+3. Commit? → commit it (or stage TODO to commit)
+4. Future reminder or pending task? → manage-todos → `.claude/todos.json`
+5. Feature-scale idea to brainstorm later? → manage-features → `.claude/features.json`
+6. None of the above AND losing it on session exit is costly → MEMORY.md
+7. Otherwise → do not save
+
+**Step 6 is a narrow escape hatch, not a default.** Does NOT mean "valuable
+to remember". "No file mentions this yet" is a reason to propose editing
+the right file, not to use MEMORY.md. Time pressure alone is not a step-6
+trigger — exhaust steps 1–5 first.
+
+### Ambiguous scope
+
+If a preference could be cross-project OR project-specific and the user has
+not said which, **ask** before routing. Do not silently pick project-level
+or user-level CLAUDE.md.
+
+### Suspended default categories
+
+The default four types (user/feedback/project/reference) assume permanent
+cross-session semantics and are **suspended**. Route them to their proper
+long-term home per the decision order; none go to MEMORY.md by default.
+
+### Cleanup is mandatory
+
+When a MEMORY.md entry has moved to any long-term home listed above,
+**delete it from MEMORY.md in the same action**. MEMORY.md is a buffer,
+not an archive.
+
 ## User Instructions
 
 Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
