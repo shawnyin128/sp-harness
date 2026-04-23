@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
+description: Use when creating or editing any behavior-shaping content before deployment — skills (skills/*.md), agent templates (agent-templates/*.md), or dispatched agents (agents/*.md). All three shape agent behavior and require the same TDD discipline: baseline pressure-test, write, close loopholes. File paths differ; methodology is identical.
 user-invocable: false
 ---
 
