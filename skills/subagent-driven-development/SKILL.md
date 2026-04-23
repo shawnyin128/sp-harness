@@ -1,6 +1,6 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when a written implementation plan already exists (from writing-plans or brainstorming) and you need to execute its independent tasks in the current session — dispatches a fresh subagent per task with spec-then-quality review. Requires a plan as input; if there is no plan yet, use writing-plans or brainstorming first.
 user-invocable: false
 ---
 

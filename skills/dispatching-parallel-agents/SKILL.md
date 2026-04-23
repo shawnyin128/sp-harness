@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+description: Use when investigating 2+ independent bugs, failures, or unknowns in parallel with no written implementation plan yet — each problem domain gets its own agent with isolated context. NOT for executing a written plan (use subagent-driven-development for that).
 user-invocable: false
 ---
 
