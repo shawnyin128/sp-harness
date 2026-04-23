@@ -134,6 +134,18 @@ asks for** (not by guessing intent):
    Signals: "let's add / build / create / design", proposes a new direction.
    → invoke `/brainstorming` (even if user suggests the approach)
 
+   **Red flag — do NOT skip brainstorming on these rationalizations:**
+   - "Requirements are already scoped, just implement"
+   - "User wrote requirements in bullet points, so design is done"
+   - "No design decision needed"
+   - "This is small enough to skip"
+   - "User said 'build directly' / 'don't need the pipeline'"
+
+   Brainstorming's job is surfacing gaps the user has NOT stated — edge
+   cases, acceptance criteria, non-functional requirements. If requirements
+   truly are complete, brainstorming exits in under 60 seconds. The overhead
+   is tiny; the cost of a missed requirement is large. **Invoke it.**
+
 3. **Explicit scoped edit** — user specifies WHAT to change and WHERE,
    with no ambiguity. No diagnosis needed, no design decision.
    Signals: "change MAX_RETRIES from 3 to 5 in config.yaml", "rename X to Y",
