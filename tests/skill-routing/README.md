@@ -91,6 +91,27 @@ a skill pair whose descriptions need disambiguation.
 The runner does a preflight check and exits with a clear error if either
 is missing.
 
+## Baseline — 2026-04-23
+
+First full run of the 12-scenario seed corpus against `claude` CLI 2.1.118:
+
+```
+Summary: 11 PASS · 0 PASS-WEAK · 1 FAIL · 0 FLAKY
+```
+
+Known issue surfaced:
+
+- **`add-dashboard-roadmap`** (expected `manage-features`, got `manage-todos ×3`).
+  Prompt: *"Also a bigger idea worth brainstorming eventually: a self-service
+  dashboard so users can manage their own API keys. Too big for today, park it."*
+  Claude consistently reads this as a reminder-to-self rather than a feature-scale
+  idea. Root cause: the Memory Discipline decision order distinguishes step 4
+  (pending tasks → `manage-todos`) from step 5 (feature-scale → `manage-features`),
+  but the `manage-todos` vs `manage-features` skill descriptions do not clearly
+  demarcate "todo scale" vs "feature scale". **This is a real v0.8.x
+  boundary-tightening target**, not a framework bug. Scenario kept as-is to
+  serve as the regression marker.
+
 ## Files
 
 ```
