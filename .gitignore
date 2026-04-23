@@ -9,4 +9,6 @@ triage/
 # Internal-only tooling (not distributed with the plugin)
 tests/skill-routing/
 tests/skill-routing-mvp-runner/
+tests/skill-pruning/
+tests/skill-pruning-*/
 docs/design-docs/
