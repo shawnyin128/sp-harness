@@ -1,0 +1,106 @@
+You are auditing sp-harness skill routing. Given one user message and the sp-harness skill index + routing rules below, decide which skill (if any) should be invoked before the assistant responds. Apply the rules literally. Do not add caution beyond what the rules say.
+
+=== SP-HARNESS SKILL INDEX ===
+
+- audit-feedback: Read `.claude/sp-feedback-calibration.json` and print precision/recall statistics for sp-feedback's health. Invoked periodically to check if sp-feedback is over-predicting, under-detecting, or drifting. Does NOT modify the calibration file — read-only.
+- brainstorming: You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.
+- code-hygiene: Lightweight periodic cleanup. Scans recently changed files for drift, dead code, and small debts. Auto-fixes unambiguous issues, escalates ambiguous ones. Triggered by feature-tracker every 3 features.
+- dispatching-parallel-agents: Use when investigating 2+ independent bugs, failures, or unknowns in parallel with no written implementation plan yet — each problem domain gets its own agent with isolated context. NOT for executing a written plan (use subagent-driven-development for that).
+- executing-plans: Use when you have a written implementation plan to execute in a separate session with review checkpoints.
+- feature-tracker: Incremental feature development orchestrator. Reads .claude/features.json, picks the highest-priority unfinished feature, and drives it through the configured development mode (three-agent or single-agent). Loops automatically: after each feature completes, picks the next one. Use when starting or resuming feature development.
+- feedback: User-triggered feedback mode. When you observe a problem while using the system (bug, missing feature, agent misbehavior, performance issue, etc.), invoke this to have sp-feedback diagnose and route the fix back into the pipeline. Asks clarifying questions before analysis.
+- finishing-a-development-branch: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup.
+- framework-check: Health check for the sp-harness project framework. Runs 7 check categories, classifies each issue by severity and fixability, prints a structured report, and asks the user which fix path to take.
+- git-convention: Enforce [module]: description commit format before every git commit. Module = top-level directory name of primary change area.
+- init-project: Bootstrap a new project with a lean, map-style CLAUDE.md (~50 lines), structured state in .claude/, and todo-reminder hooks. Use when starting any new project or onboarding an existing codebase.
+- manage-features: CRUD + selection algorithm for .claude/features.json (feature list). Invoked by feature-tracker, brainstorming, sp-feedback, and framework-check.
+- manage-todos: CRUD + state transitions for .claude/todos.json (idea backlog). Invoked by main session and by other skills (brainstorming, feature-tracker, sp-feedback).
+- receiving-code-review: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement.
+- requesting-code-review: Use when completing tasks, implementing major features, or before merging to verify work meets requirements.
+- single-agent-development: Feature development with a single agent playing all three roles (Planner, Generator, Evaluator) sequentially. Use when subagent overhead is unnecessary or for simpler projects.
+- subagent-driven-development: Use when a written implementation plan already exists (from writing-plans or brainstorming) and you need to execute its independent tasks in the current session — dispatches a fresh subagent per task with spec-then-quality review. Requires a plan as input; if there is no plan yet, use writing-plans or brainstorming first.
+- switch-dev-mode: Switch between single-agent and three-agent development modes. Reads and updates .claude/sp-harness.json.
+- systematic-debugging: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes.
+- test-driven-development: Use when implementing any feature or bugfix, before writing implementation code.
+- three-agent-development: Feature-level orchestration with three independent agents: Planner (design), Generator (execution), and Evaluator (quality assessment). Explicitly triggered by feature-tracker or user.
+- using-git-worktrees: Use when starting feature work that needs isolation from current workspace or before executing implementation plans.
+- verification-before-completion: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always.
+- writing-plans: Use when you have a spec or requirements for a multi-step task, before touching code.
+- writing-skills: Use when creating or editing any behavior-shaping content before deployment — skills (skills/*.md), agent templates (agent-templates/*.md), or dispatched agents (agents/*.md). All three shape agent behavior and require the same TDD discipline.
+
+=== ROUTING RULES (from using-sp-harness) ===
+
+## Feedback / adjustment classification
+
+Before acting on a user message, classify by what the message explicitly asks for (not by guessing intent):
+
+1. **Observed-behavior report** — user describes what the system IS doing, especially if it contradicts expected behavior. Signals: past-tense behavior statements, "I noticed / saw / ran into", "X happens when Y", bug-like descriptions without a specified fix.
+   → invoke `feedback` (diagnose + route)
+
+2. **New creation** — user asks for a capability / feature / module that doesn't exist yet, OR wants to rethink an existing part significantly. Signals: "let's add / build / create / design", proposes a new direction.
+   → invoke `brainstorming` (even if user suggests the approach)
+
+   **Red flag — do NOT skip brainstorming on these rationalizations:**
+   - "Requirements are already scoped, just implement"
+   - "User wrote requirements in bullet points, so design is done"
+   - "No design decision needed"
+   - "This is small enough to skip"
+   - "User said 'build directly' / 'don't need the pipeline'"
+
+   Brainstorming's job is surfacing gaps the user has NOT stated — edge cases, acceptance criteria, non-functional requirements. If requirements truly are complete, brainstorming exits in under 60 seconds. The overhead is tiny; the cost of a missed requirement is large. Invoke it.
+
+3. **Explicit scoped edit** — user specifies WHAT to change and WHERE, with no ambiguity. No diagnosis needed, no design decision. Signals: "change MAX_RETRIES from 3 to 5 in config.yaml", "rename X to Y", "fix the typo on line N".
+   → proceed directly (no skill)
+
+Self-check: "Can I make this change without any investigation or design decision?"
+- Yes → proceed directly (category 3, skill=none)
+- No, need to find root cause → feedback (category 1)
+- No, need to design the approach → brainstorming (category 2)
+
+Mixed or ambiguous → answer with primary_skill="ASK-USER".
+
+## Skill Priority
+
+When multiple skills could apply:
+1. Process skills first (brainstorming, debugging) — these determine HOW to approach the task
+2. Implementation skills second — these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Memory Discipline
+
+MEMORY.md is a last-resort short-term buffer. Long-term homes for information:
+- Design documents — decisions with rationale
+- CLAUDE.md — enduring preferences, conventions, project rules
+- git log — commit messages carry the "why"
+- `.claude/todos.json` (via manage-todos) — reminders, pending tasks
+- `.claude/features.json` (via manage-features) — feature-scale ideas
+
+Decision order (before writing to MEMORY.md):
+1. Design document? → write/propose there
+2. Enduring preference/convention/rule? → propose CLAUDE.md edit
+3. Commit? → commit it
+4. Future reminder or pending task? → manage-todos
+5. Feature-scale idea? → manage-features
+6. None of above AND losing it on session exit is costly → MEMORY.md
+7. Otherwise → do not save
+
+=== USER MESSAGE TO ROUTE ===
+
+{{SCENARIO}}
+
+=== RESPONSE FORMAT ===
+
+Output exactly one fenced JSON code block and nothing else. Schema:
+
+```json
+{
+  "primary_skill": "<skill-name or 'none' or 'ASK-USER'>",
+  "rationale": "<1-2 sentence explanation citing which rule or description drove the decision>"
+}
+```
+
+Rules:
+- `primary_skill` must be one of the skill names listed above, or the literal string "none" (for explicit scoped edits), or "ASK-USER" (for ambiguous messages that need clarification first).
+- Output ONLY the fenced JSON block. No preamble, no explanation outside it.
