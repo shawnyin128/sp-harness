@@ -56,26 +56,30 @@ done
 # --- scenario discovery ---
 
 shopt -s nullglob
+# Initialize explicitly — on bash 3.2 with nullglob, assigning from an empty
+# glob can leave the array unset, which trips `set -u` at first reference.
+ALL_SCENARIOS=()
 ALL_SCENARIOS=("$CORPUS_DIR"/*.md)
-
-if [[ ${#ALL_SCENARIOS[@]} -eq 0 ]]; then
-  echo "no scenarios in $CORPUS_DIR (expected corpus/*.md)"
-  echo '{"scenarios": []}' | python3 "$TALLY"
-  exit $?
-fi
 
 SCENARIOS=()
 if [[ -n "$FILTER_ID" ]]; then
-  for f in "${ALL_SCENARIOS[@]}"; do
-    stem=$(basename "$f" .md)
-    if [[ "$stem" == "$FILTER_ID" ]]; then
-      SCENARIOS+=("$f")
-    fi
-  done
+  # --scenario filter: error if no match, regardless of empty-corpus status.
+  if [[ ${#ALL_SCENARIOS[@]} -gt 0 ]]; then
+    for f in "${ALL_SCENARIOS[@]}"; do
+      stem=$(basename "$f" .md)
+      if [[ "$stem" == "$FILTER_ID" ]]; then
+        SCENARIOS+=("$f")
+      fi
+    done
+  fi
   if [[ ${#SCENARIOS[@]} -eq 0 ]]; then
     echo "error: no scenario matches --scenario=$FILTER_ID" >&2
     exit 2
   fi
+elif [[ ${#ALL_SCENARIOS[@]} -eq 0 ]]; then
+  echo "no scenarios in $CORPUS_DIR (expected corpus/*.md)"
+  echo '{"scenarios": []}' | python3 "$TALLY"
+  exit $?
 else
   SCENARIOS=("${ALL_SCENARIOS[@]}")
 fi
@@ -140,7 +144,7 @@ PYEOF
   VOTES_PER_SCENARIO="$VOTES_PER_SCENARIO" \
   TIMEOUT_SECONDS="$TIMEOUT_SECONDS" \
     python3 - >> "$RECORDS" <<'PYEOF'
-import os, json, subprocess, concurrent.futures, pathlib
+import os, re, json, subprocess, concurrent.futures, pathlib
 
 prompt_text = pathlib.Path(os.environ["PROMPT_FILE"]).read_text()
 sid = os.environ["SCENARIO_ID"]
@@ -148,7 +152,11 @@ expected = os.environ["SCENARIO_EXPECTED"]
 n = int(os.environ["VOTES_PER_SCENARIO"])
 timeout = int(os.environ["TIMEOUT_SECONDS"])
 
-def vote() -> dict:
+# Cheap parseability check (no JSON parsing here — tally.py is authoritative).
+# If no fenced JSON block is present we retry once before giving up.
+FENCED_JSON_RE = re.compile(r"```json\s*\{.*?\}\s*```", re.DOTALL)
+
+def _call_once() -> dict:
     try:
         proc = subprocess.run(
             ["claude", "--print", "--max-turns", "1"],
@@ -159,6 +167,13 @@ def vote() -> dict:
         return {"output": "", "exit_code": 124}
     except Exception as e:
         return {"output": f"(spawn error: {e})", "exit_code": -1}
+
+def vote() -> dict:
+    result = _call_once()
+    # Retry once if the response has no fenced JSON block or CLI errored.
+    if result["exit_code"] != 0 or not FENCED_JSON_RE.search(result["output"] or ""):
+        result = _call_once()
+    return result
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=n) as pool:
     votes = list(pool.map(lambda _: vote(), range(n)))
