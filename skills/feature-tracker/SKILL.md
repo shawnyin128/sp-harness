@@ -75,8 +75,10 @@ Feature Progress: <passed>/<total> completed
 Dev Mode: {dev_mode}
 Hygiene: last at {last_hygiene_at_completed}, next at {last_hygiene_at_completed + 3}
 
-Remaining (from script output):
-  [priority] feature-id — description
+Remaining (from script output — display_name primary, id on indented line):
+  · [priority] Display Name
+      id: feature-id   deps: Dep Display Name
+      Description text
   ...
 ```
 
@@ -169,11 +171,20 @@ commit. If `done=false`, remaining features are listed — no further
 action needed.
 
 **MUST: Commit feature completion — do NOT skip:**
+
+Fetch the display_name for the completed feature:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" \
+  get <feature-id> --format=json
+```
+Parse `display_name` from that JSON (fall back to `<feature-id>` if the
+field is missing or empty — shouldn't happen after backfill, but stay safe).
+
 ```
 git add .claude/features.json .claude/sp-harness.json \
         .claude/agents/state/archive/ .claude/todos.json \
         docs/plans/
-git commit -m "[features]: mark {feature-id} as complete"
+git commit -m "[features]: complete \"{display_name}\" ({feature-id})"
 ```
 This commit is how new sessions know which features are done via `git log`.
 Without it, the session start protocol's git log step is useless.
