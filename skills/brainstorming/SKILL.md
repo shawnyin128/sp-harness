@@ -433,9 +433,9 @@ Rules:
 - When the user picks an option or approves, update the spec file
   accordingly BEFORE moving to feature extraction.
 
-**Before printing the brief, write an in-flight block to `.claude/memory.md`.**
-This lets a later session auto-resume if the user pauses. Use the schema
-defined in `.claude/memory.md`'s `## In-flight` section:
+**Before printing the brief, write an in-flight topic block to the
+`## Buffer` section of `.claude/memory.md`.** This lets a later session
+auto-resume if the user pauses. Use this schema:
 
 ```markdown
 ### <topic-id>  (paused: <ISO 8601 UTC>)

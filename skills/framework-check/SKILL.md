@@ -68,11 +68,11 @@ Checks:
 - [ ] All `linked_feature_ids` reference existing features (🟡, `manual`)
 - [ ] No duplicate todo ids (🔴, `manual`)
 - [ ] `.claude/memory.md` exists (🟡, `auto`: create from template)
-- [ ] memory.md has `## Observations` + `## In-flight` sections (🟡, `manual`)
+- [ ] memory.md has a `## Buffer` section (🟡, `manual`)
 - [ ] memory.md under 30 lines (🟡, `manual`: triage bloated entries)
 - [ ] `.claude/features.json` entries with `from_todo` reference existing todo ids (🔴, `manual`)
 
-Source overlap (HARD RULE): for each memory.md observation entry, check
+Source overlap (HARD RULE): for each memory.md buffer entry, check
 if the referenced file also appears in pending todos, features.json, or
 recent git log. Overlap → warn `manual` (user triages which is authoritative).
 
@@ -144,7 +144,7 @@ Checks:
 
 Scope is narrow: only files that inherit their content from the plugin
 (which is English-only). User-authored project files — CLAUDE.md, design
-docs, memory.md observations, todo descriptions — follow the user's
+docs, memory.md buffer entries, todo descriptions — follow the user's
 choice of language and are NOT checked here.
 
 Severity: 🔴 for deployed agent files (prompt pollution breaks model
@@ -178,7 +178,7 @@ repo root — indicates this IS the sp-harness repo):
 
 **Never check** (user's choice):
 - Any user-project `CLAUDE.md`
-- `.claude/memory.md` observations
+- `.claude/memory.md` buffer entries
 - `.claude/todos.json` descriptions
 - `docs/design-docs/` in user projects (user's spec, user's language)
 

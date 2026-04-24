@@ -102,13 +102,14 @@ State lives in structured files — each concern has one authoritative source.
 3. `.claude/sp-harness.json` — config (dev_mode, hygiene counter, external_codebase flag)
 4. `.claude/codebase-context.md` — only if sp-harness.json has `external_codebase: true`
 5. `.claude/todos.json` — idea backlog
-6. `.claude/memory.md` — short-term session memory (observations + in-flight)
+6. `.claude/memory.md` — short-term buffer (loose notes + in-flight topic blocks)
 7. `git log --oneline -20` — recent activity
 8. `git status` — uncommitted work (where you physically left off)
 
 **In-flight auto-resume (after step 6):**
-If `.claude/memory.md` `## In-flight` section has one or more topic blocks,
-surface each to the user before doing anything else:
+If `.claude/memory.md` `## Buffer` section has one or more in-flight topic
+blocks (entries beginning with `### <topic-id>`), surface each to the user
+before doing anything else:
 
 ```
 ⏸ In-flight detected: <topic-id>
@@ -208,23 +209,37 @@ If already exists (check B2), skip.
 Create with this EXACT content (template + scope comment):
 
 ````markdown
-# Session Memory (short-term, pre-triage)
+# Session Memory (short-term buffer)
 
 <!--
-SCOPE: Observations not yet decided how to handle. Cleared as triaged.
+SCOPE: Last-resort short-term buffer per `using-sp-harness` Memory
+Discipline. ONLY for content that (a) has no permanent home yet
+(design doc / CLAUDE.md / commit / todos.json / features.json) AND
+(b) would be lost on session exit.
 
-WHAT GOES HERE:
-  - bug: observed, not yet verified or decided to fix
-  - hypothesis: theory under investigation
-  - concern: raised but undecided
-  - note: mid-investigation progress
+Delete each entry the moment it reaches a permanent home. This file
+is a buffer, not an archive.
 
-WHAT DOES NOT GO HERE (already decided → SKIP memory, go direct):
+WHAT DOES NOT GO HERE (already decided → skip memory, route direct):
   - Ideas to pursue → sp-harness:manage-todos add
   - Bugs to fix → sp-harness:manage-features add (fix_feature)
   - Reusable patterns → raise via sp-feedback (routes to agent-memory)
   - Design decisions → docs/design-docs/
   - Project architecture → CLAUDE.md + docs/
+
+Entries may be loose 1-line notes OR structured in-flight topic blocks
+— both live in the single `## Buffer` section below. Examples:
+
+  Loose note:
+    - [YYYY-MM-DD] <freeform note> — refs: <file:line / id / commit>
+
+  In-flight topic block (self-sufficient for session resume):
+    ### <topic-id>  (paused: <ISO 8601 UTC>)
+    - **Phase**: <what stage>
+    - **Context**: <1-2 sentences on what was decided and where we are>
+    - **Open**: <open questions / decisions>
+    - **Pointers**: <file paths / ids the resuming session should read>
+    - **Next**: <one sentence describing the next action that resumes this>
 
 BEFORE ADDING (mandatory triage of existing entries):
   For each existing entry, run these checks in order:
@@ -235,44 +250,15 @@ BEFORE ADDING (mandatory triage of existing entries):
 
 HARD RULE: NEVER duplicate with todos.json / features.json / agent-memory.
 Keep under 30 lines. If bloated, triage before adding more.
+
+Agent reading this file on session start MUST surface each in-flight
+topic block to the user with a resume prompt. Loose notes need no resume
+prompt; they are context for whatever the user does next.
 -->
 
-## Observations
+## Buffer
 
-<!-- Format: - [YYYY-MM-DD] [bug|hypothesis|concern|note] description — refs: <file:line, feature-id, commit-sha, ...> -->
-
-## In-flight
-
-<!--
-Each entry must be self-sufficient for session resumption — reading
-this section alone tells the next session what was happening and what
-to do next. Do NOT write a pointer like "see spec X" — write the
-context itself.
-
-Schema (one block per in-flight topic, replaced not appended per topic):
-
-### <topic-id>  (paused: <ISO timestamp>)
-- **Phase**: <what stage, e.g. "brainstorm post-spec-draft, awaiting user review">
-- **Context**: <1-2 sentences summarizing what was decided and where we are>
-- **Open**: <structured list of open questions or decisions>
-  - Q1: <question> — alternatives: [...]
-  - Q2: ...
-- **Pointers**: <file paths and ids the resuming session should read>
-  - docs/design-docs/<spec>.md
-  - todo: <todo-id> (if any)
-  - feature: <feature-id> (if any)
-- **Next**: <one sentence describing the next action that resumes this>
-
-Rules:
-- One block per distinct topic. Multiple in-flight topics = multiple blocks.
-- Replace the entire block when state changes (do not append history).
-- Agent reading this section on session start MUST surface each in-flight
-  topic to the user with a resume prompt. See CLAUDE.md session-start
-  protocol.
-- Remove the block when the topic is finalized (e.g. brainstorm done,
-  feature handed off to feature-tracker).
-
--->
+<!-- entries go here — loose notes and/or in-flight topic blocks -->
 ````
 
 ### 4c. Legacy cleanup (pre-0.4.x projects)
