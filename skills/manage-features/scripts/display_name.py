@@ -14,6 +14,7 @@ LEADING_VERBS = frozenset({
 })
 
 MAX_LEN = 50
+MAX_WORDS = 5
 
 TRAILING_CONNECTORS = frozenset({
     "and", "or", "with", "for", "to", "the", "a", "an", "of", "in",
@@ -49,12 +50,16 @@ def derive_display_name(description: str) -> str:
         if stripped:
             s = stripped[:1].upper() + stripped[1:]
 
-    if len(s) <= MAX_LEN:
-        return s
+    words = s.split()
+    if len(words) > MAX_WORDS:
+        s = " ".join(words[:MAX_WORDS])
 
-    cut = s[:MAX_LEN]
-    last_space = cut.rfind(" ")
-    if last_space > 0:
-        cut = cut[:last_space]
-    cut = _strip_trailing_connectors(cut)
-    return cut or s[:MAX_LEN]
+    if len(s) > MAX_LEN:
+        cut = s[:MAX_LEN]
+        last_space = cut.rfind(" ")
+        if last_space > 0:
+            cut = cut[:last_space]
+        s = cut
+
+    s = _strip_trailing_connectors(s)
+    return s or description.strip()[:MAX_LEN]

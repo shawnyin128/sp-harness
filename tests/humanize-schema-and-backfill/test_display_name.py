@@ -37,6 +37,18 @@ class TestDeriveDisplayName(unittest.TestCase):
             "Something important",
         )
 
+    def test_caps_at_five_words(self):
+        out = derive_display_name(
+            "Commit templates feature-tracker listings and manage-star query output"
+        )
+        self.assertLessEqual(len(out.split()), 5)
+
+    def test_five_word_cap_applies_before_char_cap(self):
+        # Description under 50 chars but over 5 words → word cap still trims it
+        out = derive_display_name("one two three four five six seven")
+        self.assertEqual(len(out.split()), 5)
+        self.assertEqual(out, "one two three four five")
+
     def test_truncate_strips_trailing_connectors_and_commas(self):
         out = derive_display_name(
             "Commit templates, feature-tracker listings, and manage-* query output"

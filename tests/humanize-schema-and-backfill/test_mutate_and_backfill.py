@@ -47,7 +47,7 @@ class TestFeaturesMutate(TempRepo):
         self.assertEqual(res.returncode, 0, res.stderr)
         data = json.loads((self.tmp / ".claude" / "features.json").read_text())
         self.assertEqual(data["features"][0]["display_name"],
-                         "A shiny new thing to the codebase")
+                         "A shiny new thing")
 
     def test_add_explicit_overrides(self):
         res = self._add("--display-name=Custom Label")

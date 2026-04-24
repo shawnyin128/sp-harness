@@ -78,10 +78,13 @@ For confirmed batches:
 - **fix_feature**: invoke `sp-harness:manage-features` Add operation:
   ```bash
   python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
-    --id=<kebab-id> --category=functional --priority=<high|medium|low> \
+    --id=<kebab-id> --display-name="<3-5 word noun phrase>" \
+    --category=functional --priority=<high|medium|low> \
     --description="<from finding>" --steps="<from suggestion>"
   ```
-  Will be picked up by feature-tracker on next loop.
+  Derive the display_name from the finding (what the fix IS, not what you
+  do) — don't fall back to the heuristic. Will be picked up by
+  feature-tracker on next loop.
 - **manual**: print to user, no automated action.
 
 ## Step 7: Update calibration log
