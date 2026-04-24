@@ -3,12 +3,15 @@
 Mutate .claude/todos.json via structured operations.
 
 Usage:
-  mutate.py add <description> --category=<c> [--notes=<n>]
+  mutate.py add <description> --category=<c> [--notes=<n>] [--display-name=<n>]
   mutate.py mark-in-brainstorm <id>
   mutate.py link-features <id> <feature_id> [<feature_id> ...]
   mutate.py check-done <id>
   mutate.py drop <id> --reason=<r>
-  mutate.py update <id> [--description=<d>] [--category=<c>] [--notes=<n>]
+  mutate.py update <id> [--description=<d>] [--category=<c>] [--notes=<n>] [--display-name=<n>]
+
+--display-name is a short 3-6 word plain-language label. If omitted on
+add, a deterministic heuristic derives one from the description.
 
 All ops validate the schema and state machine. Invalid transitions exit
 non-zero with an error message.
@@ -30,6 +33,8 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+from display_name import derive_display_name
 
 TODOS_PATH = Path(".claude/todos.json")
 FEATURES_PATH = Path(".claude/features.json")
@@ -117,9 +122,11 @@ def op_add(args):
     existing_ids = {t["id"] for t in data["todos"]}
     if args.category not in VALID_CATEGORIES:
         sys.exit(f"error: category must be one of {sorted(VALID_CATEGORIES)}")
+    display_name = args.display_name or derive_display_name(args.description)
     todo = {
         "id": unique_id(slugify(args.description), existing_ids),
         "description": args.description,
+        "display_name": display_name,
         "category": args.category,
         "status": "pending",
         "notes": args.notes or "",
@@ -253,8 +260,11 @@ def op_update(args):
     if args.notes is not None:
         todo["notes"] = args.notes
         updates["notes"] = args.notes
+    if args.display_name is not None:
+        todo["display_name"] = args.display_name
+        updates["display_name"] = args.display_name
     if not updates:
-        sys.exit("error: provide at least one of --description, --category, --notes")
+        sys.exit("error: provide at least one of --description, --category, --notes, --display-name")
     save_todos(data)
     print(json.dumps({"id": todo["id"], "updated": list(updates.keys())}, indent=2))
 
@@ -267,6 +277,7 @@ def main():
     p_add.add_argument("description")
     p_add.add_argument("--category", required=True, choices=sorted(VALID_CATEGORIES))
     p_add.add_argument("--notes")
+    p_add.add_argument("--display-name", help="Short 3-6 word label; auto-derived from description if omitted")
     p_add.set_defaults(func=op_add)
 
     p_mark = sub.add_parser("mark-in-brainstorm")
@@ -292,6 +303,7 @@ def main():
     p_update.add_argument("--description")
     p_update.add_argument("--category", choices=sorted(VALID_CATEGORIES))
     p_update.add_argument("--notes")
+    p_update.add_argument("--display-name", help="Overwrite display_name")
     p_update.set_defaults(func=op_update)
 
     args = parser.parse_args()
