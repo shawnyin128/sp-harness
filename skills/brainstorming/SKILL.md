@@ -470,6 +470,7 @@ each feature, invoke:
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/mutate.py" add \
   --id=kebab-case-id \
+  --display-name="Short noun phrase" \
   --category=functional|ui|infrastructure|testing \
   --priority=high|medium|low \
   --description="One-line description" \
@@ -484,6 +485,10 @@ schema, dependency references, supersedes references, and rejects cycles on ever
 
 **Rules:**
 - `id` must be unique (script enforces)
+- `display_name` is a 3-6 word **noun phrase** (≤ 60 chars) describing what
+  the feature IS, not a verb phrase for what you do. Derive it per feature
+  from spec context — do not fall back to the heuristic auto-derivation.
+  Example: ✅ `"Skill routing audit harness"` · ❌ `"Build audit harness for routing"`
 - `depends_on` only references features already added (add in dependency order)
 - `supersedes` references features this one replaces — set if the spec has
   a `## Supersession Plan` section. Listed feature ids must exist in features.json.
