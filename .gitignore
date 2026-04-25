@@ -12,3 +12,8 @@ tests/skill-routing-mvp-runner/
 tests/skill-pruning/
 tests/skill-pruning-*/
 docs/design-docs/
+
+# Skill development artifacts (writing-skills TDD outputs)
+skills/*/CREATION-LOG.md
+skills/*/test-pressure-*.md
+skills/*/test-academic.md
