@@ -1,7 +1,7 @@
 {
   "name": "sp-harness",
   "description": "Harness engineering skills library: structured memory, three-agent development, feature tracking, and systematic quality control",
-  "version": "0.8.8",
+  "version": "0.8.9",
   "author": {
     "name": "Shawn Yin",
     "email": "shawnyin128@gmail.com"
