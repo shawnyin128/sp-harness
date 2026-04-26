@@ -27,7 +27,9 @@ Each category groups related checks. Every issue found is tagged with:
 
 ### 1. CLAUDE.md
 
-Severity: 🔴 if missing or old format; 🟡 if content drift.
+Severity: 🔴 if missing or old format; 🔴 if humanization or
+language-consistency rules are absent (v0.8.5+ / v0.8.7+); 🟡 for other
+content drift.
 
 Checks:
 - [ ] File exists
@@ -40,15 +42,15 @@ Checks:
       Mentioning `.claude/memory.md` (at root, v0.4.3+ scope) is FINE — that's the current short-term memory file.
 - [ ] Project Map has `### Design Docs` and `### Codebase` subsections (no tables)
 - [ ] No extra sections
-- [ ] **Principle 4 contains the humanization directive** (v0.8.5+): the body
+- [ ] **Principle 4 contains the humanization directive** (v0.8.5+, 🔴): the body
       mentions translating jargon. Marker: case-insensitive match for
       `translate jargon` OR `don't paste doc vocabulary`. Old short form
       ("Skip preamble, summaries, and obvious observations.") = FAIL.
-- [ ] **Context Management Rules contains the audience-modeling line** (v0.8.5+):
+- [ ] **Context Management Rules contains the audience-modeling line** (v0.8.5+, 🔴):
       the `**Rules:**` block starts with a bullet about translating project
       terms for the listener. Marker: case-insensitive match for
       `translate project terms into plain language` OR `listener may not share`.
-- [ ] **Principle 5 contains the language-consistency rule** (v0.8.7+):
+- [ ] **Principle 5 contains the language-consistency rule** (v0.8.7+, 🔴):
       First-Principles section has a `**5.` heading and the body mentions
       matching the user's language for inline chat. Marker: case-insensitive
       match for both `match the user's language` AND `code-mixing`. Absence
@@ -58,33 +60,46 @@ Fixability:
 - File missing → `needs-confirm` (full rewrite via init-project template)
 - Old-format sections present → `needs-confirm` (full rewrite)
 - Content drift (minor) → `manual` (user must decide what to keep)
-- **Missing Principle 4 humanization directive (v0.8.5+) → `auto` (FORCE
-  UPDATE, no confirm)**: locate the `**4. Output only what changes decisions.**`
-  line; if the next non-blank line is exactly
-  `Skip preamble, summaries, and obvious observations.` → replace those two
-  lines with the v0.8.5 form (4 lines: title + 3-line body containing the
-  translation directive). If the body has been hand-edited to something
-  other than the old short form, downgrade to `manual` (user must reconcile).
-- **Missing Context Management audience-modeling rule (v0.8.5+) → `auto`
-  (FORCE UPDATE)**: locate the `**Rules:**` line; if the next bullet is not
-  the audience-modeling line, insert it as the new first bullet:
+- **Missing Principle 4 humanization directive (v0.8.5+) → 🔴 `auto`
+  (FORCE UPDATE, no confirm, no manual fallback)**: locate
+  `**4. Output only what changes decisions.**`. Replace its body (every
+  line between this heading and the next blank line) with the canonical
+  v0.8.5 body:
+  ```
+  Skip preamble and obvious observations. When summarizing plans, specs, or
+  status, translate jargon — don't paste doc vocabulary back. Cite file:line
+  at the end if needed, not as the lead.
+  ```
+  Before writing, print the old body to terminal so user can manually
+  re-apply any custom wording afterwards. DO NOT downgrade to manual
+  even if the body looks hand-edited — the goal is forced convergence.
+- **Missing Context Management audience-modeling rule (v0.8.5+) → 🔴 `auto`
+  (FORCE UPDATE, no manual fallback)**: locate the `**Rules:**` line. If
+  no bullet in the Rules block matches markers `translate project terms`
+  OR `listener may not share`, insert this as the new first bullet:
   `- When reporting plan/status to the user, translate project terms into plain language. The listener may not share doc vocabulary.`
-- **Missing Principle 5 (v0.8.7+) → `auto` (FORCE UPDATE)**: insert the
-  full Principle 5 block immediately after Principle 4 (and before the
-  `---` separator). Canonical form:
+- **Missing Principle 5 (v0.8.7+) → 🔴 `auto` (FORCE UPDATE, no manual
+  fallback)**: insert the full Principle 5 block immediately after the
+  Principle 4 body's blank-line terminator and before the `---` separator
+  that ends First-Principles Standards. Canonical form:
   ```
   **5. Match the user's language for inline chat only.**
   Reply fully in the user's language with no code-mixing. Identifiers (paths,
   commands, field names, product names) stay in original. Files, commits,
   docs, code, and state always English regardless.
   ```
-  If Principle 5 already exists with different wording but covers the rule
-  (markers `match the user's language` AND `code-mixing` AND a file/commit
-  carve-out), treat as ✅ — don't overwrite.
+  If a `**5.` heading already exists but is missing markers
+  (`match the user's language` AND `code-mixing`), DELETE the old block
+  and replace with the canonical form (print the old block to terminal
+  first so user can manually re-apply customizations).
 
-These three are FORCE-UPDATE because outputs without them are observably
-hard to read (jargon dump from dense plan docs, or English-Chinese code-
-mixed sentences). Severity: 🟡.
+These three are 🔴 FORCE-UPDATE — runtime is observably degraded
+without them (jargon dump from dense plan docs, English-Chinese
+code-mixed sentences). They apply on path (a) and (b) without
+per-item gating. On path (c) per-item, the agent still asks but
+notes "🔴 force-recommended". On path (d) report-only, list as
+unfixed but with explicit warning that user-facing output will keep
+producing the broken patterns until applied.
 
 ### 2. Docs structure
 
@@ -144,18 +159,21 @@ New-format markers (absence = BAD):
 - [ ] sp-evaluator.md contains `eval.rounds[]` or `<feature-id>.plan.yaml`
 - [ ] sp-feedback.md contains `<feature-id>.plan.yaml`
 
-Language-consistency rule (v0.8.7+, absence = BAD, force-update):
+Language-consistency rule (v0.8.7+, 🔴 FORCE UPDATE, no manual fallback):
 - [ ] Each existing `.claude/agents/sp-*.md` contains the language
       consistency rule. Marker: case-insensitive match for
       `match the user's language` AND (`code-mixing` OR `code mixing`).
-      Detect per-file; missing in any file = FAIL for that file.
+      Detect per-file; missing in any file = 🔴 FAIL for that file.
 
-Fix: regenerate from `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`
-(fills {PROJECT_NAME}, {PROJECT_CONTEXT} from CLAUDE.md, overwrites).
-`needs-confirm` because any hand customization is lost — UNLESS the only
-issue is the missing language-consistency rule and old/new format markers
-all pass; then it's `auto` (FORCE UPDATE) since the fix is purely additive
-(append the rule to the existing `## Rules` numbered list).
+Fix:
+- **Old/new format markers FAIL → `needs-confirm` (full template regenerate)**:
+  read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill
+  `{PROJECT_NAME}` and `{PROJECT_CONTEXT}` from CLAUDE.md, overwrite the
+  deployed file. User-confirm because hand customization is lost.
+- **Only language-consistency rule missing → 🔴 `auto` (FORCE UPDATE)**:
+  append the canonical rule (per-file wording in the Critical Fix Paths
+  section below) to the existing `## Rules` numbered list. Purely
+  additive. DO NOT downgrade to manual or needs-confirm.
 
 ### 5. Agent state
 
@@ -416,7 +434,7 @@ the project name transfers. Design decisions go to docs/design-docs/;
 decided ideas go to manage-todos; decided fixes go to manage-features;
 recurring patterns go to agent memory via sp-feedback.
 
-### CLAUDE.md missing v0.8.5 humanization rules (FORCE UPDATE, auto)
+### CLAUDE.md missing v0.8.5 humanization rules (🔴 FORCE UPDATE, auto, no manual fallback)
 
 Two surgical patches. Apply directly without user confirm.
 
@@ -436,9 +454,10 @@ status, translate jargon — don't paste doc vocabulary back. Cite file:line
 at the end if needed, not as the lead.
 ```
 
-If Principle 4's body is NOT exactly the old short form (user has
-hand-edited it), DO NOT auto-replace — downgrade to `manual` and tell the
-user to reconcile their custom wording with the new directive.
+If Principle 4's body has been hand-edited beyond the old short form,
+**still force-replace** with the canonical body. Before writing, print
+the old body to terminal so the user can manually re-apply any
+customization afterwards. DO NOT downgrade to manual.
 
 **Patch 2: Context Management Rules first bullet.** Find the line
 `**Rules:**` and check the immediately following bullet. If it is not
@@ -455,7 +474,7 @@ treat as ✅ — don't insert a duplicate.
 After both patches, re-check the 80-line cap. If now over, warn user:
 typical fix is to trim the FILL tree examples in Project Map.
 
-### CLAUDE.md missing Principle 5 (v0.8.7+, FORCE UPDATE, auto)
+### CLAUDE.md missing Principle 5 (v0.8.7+, 🔴 FORCE UPDATE, auto, no manual fallback)
 
 Insert the canonical Principle 5 block immediately after Principle 4 and
 before the `---` separator that ends First-Principles Standards:
@@ -471,12 +490,14 @@ If a Principle 5 already exists with different wording AND covers all of:
 matches `match the user's language`, mentions `code-mixing` (or `code mixing`),
 mentions a file/commit/docs carve-out → treat as ✅, don't overwrite.
 
-If Principle 5 exists but is missing one of the markers → downgrade to
-`manual`; user reconciles.
+If Principle 5 exists but is missing one of the markers, **delete the
+existing block and replace** with the canonical form. Print the old
+block to terminal first so the user can manually re-apply customization.
+DO NOT downgrade to manual.
 
 After patch, re-check 80-line cap.
 
-### Agent files missing language-consistency rule (v0.8.7+, FORCE UPDATE, auto)
+### Agent files missing language-consistency rule (v0.8.7+, 🔴 FORCE UPDATE, auto)
 
 For each existing `.claude/agents/sp-*.md` that lacks the rule (markers
 `match the user's language` AND `code-mixing`):
@@ -491,8 +512,12 @@ For each existing `.claude/agents/sp-*.md` that lacks the rule (markers
   - sp-generator.md (no terminal output):
     `N. Files / commits / plan YAML always English regardless of any chat language. (Generator has no terminal output, so the "inline chat" half of the language rule does not apply here.)`
 
-If a file lacks a `## Rules` section entirely (drift), downgrade to
-`needs-confirm` and prefer full template regeneration.
+If a file lacks a `## Rules` section entirely (drift), prefer full
+template regeneration via `needs-confirm` (since drift this severe
+suggests other issues). This is the ONE case where it's not pure-auto —
+because regenerating the full file destroys hand customization, which
+needs user awareness. The other cases (Rules section exists but rule
+missing) are pure-auto force-update.
 
 ### Agent template drift
 Read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill
