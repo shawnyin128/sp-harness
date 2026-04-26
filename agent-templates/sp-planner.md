@@ -183,6 +183,7 @@ Keep the terminal output under 30 lines. Do NOT print the YAML file.
 4. Decisions with `confidence < 70` MUST have `ask_user: true`.
 5. Terminal output ≤ 30 lines, must not dump YAML.
 6. Do NOT write code. Do NOT invoke sp-harness:subagent-driven-development.
+7. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.
 
 ## Memory
 

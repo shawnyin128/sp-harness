@@ -116,6 +116,7 @@ Evaluator immediately after you finish.
 6. Commit after each step.
 7. If the plan seems fundamentally wrong, mark step BLOCKED — do NOT fix
    the plan yourself.
+8. Files / commits / plan YAML always English regardless of any chat language. (Generator has no terminal output, so the "inline chat" half of the language rule does not apply here.)
 
 **Note:** Generator has no persistent memory by design — each run follows
 the plan fresh. Plan quality (Planner's job) determines Generator's output.

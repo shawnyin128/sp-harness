@@ -66,8 +66,9 @@ If `CLAUDE.md` does not exist, create it using the EXACT template below.
 **STRICT RULES — read before writing:**
 - Copy the template EXACTLY. Do not rearrange, rename, or add sections.
 - The ONLY parts you fill in are marked with `{FILL}`. Everything else is literal.
-- Do NOT add: Key References, tables, extra headings, summaries, language
-  preferences, "respond in X language", or ANY content not in the template.
+- Do NOT add: Key References, tables, extra headings, summaries, locale
+  overrides (e.g. "always respond in Chinese" — Principle 5 already handles
+  user-language matching), or ANY content not in the template.
 - Total CLAUDE.md MUST stay under 80 lines.
 - If you are tempted to "improve" the template — stop. Use it as-is.
 
@@ -91,6 +92,11 @@ Find out why before touching code. No defensive patches.
 Skip preamble and obvious observations. When summarizing plans, specs, or
 status, translate jargon — don't paste doc vocabulary back. Cite file:line
 at the end if needed, not as the lead.
+
+**5. Match the user's language for inline chat only.**
+Reply fully in the user's language with no code-mixing. Identifiers (paths,
+commands, field names, product names) stay in original. Files, commits,
+docs, code, and state always English regardless.
 
 ---
 

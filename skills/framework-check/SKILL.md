@@ -48,6 +48,11 @@ Checks:
       the `**Rules:**` block starts with a bullet about translating project
       terms for the listener. Marker: case-insensitive match for
       `translate project terms into plain language` OR `listener may not share`.
+- [ ] **Principle 5 contains the language-consistency rule** (v0.8.7+):
+      First-Principles section has a `**5.` heading and the body mentions
+      matching the user's language for inline chat. Marker: case-insensitive
+      match for both `match the user's language` AND `code-mixing`. Absence
+      of any Principle 5 = FAIL.
 
 Fixability:
 - File missing → `needs-confirm` (full rewrite via init-project template)
@@ -64,9 +69,22 @@ Fixability:
   (FORCE UPDATE)**: locate the `**Rules:**` line; if the next bullet is not
   the audience-modeling line, insert it as the new first bullet:
   `- When reporting plan/status to the user, translate project terms into plain language. The listener may not share doc vocabulary.`
+- **Missing Principle 5 (v0.8.7+) → `auto` (FORCE UPDATE)**: insert the
+  full Principle 5 block immediately after Principle 4 (and before the
+  `---` separator). Canonical form:
+  ```
+  **5. Match the user's language for inline chat only.**
+  Reply fully in the user's language with no code-mixing. Identifiers (paths,
+  commands, field names, product names) stay in original. Files, commits,
+  docs, code, and state always English regardless.
+  ```
+  If Principle 5 already exists with different wording but covers the rule
+  (markers `match the user's language` AND `code-mixing` AND a file/commit
+  carve-out), treat as ✅ — don't overwrite.
 
-These two are FORCE-UPDATE because outputs without them are observably
-hard to read (jargon dump from dense plan docs). Severity: 🟡.
+These three are FORCE-UPDATE because outputs without them are observably
+hard to read (jargon dump from dense plan docs, or English-Chinese code-
+mixed sentences). Severity: 🟡.
 
 ### 2. Docs structure
 
@@ -126,9 +144,18 @@ New-format markers (absence = BAD):
 - [ ] sp-evaluator.md contains `eval.rounds[]` or `<feature-id>.plan.yaml`
 - [ ] sp-feedback.md contains `<feature-id>.plan.yaml`
 
+Language-consistency rule (v0.8.7+, absence = BAD, force-update):
+- [ ] Each existing `.claude/agents/sp-*.md` contains the language
+      consistency rule. Marker: case-insensitive match for
+      `match the user's language` AND (`code-mixing` OR `code mixing`).
+      Detect per-file; missing in any file = FAIL for that file.
+
 Fix: regenerate from `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`
 (fills {PROJECT_NAME}, {PROJECT_CONTEXT} from CLAUDE.md, overwrites).
-`needs-confirm` because any hand customization is lost.
+`needs-confirm` because any hand customization is lost — UNLESS the only
+issue is the missing language-consistency rule and old/new format markers
+all pass; then it's `auto` (FORCE UPDATE) since the fix is purely additive
+(append the rule to the existing `## Rules` numbered list).
 
 ### 5. Agent state
 
@@ -427,6 +454,45 @@ treat as ✅ — don't insert a duplicate.
 
 After both patches, re-check the 80-line cap. If now over, warn user:
 typical fix is to trim the FILL tree examples in Project Map.
+
+### CLAUDE.md missing Principle 5 (v0.8.7+, FORCE UPDATE, auto)
+
+Insert the canonical Principle 5 block immediately after Principle 4 and
+before the `---` separator that ends First-Principles Standards:
+
+```
+**5. Match the user's language for inline chat only.**
+Reply fully in the user's language with no code-mixing. Identifiers (paths,
+commands, field names, product names) stay in original. Files, commits,
+docs, code, and state always English regardless.
+```
+
+If a Principle 5 already exists with different wording AND covers all of:
+matches `match the user's language`, mentions `code-mixing` (or `code mixing`),
+mentions a file/commit/docs carve-out → treat as ✅, don't overwrite.
+
+If Principle 5 exists but is missing one of the markers → downgrade to
+`manual`; user reconciles.
+
+After patch, re-check 80-line cap.
+
+### Agent files missing language-consistency rule (v0.8.7+, FORCE UPDATE, auto)
+
+For each existing `.claude/agents/sp-*.md` that lacks the rule (markers
+`match the user's language` AND `code-mixing`):
+
+- Locate the file's `## Rules` section.
+- Append a new numbered rule continuing the existing numbering. Wording
+  by file:
+
+  - sp-planner.md / sp-evaluator.md / sp-feedback.md:
+    `N. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.`
+
+  - sp-generator.md (no terminal output):
+    `N. Files / commits / plan YAML always English regardless of any chat language. (Generator has no terminal output, so the "inline chat" half of the language rule does not apply here.)`
+
+If a file lacks a `## Rules` section entirely (drift), downgrade to
+`needs-confirm` and prefer full template regeneration.
 
 ### Agent template drift
 Read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill

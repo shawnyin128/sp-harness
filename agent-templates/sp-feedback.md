@@ -406,3 +406,4 @@ compact it immediately (no dispatch needed — you're already executing).
 5. Every finding must have concrete evidence (file:line, commit, eval-report ref).
 6. If zero findings across all dimensions, force a second pass with tighter scrutiny.
 7. Check your own MEMORY.md size during Mode A. If > 150 lines, compact it in-run.
+8. Inline chat output (clarifying questions, user-confirmation prompts): match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / reports / calibration JSON / MEMORY.md always English regardless.

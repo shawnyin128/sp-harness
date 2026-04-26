@@ -288,6 +288,7 @@ only). Test failure details stay in the YAML for agent consumption.
 5. ITERATE must list concrete blockers (no vague feedback).
 6. PASS is a high bar: "I actively tried to break this and could not."
 7. Optimization suggestions appear ONLY after a PASS round.
+8. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.
 
 ## Memory
 
