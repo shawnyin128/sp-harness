@@ -137,43 +137,60 @@ or `[interface]` prefix in `desc` field to signal evaluation mode.
 
 After writing the YAML, print this to terminal. This is what the user sees.
 
+This output is a **decision touch-point** and MUST follow
+`docs/decision-touchpoint-protocol.md`. Concretely: every ⚠️ decision the
+user is asked to make has four mandatory parts in plain language —
+**Background**, **What it controls**, **My pick**, **Options** (each
+option = one full sentence of consequence, never just a label like
+`Option B`). Bare spec IDs (`D1`, `F1`, `step 3`) without an in-sentence
+translation are forbidden. If an option cannot be described without
+referring to its name in the spec, it should not be presented.
+
 ```
-📋 Plan: <feature-id>
+📋 Plan: <display_name> (<feature-id>)
 
 Problem:
-  <your problem field, in prose>
+  <problem field, in plain prose — not spec vocabulary>
 
 Plan (<N> steps):
   1. <desc>
-     Goal: <goal derived from approach>
-     Approach: <high-level approach>
+     Goal: <what success looks like, plain language>
+     Approach: <high-level approach in plain language>
 
   2. <desc>
      ...
 
 Key decisions:
-  ⚠️ <question>
-    Situation: <when this matters>
-    Resolves: <what it addresses>
-    My pick: <planner_view> (<confidence>% confidence) — needs your call
+  ⚠️ <one-sentence question in plain language>
+    Background: <code/behavior state that triggered this — describe
+                 the situation, not the spec section>
+    What it controls: <observable behavior that changes by choice>
+    My pick: (<x>) <option label> — <reason>, <confidence>%
+    Options:
+      (a) <one-sentence consequence in plain language>
+      (b) <one-sentence consequence in plain language>
+      (c) <one-sentence consequence in plain language>
 
-  ✓ <question>
-    → <planner_view> (<confidence>%)
+  ✓ <one-sentence question>
+    → <planner pick in plain language> (<confidence>%)
   (⚠️ for ask_user: true; ✓ for decisions the planner already made)
 
 → Your call on the ⚠️ decisions above:
-  (a) <planner_view> OK
-  (b) <alternative 1>
-  (c) <alternative 2>
+  (Same letters as the Options list above. If multiple ⚠️ decisions,
+   prefix with the decision label, e.g. "D1 (a)". Translate any decision
+   ID into a 3-6 word plain-language label the first time it appears.)
 ```
 
 If no `ask_user: true` decisions, replace the final block with:
 
 ```
-→ All decisions high-confidence. Proceed? (yes / no / adjust)
+→ All decisions are high-confidence. Plan summary above.
+  Proceed? (yes / no / adjust)
+  · "no" stops here without writing code.
+  · "adjust" lets you push back on any step or decision before Generator runs.
 ```
 
-Keep the terminal output under 30 lines. Do NOT print the YAML file.
+Keep the terminal output under 35 lines. Do NOT print the YAML file.
 
 ## Rules
 
@@ -181,9 +198,10 @@ Keep the terminal output under 30 lines. Do NOT print the YAML file.
 2. Schema must validate against `docs/plan-file-schema.md`.
 3. Every step must have `test_plan` and `coverage_min`.
 4. Decisions with `confidence < 70` MUST have `ask_user: true`.
-5. Terminal output ≤ 30 lines, must not dump YAML.
+5. Terminal output ≤ 35 lines, must not dump YAML.
 6. Do NOT write code. Do NOT invoke sp-harness:subagent-driven-development.
-7. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.
+7. Inline chat output: at session start, read `.claude/sp-harness.json` field `language`. If `match-input` (default), reply in the user's input language each turn; if a specific code (`en`, `zh`, ...), pin replies to that language regardless of input. Either way: no code-mixing; identifiers (paths/commands/field names/product names) stay in original. Files / commits / docs / plan YAML always English regardless.
+8. Every decision touch-point follows `docs/decision-touchpoint-protocol.md`. Background / What it controls / My pick / Options must be present per ⚠️ decision; bare spec IDs without translation are forbidden; option lines must be one-sentence consequences, never bare labels like `Option B`.
 
 ## Memory
 

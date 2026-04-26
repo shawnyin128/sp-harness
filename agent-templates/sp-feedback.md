@@ -255,6 +255,12 @@ checklists. Results logged for audit.
 ### Phase 2: User-gated actions (HARD-GATE)
 
 <HARD-GATE>
+This is a decision touch-point per `docs/decision-touchpoint-protocol.md` —
+each batch must list its items in plain language (not just counts) and
+each ask must say what happens on yes vs no. Findings printed below MUST
+lead with a 3-6 word plain-language label; bare finding-IDs without
+translation are forbidden.
+
 After auto memory ops complete, print findings grouped by action type:
 
 ```
@@ -262,16 +268,33 @@ Auto-executed:
   memory_update: X applied, Y rejected by agent (see memory-ops-log.json)
   memory_compact: Z agents compacted (before/after line counts)
 
-Pending user confirmation:
-  new_todo: N items (feature ideas, will seed future brainstorming)
-  fix_feature: M items (bugs, go direct to features.json)
-  manual: K items (report only — spec/architecture concerns)
+Pending your review:
+  new_todo (N items — feature ideas you'd want to revisit later):
+    - <plain-language label>  (<finding-id>)  → <one-line why it surfaced>
+    ...
+  fix_feature (M items — bugs scoped enough to go straight to features.json):
+    - <plain-language label>  (<finding-id>)  → <one-line user impact>
+    ...
+  manual (K items — report only, no system action):
+    - <plain-language label>  → <one-line why this needs a human call>
+    ...
 ```
 
-Ask user to confirm:
-1. "Add N new todos to idea backlog?"
-2. "Append M fix features to features.json for next feature-tracker loop?"
-3. "Manual items listed for your review."
+Ask user to confirm, one batch at a time:
+
+1. "Add the N new todos above to the idea backlog?
+   · yes → they appear in `.claude/todos.json` as `pending`, surfaced
+     by brainstorming when you're ready.
+   · no → drop them; they will not be re-detected unless the underlying
+     pattern recurs."
+
+2. "Append the M fix features above to features.json for the next
+   feature-tracker loop?
+   · yes → they enter the queue and get picked up by priority/topology.
+   · no → bugs stay open; you can always re-add them manually later."
+
+3. "Manual items above are listed for your review only — no system
+   action. (press enter to acknowledge)"
 
 WAIT for confirmation before applying. Manual items require no execution.
 </HARD-GATE>
@@ -406,4 +429,5 @@ compact it immediately (no dispatch needed — you're already executing).
 5. Every finding must have concrete evidence (file:line, commit, eval-report ref).
 6. If zero findings across all dimensions, force a second pass with tighter scrutiny.
 7. Check your own MEMORY.md size during Mode A. If > 150 lines, compact it in-run.
-8. Inline chat output (clarifying questions, user-confirmation prompts): match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / reports / calibration JSON / MEMORY.md always English regardless.
+8. Inline chat output (clarifying questions, user-confirmation prompts): at session start, read `.claude/sp-harness.json` field `language`. If `match-input` (default), reply in the user's input language each turn; if a specific code (`en`, `zh`, ...), pin replies to that language regardless of input. Either way: no code-mixing; identifiers (paths/commands/field names/product names) stay in original. Files / commits / reports / calibration JSON / MEMORY.md always English regardless.
+9. Per-batch confirmation prompts (Phase 2) follow `docs/decision-touchpoint-protocol.md`: list items by plain-language label not bare IDs, and every yes/no ask must spell out what happens on each path.

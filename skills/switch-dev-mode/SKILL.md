@@ -71,16 +71,19 @@ The current plugin expects new-format agents. Running three-agent mode
 with stale files will fail.
 ```
 
-Then ask: `Regenerate from current templates? (yes / no / diff)`
+Then ask — decision touch-point per `docs/decision-touchpoint-protocol.md`
+(structured menu, plain-language consequences):
 
-- `yes`: for each stale agent, read
-  `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill `{PROJECT_NAME}`
-  and `{PROJECT_CONTEXT}` from CLAUDE.md, **overwrite** the deployed file.
-  Warn first: "Any hand customization will be lost. Continue?"
-- `no`: keep stale. Advise the user to run framework-check later or
-  manually reconcile before running features.
-- `diff`: print diff between deployed and template for each stale agent,
-  then re-ask yes/no.
+```
+→ Regenerate the stale agents from current templates?
+  · yes  — overwrite each stale `.claude/agents/*.md` with a fresh copy
+           from the plugin template; any hand-customization in those
+           files is lost (you'll be re-confirmed before the actual write).
+  · no   — keep the stale files; three-agent runs will likely fail
+           until you run framework-check or reconcile by hand.
+  · diff — print the diff between deployed and template for each stale
+           agent, then re-ask yes/no.
+```
 
 **Note:** `.claude/agents/sp-feedback.md` should already exist from init-project.
 If it's missing, generate it from the template regardless of dev mode.

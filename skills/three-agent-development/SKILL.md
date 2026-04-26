@@ -131,19 +131,29 @@ Evaluator will:
 
 Evaluator's terminal output ends with one of:
 
+Both blocks below are decision touch-points per
+`docs/decision-touchpoint-protocol.md` — option lines are full
+plain-language consequences, never bare labels. Evaluator's blockers
+listed above must read as plain language with no bare spec IDs.
+
 **If verdict == ITERATE:**
 ```
 → Your call:
-  (a) Send back to Generator to fix (<N> blockers)
-  (b) Force-merge (you own the risk)
-  (c) Replan
+  (a) Send back to Generator to fix the <N> blocker(s) above —
+      Generator addresses each, then a new Round runs.
+  (b) Force-merge anyway — ship as-is, listed blockers stay open;
+      you own the risk and the followup.
+  (c) Replan from scratch — current plan is archived, Planner re-runs
+      and may produce different steps.
 ```
 
 **If verdict == PASS (optimization):**
 ```
 → Your call:
-  (a) Accept, merge
-  (b) Apply optimizations first, then merge
+  (a) Accept and merge — feature ships now, optimization suggestions
+      stay as ideas in the plan YAML for later.
+  (b) Apply optimizations first, then merge — Generator implements the
+      suggestions, a final Round verifies, then ship.
 ```
 
 Orchestrator waits for user choice, then routes:
@@ -164,11 +174,18 @@ Evaluator writes a blocker "Max rounds exceeded" and forces ITERATE.
 Orchestrator escalates to user explicitly:
 
 ```
-⚠️ 5 rounds and blockers still present. Plan may be fundamentally wrong.
+⚠️ 5 rounds completed and blockers still present. The plan may be
+   fundamentally wrong — five attempts have not converged.
+
 → Your call:
-  (a) Keep iterating (Round 6)
-  (b) Replan
-  (c) Force-merge
+  (a) Keep iterating into Round 6 — Generator addresses current
+      blockers; we may converge or hit the same wall again.
+  (b) Replan from scratch — current plan is archived, Planner re-runs
+      with full knowledge of the round history (best when blockers
+      look like the wrong design, not buggy execution).
+  (c) Force-merge as-is — ship with the listed blockers open, you
+      own the risk; pick this only if blockers turn out to be
+      cosmetic or out-of-scope.
 ```
 
 ---

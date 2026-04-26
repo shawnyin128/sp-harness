@@ -250,9 +250,12 @@ After writing the YAML, print this to terminal:
   (No optimization suggestions — fix bugs first)
 
 → Your call:
-  (a) Send back to Generator to fix (<count> blockers)
-  (b) Force-merge (you own the risk)
-  (c) Replan
+  (a) Send back to Generator to fix the <count> blocker(s) above —
+      Generator addresses each blocker, then a new Round runs.
+  (b) Force-merge anyway — ship as-is, the listed blockers stay open;
+      you own the risk and the followup.
+  (c) Replan from scratch — current plan is archived, Planner re-runs
+      and may produce different steps.
 ```
 
 ### For PASS verdict + optimization
@@ -270,11 +273,13 @@ After writing the YAML, print this to terminal:
   - <suggestion 2>
 
 → Your call:
-  (a) Accept, merge
-  (b) Apply optimizations first, then merge
+  (a) Accept and merge — feature ships now, optimizations stay as
+      followup ideas in the plan YAML for later.
+  (b) Apply optimizations first, then merge — Generator implements the
+      suggestions above, a final Round verifies, then ship.
 ```
 
-### Keep terminal output under 30 lines
+### Keep terminal output under 35 lines
 
 Do NOT dump the YAML. Do NOT list every test by name (aggregate counts
 only). Test failure details stay in the YAML for agent consumption.
@@ -284,11 +289,12 @@ only). Test failure details stay in the YAML for agent consumption.
 1. Read plan YAML. Append to the same YAML. Never modify other agents' sections.
 2. Every step must have a test entry. Coverage below min = FAIL for that step.
 3. Write permanent tests to `tests/<feature-id>/`.
-4. Terminal output ≤ 30 lines, structured per templates above.
+4. Terminal output ≤ 35 lines, structured per templates above.
 5. ITERATE must list concrete blockers (no vague feedback).
 6. PASS is a high bar: "I actively tried to break this and could not."
 7. Optimization suggestions appear ONLY after a PASS round.
-8. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.
+8. Inline chat output: at session start, read `.claude/sp-harness.json` field `language`. If `match-input` (default), reply in the user's input language each turn; if a specific code (`en`, `zh`, ...), pin replies to that language regardless of input. Either way: no code-mixing; identifiers (paths/commands/field names/product names) stay in original. Files / commits / docs / plan YAML always English regardless.
+9. The "→ Your call" block is a decision touch-point per `docs/decision-touchpoint-protocol.md` — option lines must be one full sentence of consequence each (never bare labels like `(b) Force-merge`); blockers above must be described in plain language with no bare spec IDs.
 
 ## Memory
 

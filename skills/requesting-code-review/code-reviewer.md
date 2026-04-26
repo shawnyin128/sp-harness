@@ -87,9 +87,20 @@ git diff {BASE_SHA}..{HEAD_SHA}
 
 ### Assessment
 
-**Ready to merge?** [Yes/No/With fixes]
+This block is a closure-summary touch-point per
+`docs/decision-touchpoint-protocol.md`. The verdict must spell out the
+consequence of each path, not just a label.
 
-**Reasoning:** [Technical assessment in 1-2 sentences]
+**Verdict:** one of:
+
+- **Yes — ready to merge.** No blocking issues found. Concrete reason
+  in 1-2 sentences (what was checked, why it's clean).
+- **With fixes — merge after addressing the items above.** List which
+  Critical/Important issues block merge. State whether fixes are
+  expected before re-review or trusted to be applied.
+- **No — do not merge.** Architecture, security, or correctness
+  problem that requires rework, not just a fix list. Say what would
+  need to change.
 
 ## Critical Rules
 
@@ -98,7 +109,8 @@ git diff {BASE_SHA}..{HEAD_SHA}
 - Be specific (file:line, not vague)
 - Explain WHY issues matter
 - Acknowledge strengths
-- Give clear verdict
+- Give a clear verdict in plain language with the consequence spelled
+  out (not just "Yes/No/With fixes")
 
 **DON'T:**
 - Say "looks good" without checking
@@ -140,7 +152,9 @@ git diff {BASE_SHA}..{HEAD_SHA}
 
 ### Assessment
 
-**Ready to merge: With fixes**
+**Verdict: With fixes — merge after addressing the two Important items above.**
 
-**Reasoning:** Core implementation is solid with good architecture and tests. Important issues (help text, date validation) are easily fixed and don't affect core functionality.
+Core implementation is solid: clean architecture, good tests, no
+correctness issues. The two Important items (help text, date validation)
+are scoped fixes that don't change the design. Apply them, then merge.
 ```

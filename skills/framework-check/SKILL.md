@@ -17,7 +17,7 @@ to fix issues.
 
 ---
 
-## Check Categories (8)
+## Check Categories (9)
 
 Each category groups related checks. Every issue found is tagged with:
 
@@ -50,11 +50,13 @@ Checks:
       the `**Rules:**` block starts with a bullet about translating project
       terms for the listener. Marker: case-insensitive match for
       `translate project terms into plain language` OR `listener may not share`.
-- [ ] **Principle 5 contains the language-consistency rule** (v0.8.7+, 🔴):
-      First-Principles section has a `**5.` heading and the body mentions
-      matching the user's language for inline chat. Marker: case-insensitive
-      match for both `match the user's language` AND `code-mixing`. Absence
-      of any Principle 5 = FAIL.
+- [ ] **Principle 5 contains the configurable-language rule** (v0.8.10+, 🔴):
+      First-Principles section has a `**5.` heading and the body references
+      reading `language` from `.claude/sp-harness.json`. Markers (all three
+      required, case-insensitive): `sp-harness.json`, `language`, `code-mixing`.
+      Old v0.8.7 form (just `match the user's language` + `code-mixing` with
+      no `sp-harness.json` reference) = FAIL — force-update.
+      Absence of any Principle 5 = FAIL.
 
 Fixability:
 - File missing → `needs-confirm` (full rewrite via init-project template)
@@ -78,20 +80,24 @@ Fixability:
   no bullet in the Rules block matches markers `translate project terms`
   OR `listener may not share`, insert this as the new first bullet:
   `- When reporting plan/status to the user, translate project terms into plain language. The listener may not share doc vocabulary.`
-- **Missing Principle 5 (v0.8.7+) → 🔴 `auto` (FORCE UPDATE, no manual
-  fallback)**: insert the full Principle 5 block immediately after the
-  Principle 4 body's blank-line terminator and before the `---` separator
-  that ends First-Principles Standards. Canonical form:
+- **Missing Principle 5 OR old v0.8.7 form (v0.8.10+) → 🔴 `auto` (FORCE
+  UPDATE, no manual fallback)**: insert the full Principle 5 block
+  immediately after the Principle 4 body's blank-line terminator and
+  before the `---` separator that ends First-Principles Standards.
+  Canonical form (v0.8.10+):
   ```
-  **5. Match the user's language for inline chat only.**
-  Reply fully in the user's language with no code-mixing. Identifiers (paths,
-  commands, field names, product names) stay in original. Files, commits,
-  docs, code, and state always English regardless.
+  **5. Inline chat language is configured in `.claude/sp-harness.json`.**
+  Read the `language` field at session start. Default `match-input` replies
+  in the user's input language each turn; any other value (e.g. `en`, `zh`)
+  pins replies to that language regardless of input. No code-mixing in
+  either case. Identifiers (paths, commands, field names, product names)
+  stay in original. Files, commits, docs, code, and state always English
+  regardless.
   ```
-  If a `**5.` heading already exists but is missing markers
-  (`match the user's language` AND `code-mixing`), DELETE the old block
-  and replace with the canonical form (print the old block to terminal
-  first so user can manually re-apply customizations).
+  If a `**5.` heading already exists but is missing any of the three
+  markers (`sp-harness.json`, `language`, `code-mixing`), DELETE the old
+  block and replace with the canonical form (print the old block to
+  terminal first so user can manually re-apply customizations).
 
 These three are 🔴 FORCE-UPDATE — runtime is observably degraded
 without them (jargon dump from dense plan docs, English-Chinese
@@ -159,11 +165,13 @@ New-format markers (absence = BAD):
 - [ ] sp-evaluator.md contains `eval.rounds[]` or `<feature-id>.plan.yaml`
 - [ ] sp-feedback.md contains `<feature-id>.plan.yaml`
 
-Language-consistency rule (v0.8.7+, 🔴 FORCE UPDATE, no manual fallback):
-- [ ] Each existing `.claude/agents/sp-*.md` contains the language
-      consistency rule. Marker: case-insensitive match for
-      `match the user's language` AND (`code-mixing` OR `code mixing`).
-      Detect per-file; missing in any file = 🔴 FAIL for that file.
+Configurable-language rule (v0.8.10+, 🔴 FORCE UPDATE, no manual fallback):
+- [ ] Each existing `.claude/agents/sp-*.md` (except `sp-generator.md`,
+      which has no terminal output) contains the configurable-language
+      rule. Markers (all three required, case-insensitive): `sp-harness.json`,
+      `language`, `code-mixing`. Old v0.8.7 form (just `match the user's
+      language` + `code-mixing` with no `sp-harness.json` reference) =
+      FAIL for that file — force-update.
 
 Fix:
 - **Old/new format markers FAIL → `needs-confirm` (full template regenerate)**:
@@ -196,7 +204,7 @@ Severity: mixed. Fixability: `auto` unless noted.
 Checks:
 - [ ] `.claude/hooks/update-todo-reminder.sh` exists and executable (🟡, `auto`)
 - [ ] `.claude/settings.json` has Stop + UserPromptSubmit hooks (🟡, `auto`)
-- [ ] `.claude/sp-harness.json` exists with `dev_mode`, `last_hygiene_at_completed`, `external_codebase` (🔴 if missing, `auto`)
+- [ ] `.claude/sp-harness.json` exists with `dev_mode`, `last_hygiene_at_completed`, `external_codebase`, `language` (🔴 if file missing, `auto`; 🟡 if file present but `language` field missing — `auto`-add as `match-input`, v0.8.10+)
 - [ ] If `external_codebase: true`, `.claude/codebase-context.md` exists (🟡, `manual`: re-run init-project)
 - [ ] If `external_codebase: false` (or absent), `.claude/codebase-context.md` should NOT exist (🟡, `manual`: decide which side is correct)
 
@@ -262,6 +270,69 @@ convention — they pick their own language. The only cross-boundary
 concern is deployed agent files in `.claude/agents/`, which inherit from
 the plugin and therefore should stay English.
 
+### 9. Decision touch-point protocol coverage (v0.8.10+, plugin-dev only)
+
+Scope: applies when `skills/` and `agent-templates/` exist at repo root
+(this IS the sp-harness repo). Skipped in user-project context — the
+protocol is a plugin-source convention, not a user-project rule.
+
+Severity: 🔴 (degraded user-facing output if missing). Fixability:
+`manual` (the LLM must understand WHY the protocol applies before
+inserting the marker; mechanical insertion would defeat the purpose).
+
+Checks:
+
+For each file in the canonical touch-point inventory below, the literal
+string `decision-touchpoint-protocol` must appear at least once
+(case-sensitive). Missing = 🔴 FAIL for that file.
+
+Inventory (matches `docs/decision-touchpoint-protocol.md` § Touch-point inventory):
+
+```
+agent-templates/sp-planner.md
+agent-templates/sp-evaluator.md
+agent-templates/sp-feedback.md
+skills/three-agent-development/SKILL.md
+skills/single-agent-development/SKILL.md
+skills/feature-tracker/SKILL.md
+skills/brainstorming/SKILL.md
+skills/finishing-a-development-branch/SKILL.md
+skills/framework-check/SKILL.md
+skills/switch-dev-mode/SKILL.md
+skills/init-project/SKILL.md
+skills/requesting-code-review/code-reviewer.md
+```
+
+One-shot detection:
+
+```bash
+for f in agent-templates/sp-planner.md agent-templates/sp-evaluator.md \
+         agent-templates/sp-feedback.md \
+         skills/{three,single}-agent-development/SKILL.md \
+         skills/feature-tracker/SKILL.md skills/brainstorming/SKILL.md \
+         skills/finishing-a-development-branch/SKILL.md \
+         skills/framework-check/SKILL.md skills/switch-dev-mode/SKILL.md \
+         skills/init-project/SKILL.md \
+         skills/requesting-code-review/code-reviewer.md; do
+  grep -q "decision-touchpoint-protocol" "$f" || echo "MISSING: $f"
+done
+```
+
+Fix path: `manual`. When this fires, it usually means a new touch-point
+was added without a protocol reference, OR an existing touch-point was
+rewritten and the marker dropped. The fix is to:
+
+1. Read `docs/decision-touchpoint-protocol.md`
+2. Identify the touch-point in the offending file
+3. Add a sentence near the format spec: `This is a decision touch-point
+   per docs/decision-touchpoint-protocol.md` plus the four-part rule
+   (or the structured-menu / closure-summary variant, whichever applies)
+4. Verify the format spec actually conforms — adding the marker without
+   conforming output defeats the check
+
+Do NOT auto-insert the marker without conforming format — that hides
+the real issue from future audits.
+
 ### Features validator (runs independently)
 
 Run:
@@ -295,34 +366,37 @@ Always use this exact format. Same every run.
 ```
 🔍 Framework Check (v<plugin version>)
 
-[1/8] CLAUDE.md
+[1/9] CLAUDE.md
     <status line: ✅ pass | ⚠️ N warn | ❌ M fail>
     <for each issue:>
     - <description>  (<severity><fixability>: <one-line fix>)
 
-[2/8] Docs structure
+[2/9] Docs structure
     ...
 
-[3/8] State sources
+[3/9] State sources
     ...
 
-[4/8] Agent templates
+[4/9] Agent templates
     ...
 
-[5/8] Agent state
+[5/9] Agent state
     ...
 
-[6/8] Hooks & config
+[6/9] Hooks & config
     ...
 
-[7/8] Git conventions
+[7/9] Git conventions
     ...
 
-[8/8] Language consistency
+[8/9] Language consistency
+    ...
+
+[9/9] Decision touch-point protocol  (plugin-dev only; skipped in user projects)
     ...
 
 ---
-Summary: 8 categories · <P> pass · <W> warn · <F> fail
+Summary: 9 categories · <P> pass · <W> warn · <F> fail
 Severity: 🔴 <C> critical · 🟡 <D> degraded
 Fixability: <A> auto-fixable · <N> need-confirm · <M> manual
 ```
@@ -331,37 +405,40 @@ Example:
 ```
 🔍 Framework Check (v<CURRENT>)
 
-[1/8] CLAUDE.md
+[1/9] CLAUDE.md
     ✅ pass
 
-[2/8] Docs structure
+[2/9] Docs structure
     ⚠️ 1 warn (auto-fixable)
     - docs/reports/ missing (🟡auto: mkdir)
 
-[3/8] State sources
+[3/9] State sources
     ✅ pass
 
-[4/8] Agent templates
+[4/9] Agent templates
     ❌ 3 fail (🔴 blocks runtime)
     - sp-planner.md contains task-plan.json (🔴needs-confirm: regenerate from template)
     - sp-generator.md contains implementation.md (🔴needs-confirm: regenerate)
     - sp-evaluator.md missing plan.yaml marker (🔴needs-confirm: regenerate)
 
-[5/8] Agent state
+[5/9] Agent state
     ✅ pass
 
-[6/8] Hooks & config
+[6/9] Hooks & config
     ⚠️ 1 warn
     - settings.json missing Stop hook (🟡auto: add hook config)
 
-[7/8] Git conventions
+[7/9] Git conventions
     ⚠️ 2/10 commits off-format (🟡manual: review recent commits)
 
-[8/8] Language consistency
+[8/9] Language consistency
+    ✅ pass
+
+[9/9] Decision touch-point protocol
     ✅ pass
 
 ---
-Summary: 8 categories · 4 pass · 2 warn · 2 fail
+Summary: 9 categories · 5 pass · 2 warn · 2 fail
 Severity: 🔴 3 critical · 🟡 3 degraded
 Fixability: 2 auto-fixable · 3 need-confirm · 3 manual
 ```
@@ -370,14 +447,20 @@ Fixability: 2 auto-fixable · 3 need-confirm · 3 manual
 
 ## Step 3: Ask user which fix path
 
-After the report, print exactly:
+This is a decision touch-point per `docs/decision-touchpoint-protocol.md`
+(structured menu — each option must be a plain-language consequence).
+After the report, print:
 
 ```
 → Your call:
-  (a) Auto-fix all (🟡auto applied directly, 🔴needs-confirm asked one by one, manual listed as skipped)
-  (b) Auto-fix only (skip needs-confirm and manual, list them)
-  (c) Per-item decision (ask for each issue)
-  (d) Report only, no changes
+  (a) Auto-fix all — apply every 🟡auto immediately; for each
+      🔴needs-confirm I'll ask "fix this? (yes/no/diff)"; manual items
+      are listed at the end as still-todo.
+  (b) Auto-fix only — apply 🟡auto; skip needs-confirm and manual,
+      print them as unfixed at the end.
+  (c) Per-item decision — walk every issue and ask one by one;
+      slowest, but you see each fix before it runs.
+  (d) Report only — print this report, change nothing.
 ```
 
 Wait for user response.
@@ -497,27 +580,30 @@ DO NOT downgrade to manual.
 
 After patch, re-check 80-line cap.
 
-### Agent files missing language-consistency rule (v0.8.7+, 🔴 FORCE UPDATE, auto)
+### Agent files missing configurable-language rule (v0.8.10+, 🔴 FORCE UPDATE, auto)
 
 For each existing `.claude/agents/sp-*.md` that lacks the rule (markers
-`match the user's language` AND `code-mixing`):
+all three required: `sp-harness.json`, `language`, `code-mixing`):
 
 - Locate the file's `## Rules` section.
-- Append a new numbered rule continuing the existing numbering. Wording
-  by file:
+- If an old v0.8.7 rule is present (matches `match the user's language`
+  + `code-mixing` but NOT `sp-harness.json`), DELETE the old rule and
+  replace with the canonical form below.
+- Otherwise append a new numbered rule continuing the existing numbering.
+- Wording by file:
 
   - sp-planner.md / sp-evaluator.md / sp-feedback.md:
-    `N. Inline chat output: match the user's language (no code-mixing; identifiers like paths/commands/field names/product names stay in original). Files / commits / docs / plan YAML always English regardless.`
+    `N. Inline chat output: at session start, read .claude/sp-harness.json field language. If match-input (default), reply in the user's input language each turn; if a specific code (en, zh, ...), pin replies to that language regardless of input. Either way: no code-mixing; identifiers (paths/commands/field names/product names) stay in original. Files / commits / docs / plan YAML always English regardless.`
 
   - sp-generator.md (no terminal output):
-    `N. Files / commits / plan YAML always English regardless of any chat language. (Generator has no terminal output, so the "inline chat" half of the language rule does not apply here.)`
+    `N. Files / commits / plan YAML always English regardless of any chat language. (Generator has no terminal output, so the inline-chat half of the language rule does not apply here.)`
 
 If a file lacks a `## Rules` section entirely (drift), prefer full
 template regeneration via `needs-confirm` (since drift this severe
 suggests other issues). This is the ONE case where it's not pure-auto —
 because regenerating the full file destroys hand customization, which
 needs user awareness. The other cases (Rules section exists but rule
-missing) are pure-auto force-update.
+missing or stale) are pure-auto force-update.
 
 ### Agent template drift
 Read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill

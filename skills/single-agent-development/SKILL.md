@@ -149,21 +149,30 @@ absent, this is Round 1. Otherwise Round N+1. Max rounds = 5.
 
 Append `eval.rounds[N]` (and optionally `eval.optimization`) to the YAML.
 
-**Print terminal summary** per sp-evaluator template:
+**Print terminal summary** per sp-evaluator template. Both blocks
+below are decision touch-points per
+`docs/decision-touchpoint-protocol.md` — option lines are full
+plain-language consequences, never bare labels. Blockers above must
+read in plain language with no bare spec IDs.
 
 For ITERATE:
 ```
 → Your call:
-  (a) Send back to Generator role to fix (<N> blockers)
-  (b) Force-merge
-  (c) Replan
+  (a) Switch back to Generator role and fix the <N> blocker(s) above —
+      address each, then a new Round runs.
+  (b) Force-merge anyway — ship as-is, listed blockers stay open;
+      you own the risk and the followup.
+  (c) Replan from scratch — current plan is archived, Planner role
+      re-runs and may produce different steps.
 ```
 
 For PASS + optimization:
 ```
 → Your call:
-  (a) Accept, merge
-  (b) Apply optimizations first, then merge
+  (a) Accept and merge — feature ships now, optimization suggestions
+      stay as ideas in the plan YAML for later.
+  (b) Switch back to Generator role and apply optimizations first —
+      a final Round verifies, then ship.
 ```
 
 ---
@@ -209,11 +218,18 @@ If Round 6 would trigger, write blocker "Max rounds exceeded", ITERATE
 verdict, and print:
 
 ```
-⚠️ 5 rounds and blockers still present. Plan may be fundamentally wrong.
+⚠️ 5 rounds completed and blockers still present. The plan may be
+   fundamentally wrong — five attempts have not converged.
+
 → Your call:
-  (a) Keep iterating (Round 6)
-  (b) Replan
-  (c) Force-merge
+  (a) Keep iterating into Round 6 — Generator role addresses current
+      blockers; we may converge or hit the same wall again.
+  (b) Replan from scratch — current plan is archived, Planner role
+      re-runs with full knowledge of the round history (best when
+      blockers look like the wrong design, not buggy execution).
+  (c) Force-merge as-is — ship with the listed blockers open, you
+      own the risk; pick this only if blockers turn out to be
+      cosmetic or out-of-scope.
 ```
 
 ---

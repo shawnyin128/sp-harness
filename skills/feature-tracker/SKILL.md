@@ -40,13 +40,18 @@ brainstorming first to create one. STOP.
 1. **If `.claude/sp-harness.json` does not exist:**
    - Create it with default values:
      ```json
-     {"dev_mode": "three-agent", "last_hygiene_at_completed": 0, "external_codebase": false}
+     {"dev_mode": "three-agent", "last_hygiene_at_completed": 0, "external_codebase": false, "language": "match-input"}
      ```
-   - Report: "Created sp-harness.json with defaults (three-agent mode, hygiene counter 0, no external codebase)"
-2. **If it exists:** read `dev_mode`, `last_hygiene_at_completed`, `external_codebase`
+   - Report: "Created sp-harness.json with defaults (three-agent mode, hygiene counter 0, no external codebase, language match-input)"
+2. **If it exists:** read `dev_mode`, `last_hygiene_at_completed`, `external_codebase`, `language`
 3. **If `dev_mode` is missing:** set to `"three-agent"`, write to disk
 4. **If `last_hygiene_at_completed` is missing:** set to `0`, write to disk
 5. **If `external_codebase` is missing:** set to `false`, write to disk
+6. **If `language` is missing:** set to `"match-input"`, write to disk
+   (`match-input` = reply in the user's input language each turn;
+    a specific code like `en`, `zh`, `ja` = pin replies to that language
+    regardless of input. Either way, code-mixing is forbidden and
+    files/commits/docs always stay English.)
 
 **MUST: Hygiene counter validation — ONLY validates. Does NOT trigger cleanup.**
 
@@ -101,7 +106,15 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-features/scripts/query.py" next --f
 - **Exit 1, `{"deadlock": true, ...}`** → print the blocked features and their
   unmet dependencies. STOP and ask user to resolve.
 
-Ask: "Ready to start this feature, or do you want to pick a different one?"
+Ask the user — this is a decision touch-point per
+`docs/decision-touchpoint-protocol.md`, so spell out both paths:
+
+```
+→ Ready to start "<display_name>" (<feature-id>)?
+  · yes  → dispatch the development skill (<dev_mode>) on this feature now.
+  · pick → show the remaining list and let you choose a different one.
+  · no   → stop here; nothing runs until you come back.
+```
 
 Wait for user confirmation before proceeding.
 
@@ -210,6 +223,13 @@ d. **If delta >= 3:**
 e. **If delta < 3:** continue
 
 **MUST: Print Feature Brief — this is the LAST output for this feature.**
+
+This is a closure-summary touch-point per
+`docs/decision-touchpoint-protocol.md`: lead with plain-language label,
+include feature-id in parentheses; field labels stay English for
+grepability, prose values follow the user's conversation language. No
+raw doc vocabulary in the prose lines; if a step or decision is named,
+include a 3-6 word plain-language label.
 
 This step MUST come after hygiene cleanup and BEFORE the all-done branch
 or the loop-back-to-Step-2 jump. The brief is the final per-feature

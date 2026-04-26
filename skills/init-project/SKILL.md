@@ -25,7 +25,7 @@ Check the following independently. Record results to skip completed steps.
 - **B**: Does `.claude/todos.json` exist? (replaces `.claude/mem/todo.md` from v0.4.0)
 - **B2**: Does `.claude/memory.md` exist? (short-term session memory, reintroduced in v0.4.3 with tightened scope)
 - **C**: Are Stop and UserPromptSubmit hooks configured in `.claude/settings.json`?
-- **D**: Does `.claude/sp-harness.json` exist with `dev_mode` AND `external_codebase`?
+- **D**: Does `.claude/sp-harness.json` exist with `dev_mode` AND `external_codebase` AND `language`?
 - **E**: Does `.claude/agents/sp-feedback.md` exist? If dev_mode is three-agent, also check sp-planner.md, sp-generator.md, sp-evaluator.md.
 
 If all are done, report "All steps already complete." and stop.
@@ -67,8 +67,9 @@ If `CLAUDE.md` does not exist, create it using the EXACT template below.
 - Copy the template EXACTLY. Do not rearrange, rename, or add sections.
 - The ONLY parts you fill in are marked with `{FILL}`. Everything else is literal.
 - Do NOT add: Key References, tables, extra headings, summaries, locale
-  overrides (e.g. "always respond in Chinese" — Principle 5 already handles
-  user-language matching), or ANY content not in the template.
+  overrides (e.g. "always respond in Chinese" — Principle 5 reads the
+  language from `.claude/sp-harness.json`, set it there instead), or ANY
+  content not in the template.
 - Total CLAUDE.md MUST stay under 80 lines.
 - If you are tempted to "improve" the template — stop. Use it as-is.
 
@@ -93,10 +94,13 @@ Skip preamble and obvious observations. When summarizing plans, specs, or
 status, translate jargon — don't paste doc vocabulary back. Cite file:line
 at the end if needed, not as the lead.
 
-**5. Match the user's language for inline chat only.**
-Reply fully in the user's language with no code-mixing. Identifiers (paths,
-commands, field names, product names) stay in original. Files, commits,
-docs, code, and state always English regardless.
+**5. Inline chat language is configured in `.claude/sp-harness.json`.**
+Read the `language` field at session start. Default `match-input` replies
+in the user's input language each turn; any other value (e.g. `en`, `zh`)
+pins replies to that language regardless of input. No code-mixing in
+either case. Identifiers (paths, commands, field names, product names)
+stay in original. Files, commits, docs, code, and state always English
+regardless.
 
 ---
 
@@ -350,7 +354,18 @@ generates project-level copies adapted to this project's context.
 
 ### Q1: Dev mode
 
-> "Which development mode? (a) Three-agent — Planner, Generator, Evaluator as separate subagents (recommended for complex projects), (b) Single-agent — one agent plays all three roles sequentially (faster, lower token cost)"
+This is a decision touch-point per `docs/decision-touchpoint-protocol.md`
+(structured menu — both options as one-sentence consequences):
+
+```
+→ Pick a development mode for this project:
+  (a) Three-agent — Planner / Generator / Evaluator run as separate
+      subagents in their own contexts; stronger evaluator independence,
+      higher token cost. Recommended for complex projects.
+  (b) Single-agent — one agent plays all three roles sequentially in
+      the same session; faster, lower token cost, but evaluator shares
+      context with implementer (weaker red-team).
+```
 
 ### Step 6a: Generate sp-feedback (always, regardless of dev mode)
 
@@ -371,7 +386,15 @@ Default three-agent configuration (from agent-templates/):
   sp-evaluator: opus, tools=Read/Grep/Glob/Bash, memory=project
 ```
 
-**Q2:** "Use these defaults? (yes/no)"
+**Q2:** decision touch-point per protocol — spell out both paths:
+
+```
+→ Use the defaults shown above?
+  · yes — write the three agent files now using template defaults;
+    you can always re-run switch-dev-mode later to customize.
+  · no  — I'll walk through the four config knobs (model / tools /
+    memory / worktree) for each of the three agents one at a time.
+```
 
 - **If yes:** For each of sp-planner, sp-generator, sp-evaluator:
   Read template from `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`.
@@ -424,13 +447,35 @@ Set `external_codebase: true` in sp-harness.json (next step).
 
 If **No** → skip scan, do not create the file. Set `external_codebase: false`.
 
-### Step 6d: Write config
+### Step 6d: Inline-chat language
+
+Decision touch-point per `docs/decision-touchpoint-protocol.md` —
+structured menu, plain-language consequences:
+
+```
+→ What language should the agents reply in for inline chat output?
+  · match-input — agents reply in whatever language you typed in this
+    turn. Behaves like the original v0.8.7 rule. Pick this if you
+    write to the agent in different languages and want it to follow.
+  · en (or any specific code: zh, ja, ko, fr, ...) — agents always
+    reply in this language regardless of what you typed. Pick this
+    if you want session-stable language across context switches.
+```
+
+Default offered: `match-input`. Files / commits / docs / plan YAML
+always stay English regardless of this choice — this only affects
+the chat language between you and the agents.
+
+Save the user's answer as the `language` field in the next step.
+
+### Step 6e: Write config
 
 ```json
 {
   "dev_mode": "three-agent" | "single-agent",
   "last_hygiene_at_completed": 0,
-  "external_codebase": true | false
+  "external_codebase": true | false,
+  "language": "match-input" | "en" | "zh" | <other>
 }
 ```
 
@@ -453,7 +498,7 @@ docs/                      ✓ directory structure created / ✓ already complet
 .claude/memory.md          ✓ initialized (template) / ✓ already complete
 .claude/settings.json      ✓ hooks configured / ✓ already complete
 .claude/sp-feedback-calibration.json  (auto-created on first sp-feedback run)
-.claude/sp-harness.json    ✓ dev_mode={mode}, external_codebase={true|false}
+.claude/sp-harness.json    ✓ dev_mode={mode}, external_codebase={true|false}, language={lang}
 .claude/codebase-context.md  ✓ generated (only if external_codebase=true) / — skipped
 .claude/agents/            ✓ sp-feedback.md + {3 dev agents if three-agent}
 ```

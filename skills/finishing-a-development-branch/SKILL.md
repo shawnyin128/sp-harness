@@ -49,20 +49,28 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-Present exactly these 4 options:
+This is a decision touch-point per `docs/decision-touchpoint-protocol.md`.
+The four options are a structured menu, so per the lighter rule each
+option must be a one-sentence consequence in plain language (not just
+a label):
 
 ```
-Implementation complete. What would you like to do?
+Implementation complete on <feature-branch>. What next?
 
-1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
-3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+1. Merge into <base-branch> locally — fast-forward / merge here, run
+   tests on the merged result, delete the feature branch on success.
+2. Push and open a Pull Request — push <feature-branch> to origin,
+   `gh pr create` with summary + test plan, branch stays for review.
+3. Keep the branch as-is — no merge, no push, worktree preserved so
+   you can come back to it.
+4. Discard this work — delete the branch and worktree (typed
+   confirmation required, work is unrecoverable after this).
 
-Which option?
+Which one?
 ```
 
-**Don't add explanation** - keep options concise.
+Keep this block under 10 lines. Don't pad — but each option must say
+what actually happens, not just its name.
 
 ### Step 4: Execute Choice
 

@@ -397,31 +397,38 @@ Approach:
   <1-2 sentences describing the chosen approach at a high level>
 
 Key decisions made:
-  D1 · <question> → <choice> (<confidence>%)
-  D2 · <question> → <choice> (<confidence>%)
-  ⚠️ D3 · <question> — open (<confidence>%)
-    alternatives: (a) ... (b) ... (c) ...
+  · <plain-language summary of decision> (D1) → <choice> (<confidence>%)
+  · <plain-language summary of decision> (D2) → <choice> (<confidence>%)
+  ⚠️ <plain-language question> (D3) — needs your call (<confidence>%)
   ...
   (⚠️ marks open questions the spec couldn't resolve without user input;
-  ⚠️ only for confidence < 70 OR decisions the spec explicitly deferred.)
+  ⚠️ only for confidence < 70 OR decisions the spec explicitly deferred.
+  Lead each line with a plain-language label; D-IDs go in parens.)
 
 Divergence risks:
   <1-3 line summary of the biggest non-deterministic risks from the
-  Divergence Risk Analysis section>
+  Divergence Risk Analysis section, in plain prose>
 
 Scope:
   <N> features will be extracted · <files/modules touched or created>
 
-→ Your call:
-  [IF any ⚠️ open]
-    Resolve Q1 (confidence <N>%):
-      (a) <option a>
-      (b) <option b>
-      (c) <option c>
+→ Your call (decision touch-point per docs/decision-touchpoint-protocol.md):
+  [IF any ⚠️ open — ask the lowest-confidence one first]
+    <plain-language question, restated>:
+      Background: <code/behavior state that triggered this — no bare
+                   spec section names>
+      What it controls: <observable behavior change>
+      My pick: (<x>) <option> — <reason>, <confidence>%
+      Options:
+        (a) <one-sentence consequence in plain language>
+        (b) <one-sentence consequence in plain language>
+        (c) <one-sentence consequence in plain language>
   [IF all resolved]
-    (a) Approve → extract features + dispatch feature-tracker
-    (b) Edit spec — tell me what to change
-    (c) Discard — cancel this brainstorm
+    (a) Approve and continue — features get extracted into features.json,
+        then feature-tracker starts on the highest-priority one.
+    (b) Edit the spec — tell me what to change before we extract anything.
+    (c) Discard — cancel this brainstorm; nothing is written to the
+        feature list.
 ```
 
 Rules:
@@ -432,6 +439,10 @@ Rules:
   one with lowest confidence first). Do not bundle open decisions.
 - When the user picks an option or approves, update the spec file
   accordingly BEFORE moving to feature extraction.
+- Every ⚠️ ask follows `docs/decision-touchpoint-protocol.md`:
+  Background / What it controls / My pick / Options must be present;
+  bare D-IDs without translation are forbidden; option lines must be
+  one-sentence consequences, never just labels.
 
 **Before printing the brief, write an in-flight topic block to the
 `## Buffer` section of `.claude/memory.md`.** This lets a later session
