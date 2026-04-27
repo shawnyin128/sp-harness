@@ -7,7 +7,7 @@ description: |
   terminal output at three touch points: Plan review, per-round Eval review,
   and Optimization review. Explicitly triggered by feature-tracker or user.
 author: sp-harness
-version: 3.0.0
+version: 3.1.0
 ---
 
 # Three-Agent Development
@@ -49,6 +49,31 @@ Active work lives in `active/`. Completed features archive to `archive/<feature-
 
 Permanent tests (written by Evaluator) live at `tests/<feature-id>/` and
 survive as regression guards after merge.
+
+---
+
+## Step 0: Declare session language
+
+**MUST run this before Step 1.** Read `.claude/sp-harness.json` and
+extract the `language` field (default `match-input` if missing).
+Print `Session language: <code>` as the first line of your reply for
+this session. Then follow the rule for the remainder of the session:
+
+- `match-input` (default) — reply in the user's input language each
+  turn.
+- Any specific code (`en`, `zh`, `ja`, ...) — pin replies to that
+  language regardless of input.
+
+In either mode, no code-mixing within a single message. Identifiers
+(file paths, command names, field names, product names, IDs) stay in
+their original form. Files / commits / docs / plan YAML always
+English regardless of chat language.
+
+This rule mirrors the one in feature-tracker Step 1 and the subagent
+templates; it lives here because this SKILL is sometimes invoked
+directly without going through feature-tracker, and because
+orchestrator output (Plan review, Round verdicts, Optimization review)
+goes through the main session.
 
 ---
 

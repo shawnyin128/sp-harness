@@ -67,7 +67,7 @@ to `missed_detections` with a hypothesis on which phase should have
 caught it (sp-evaluator / brainstorming / sp-planner / this agent).
 Then proceed to clarifying questions + scoped checklist.
 
-## Structured Checklist (6 dimensions)
+## Structured Checklist (8 dimensions)
 
 ### 1. Functional correctness (cross-feature)
 - [ ] End-to-end flows work across feature boundaries
@@ -119,6 +119,28 @@ AND its archive directory contains a `supersession.json`:
 
 This catches drift after cleanup (e.g., someone re-introduced the old
 artifact by accident, or a new feature started writing to the old path).
+
+### 8. Language compliance (orchestrator-output drift)
+
+When `.claude/sp-harness.json` declares `language` as a specific code
+(not `match-input`), the orchestrator's terminal output —
+feature-tracker progress + decision asks + feature briefs,
+single-agent-development / three-agent-development Plan review and
+Round verdicts — MUST honor that code.
+
+- [ ] If language is set to a specific code, scan the just-completed
+      feature's archived plan + chat-record for orchestrator messages
+      that visibly ignored the rule (replied in a different language,
+      or code-mixed identifiers + prose without justification).
+- [ ] If a violation is observed, surface it as a finding routed to
+      the offending SKILL (typically feature-tracker / single-agent-
+      development / three-agent-development) so its directive can be
+      tightened.
+- [ ] Note: subagent templates (sp-planner, sp-evaluator, sp-feedback)
+      have had this rule since v0.8.10. The three orchestrator SKILLs
+      received the parallel rule via the orchestrator-language-
+      enforcement feature — pre-rule sessions in the archive may show
+      drift; only flag post-rule sessions.
 
 ## Adversarial Stance
 

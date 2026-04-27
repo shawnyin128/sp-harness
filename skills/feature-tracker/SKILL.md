@@ -7,7 +7,7 @@ description: |
   automatically: after each feature completes, picks the next one.
   Use when starting or resuming feature development.
 author: sp-harness
-version: 3.3.0
+version: 3.4.0
 ---
 
 # feature-tracker
@@ -52,6 +52,26 @@ brainstorming first to create one. STOP.
     a specific code like `en`, `zh`, `ja` = pin replies to that language
     regardless of input. Either way, code-mixing is forbidden and
     files/commits/docs always stay English.)
+
+**MUST: Declare session language and follow it.**
+
+Right after reading `language` from `.claude/sp-harness.json`,
+print `Session language: <code>` as the first line of your reply for
+this session. Then follow the rule for the remainder of the session:
+
+- `match-input` (default) — reply in the user's input language each
+  turn.
+- Any specific code (`en`, `zh`, `ja`, ...) — pin replies to that
+  language regardless of input.
+
+In either mode, no code-mixing within a single message. Identifiers
+(file paths, command names, field names, product names, IDs) stay in
+their original form. Files / commits / docs / plan YAML always
+English regardless of chat language. This rule mirrors the one already
+present in sp-planner / sp-evaluator / sp-feedback subagent templates;
+it exists here because the orchestrator's own terminal output (progress
+summary, decision asks, feature briefs) goes through the main session
+and was previously not bound by the rule.
 
 **MUST: Hygiene counter validation — ONLY validates. Does NOT trigger cleanup.**
 
