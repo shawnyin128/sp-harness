@@ -108,28 +108,16 @@ def test_tracker_brief_block_reaffirms_order(tracker_text: str) -> None:
 
 # --- S5 version frontmatter --------------------------------------------------
 
-_VERSION_RE_TEMPLATE = r"^version: {major}\.(\d+)\.(\d+)$"
-
-
-def _assert_min_version(text: str, major: int, min_minor: int, file_label: str) -> None:
-    import re
-
-    m = re.search(_VERSION_RE_TEMPLATE.format(major=major), text, re.MULTILINE)
-    assert m, f"{file_label} must declare 'version: {major}.x.y' in frontmatter"
-    minor = int(m.group(1))
-    assert minor >= min_minor, (
-        f"{file_label} version must be >= {major}.{min_minor}.0 "
-        f"(this feature's bump baseline); found {major}.{minor}.{m.group(2)}"
-    )
+from _helpers.version_check import assert_min_version
 
 
 def test_hygiene_skill_version_at_or_above_1_2(hygiene_text: str) -> None:
     """code-hygiene SKILL.md must be at 1.2.0 or later — this feature bumped
     it to 1.2.0; subsequent features may bump further."""
-    _assert_min_version(hygiene_text, major=1, min_minor=2, file_label="skills/code-hygiene/SKILL.md")
+    assert_min_version(hygiene_text, major=1, min_minor=2, file_label="skills/code-hygiene/SKILL.md")
 
 
 def test_tracker_skill_version_at_or_above_3_2(tracker_text: str) -> None:
     """feature-tracker SKILL.md must be at 3.2.0 or later — this feature
     bumped it to 3.2.0; subsequent features may bump further."""
-    _assert_min_version(tracker_text, major=3, min_minor=2, file_label="skills/feature-tracker/SKILL.md")
+    assert_min_version(tracker_text, major=3, min_minor=2, file_label="skills/feature-tracker/SKILL.md")
