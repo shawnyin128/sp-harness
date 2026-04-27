@@ -161,11 +161,15 @@ Both blocks below are decision touch-points per
 plain-language consequences, never bare labels. Evaluator's blockers
 listed above must read as plain language with no bare spec IDs.
 
+**Self-check before print:** re-read each option line aloud as if to a
+colleague unfamiliar with the project. If you would stumble or they
+would ask "what does that mean," rewrite it before emitting.
+
 **If verdict == ITERATE:**
-```
+```output-template
 → Your call:
   (a) Send back to Generator to fix the <N> blocker(s) above —
-      Generator addresses each, then a new Round runs.
+      Generator addresses each, then another evaluation runs.
   (b) Force-merge anyway — ship as-is, listed blockers stay open;
       you own the risk and the followup.
   (c) Replan from scratch — current plan is archived, Planner re-runs
@@ -173,12 +177,12 @@ listed above must read as plain language with no bare spec IDs.
 ```
 
 **If verdict == PASS (optimization):**
-```
+```output-template
 → Your call:
   (a) Accept and merge — feature ships now, optimization suggestions
       stay as ideas in the plan YAML for later.
   (b) Apply optimizations first, then merge — Generator implements the
-      suggestions, a final Round verifies, then ship.
+      suggestions, a final evaluation verifies, then ship.
 ```
 
 Orchestrator waits for user choice, then routes:
@@ -198,12 +202,12 @@ If Round 6 would be triggered (5 rounds completed without PASS), the
 Evaluator writes a blocker "Max rounds exceeded" and forces ITERATE.
 Orchestrator escalates to user explicitly:
 
-```
+```output-template
 ⚠️ 5 rounds completed and blockers still present. The plan may be
    fundamentally wrong — five attempts have not converged.
 
 → Your call:
-  (a) Keep iterating into Round 6 — Generator addresses current
+  (a) Try one more iteration — Generator addresses current
       blockers; we may converge or hit the same wall again.
   (b) Replan from scratch — current plan is archived, Planner re-runs
       with full knowledge of the round history (best when blockers
