@@ -13,7 +13,13 @@ tests/skill-routing/
 tests/skill-routing-mvp-runner/
 tests/skill-pruning/
 tests/skill-pruning-*/
+tests/humanize-*
 docs/design-docs/
+
+# Maintainer-only release pipeline (not distributed with the plugin)
+.githooks/
+scripts/bump-version.sh
+.version-bump.json
 
 # Skill development artifacts (writing-skills TDD outputs)
 skills/*/CREATION-LOG.md
