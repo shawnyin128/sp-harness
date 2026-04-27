@@ -14,6 +14,78 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.18 (2026-04-27)
+
+Skill-output codename gloss migration release. F3+F4+F5 of the
+[skill-output-codename-gloss design](docs/design-docs/2026-04-27-skill-output-codename-gloss-design.md):
+every SKILL.md with prescribed user-facing terminal output now wraps
+that output in the lint-enforced ` ```output-template ` fence
+introduced by v0.8.17. The migration is now end-to-end: lint guards
+the entire user-facing surface against future codename leakage.
+
+### What's new
+
+- **Dev pipeline cluster migrated** (F3): `single-agent-development`,
+  `three-agent-development`, and `feature-tracker` SKILL.md files now
+  wrap their decision touchpoints, round verdicts, and feature-brief
+  reference in `output-template` fences. Naked `Round 6` / `Round N+1`
+  codenames dropped in favor of plain action language ("try one more
+  iteration", "another evaluation runs"). Self-check instructions
+  added before every emission step. `subagent-driven-development`
+  unchanged: it has no prescribed terminal output of its own.
+- **Brainstorm/plan cluster migrated** (F4): `brainstorming` Decision
+  Brief restructured from trailing-codename form
+  `<gloss> (D1) → choice` to the canonical leading form
+  `D1(<gloss>) → choice`. Concrete-example anchor applied to D1
+  placeholder. Protocol reference and meta-instruction moved out of
+  the fenced template into surrounding prose. `writing-plans`,
+  `executing-plans`, and `dispatching-parallel-agents` unchanged:
+  process documentation, no rendered output blocks of their own.
+- **Remaining cluster migrated** (F5): seven more skills wrapped —
+  `audit-feedback` (calibration summary), `code-hygiene` (hygiene-
+  complete report + return-of-control sentinel), `feedback`
+  (memory-operations summary), `finishing-a-development-branch`
+  (tests-failing template, structured menu, discard confirmation),
+  `framework-check` (structured-report format, example report,
+  → Your call menu), `init-project` (Q1 dev-mode menu, three-agent
+  defaults print, Q2 use-defaults menu), `switch-dev-mode` (stale-
+  agents detected report, regenerate menu). The remaining ~10 process-
+  doc / bash-catalog skills lint-pass trivially with no fences.
+- **Vocabulary fixes inside glosses.** Domain phrases rephrased to
+  drop unnecessary kebab-case where it didn't change meaning
+  (`auto-fixable` → `auto`, `need-confirm` → `needs confirm`,
+  `plugin-dev` → `plugin development`, `re-confirmed` → `confirm
+  again`, `(true red-team)` → `(true adversarial review)`,
+  `<plain-language summary>` → `<short summary>`). Where the kebab
+  is genuinely the displayed label (file names like `task-plan.json`
+  / `plan.yaml` / `eval-report.json` in switch-dev-mode's stale-marker
+  block; `🔴needs-confirm` tags in framework-check's example report;
+  `sp-feedback` self-references in audit-feedback), inline
+  `<!-- lint:disable=R3 -->` comments accompany the legitimate use.
+
+### Migration acceptance
+
+26 SKILL.md files scanned by `lint-skill-output.py`: 0 errors,
+0 warnings. Every file with a `output-template` fence passes R1
+(codename-needs-gloss) and R2 (id-placeholder-needs-format) under
+strict rules; every file without a fence lint-passes trivially per
+the design's no-allowlist principle.
+
+### Notes
+
+- The original feature plans for F3-F5 each listed a "Remove grace
+  allowlist" step that turned out to be vestigial: there has never
+  been an allowlist mechanism in `lint-skill-output.py`. The fence-
+  as-gate already handles the same concern more simply (un-fenced
+  files trivially pass; wrapping IS the migration).
+- Same-session dogfood is impossible because the harness reads SKILL
+  content from a cached path that doesn't refresh mid-session. Each
+  feature's edits become observable in the *next* session that loads
+  them. Real runtime validation accumulates as users naturally
+  exercise the skills.
+
+---
+
 ## v0.8.17 (2026-04-27)
 
 Skill-output codename gloss infrastructure release. F1+F2 of the
