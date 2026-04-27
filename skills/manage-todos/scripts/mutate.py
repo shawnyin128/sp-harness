@@ -122,7 +122,17 @@ def op_add(args):
     existing_ids = {t["id"] for t in data["todos"]}
     if args.category not in VALID_CATEGORIES:
         sys.exit(f"error: category must be one of {sorted(VALID_CATEGORIES)}")
-    display_name = args.display_name or derive_display_name(args.description)
+    if args.display_name is not None:
+        if not args.display_name.strip():
+            sys.exit("error: display_name cannot be empty")
+        display_name = args.display_name
+    else:
+        display_name = derive_display_name(args.description)
+        if not display_name or not display_name.strip():
+            sys.exit(
+                "error: display_name cannot be empty; "
+                "pass --display-name explicitly or supply a richer description"
+            )
     todo = {
         "id": unique_id(slugify(args.description), existing_ids),
         "description": args.description,
@@ -261,6 +271,8 @@ def op_update(args):
         todo["notes"] = args.notes
         updates["notes"] = args.notes
     if args.display_name is not None:
+        if not args.display_name.strip():
+            sys.exit("error: display_name cannot be empty")
         todo["display_name"] = args.display_name
         updates["display_name"] = args.display_name
     if not updates:
