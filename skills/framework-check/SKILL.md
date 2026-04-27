@@ -475,6 +475,28 @@ supersedes refs, cycles, self-supersession. Exit 1 on errors.
 Any failure → 🔴, `manual` (do NOT auto-create features.json; that is
 brainstorming's job).
 
+### Skill output lint (runs independently)
+
+Run:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-skill-output.py" --check
+```
+
+Scans every `skills/*/SKILL.md` for content inside ` ```output-template `
+fences and verifies:
+
+- R1: static codenames (D1, F2, S3, Phase N, Round N, Mode A/B) have inline `(<gloss>)`
+- R2: id placeholders use `<…-id|format>` syntax (renderer hooked to `_lib.format_id`)
+- R3 (warn-only, does not change exit): quality heuristics on gloss content
+- schema invariant: every `.claude/features.json` and `.claude/todos.json` entry has non-empty `display_name`
+
+Output is a JSON summary with `errors`, `warnings`, `files_scanned`.
+
+Exit 1 on R1/R2/schema failure → 🔴, `manual` (do NOT auto-edit
+SKILL.md content; the maintainer must fix the offending fence per
+the rules in `writing-skills` "Output template rules" chapter).
+R3 warnings are reported but do not fail the check.
+
 ---
 
 ## Step 1: Run all checks
