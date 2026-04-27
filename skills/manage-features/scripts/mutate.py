@@ -144,7 +144,17 @@ def op_add(args):
         if todo_ids and from_todo not in todo_ids:
             sys.exit(f"error: from_todo references missing todo '{from_todo}'")
 
-    display_name = args.display_name or derive_display_name(args.description)
+    if args.display_name is not None:
+        if not args.display_name.strip():
+            sys.exit("error: display_name cannot be empty")
+        display_name = args.display_name
+    else:
+        display_name = derive_display_name(args.description)
+        if not display_name or not display_name.strip():
+            sys.exit(
+                "error: display_name cannot be empty; "
+                "pass --display-name explicitly or supply a richer --description"
+            )
 
     new_feature = {
         "id": args.id,
@@ -194,6 +204,8 @@ def op_update(args):
         updates["description"] = True
 
     if args.display_name is not None:
+        if not args.display_name.strip():
+            sys.exit("error: display_name cannot be empty")
         feature["display_name"] = args.display_name
         updates["display_name"] = True
 
