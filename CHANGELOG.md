@@ -14,6 +14,83 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.17 (2026-04-27)
+
+Skill-output codename gloss infrastructure release. F1+F2 of the
+[skill-output-codename-gloss design](docs/design-docs/2026-04-27-skill-output-codename-gloss-design.md):
+the static-lint and centralized-renderer foundation that F3-F5 will
+build on to migrate every skill's user-facing output to a uniform
+`代号(白话)` format.
+
+### What's new
+
+- **Centralized id renderer.** New `skills/_lib/format_id.py` exposes
+  `get_display_name(id, kind)` and `format_id(id, kind)` →
+  `<id>(<display_name>)`. Both raise `ValueError` on unknown id,
+  empty `display_name`, or invalid kind — no fallback to bare id.
+  `skills/feature-tracker/scripts/print-brief.py` now imports the
+  helper instead of its local `lookup_display_name()`. Behavior of
+  the existing brief format is preserved at this step (F3 owns the
+  format flip to `<id>(<display_name>)`).
+- **Schema invariant: `display_name` is required and non-empty.**
+  `manage-features` and `manage-todos` `mutate.py add/update` now
+  reject empty or whitespace-only `display_name` (explicit empty
+  is distinguished from omitted-with-derive-fallback). The
+  corresponding `backfill_display_names.py` scripts also fail loudly
+  when the heuristic would write empty, naming the offending entry
+  id and leaving the file untouched.
+- **Skill output lint.** New `scripts/lint-skill-output.py` scans
+  `skills/*/SKILL.md` for content inside ` ```output-template `
+  fenced blocks and enforces:
+    - **R1**: static codenames (`D1`, `F2`, `S3`, `Phase N`,
+      `Round N`, `Mode A/B`) need an immediately-adjacent `(<gloss>)`.
+    - **R2**: id placeholders use `<…-id|format>` syntax that
+      signals the runtime renderer.
+    - **R3** (warn-only, exit unchanged): heuristics for
+      snake_case/kebab-case in glosses, consecutive Title Case
+      pairs, sp-harness denylist tokens (`Phase`, `Round`,
+      `Mode A/B`, `F1`-`F9`, `plan.yaml`, `feature-id`) used
+      outside their codename role, and `>80`-char gloss clauses.
+      Inline disable via `<!-- lint:disable=R3 -->`.
+    - **schema check**: every `.claude/features.json` and
+      `.claude/todos.json` entry has non-empty `display_name`
+      (regression guard for the new invariant).
+- **`writing-skills` "Output template rules" chapter.** New section
+  in `skills/writing-skills/SKILL.md` covering when to use the
+  fence, gloss format with concrete `GOOD`/`BAD` examples, id
+  placeholder syntax, the concrete-anchor rule, the self-check
+  step, the R3 quality rubric, and how to wire the lint script
+  into project-local pre-commit / CI per project convention. The
+  chapter explicitly opts NOT to ship pre-commit/CI config —
+  `framework-check` is the in-plugin enforcement.
+- **`framework-check` runs the lint.** New "Skill output lint"
+  validator section calls `scripts/lint-skill-output.py --check`;
+  failure is red and manual.
+
+### Background and context
+
+The 2026-04-23 "Humanize sp-harness user-facing output" work landed
+the `display_name` field in `features.json` / `todos.json` and
+populated it via a `derive_display_name` heuristic, but consumption
+was patchy — only 5 of 27 SKILL.md files actually used it, and the
+field was schema-optional with empty-fallback to bare id. v0.8.17
+closes that gap: required + non-empty schema, no-fallback
+centralized renderer, lint that prevents future regression.
+
+F3-F5 (dev-pipeline / brainstorm-plan / remaining-cluster
+migration) will incrementally add ` ```output-template ` fences to
+skill files and flip the user-visible output format. That work is
+unchanged in v0.8.17 — no fences exist yet, so the lint passes
+trivially over all 26 SKILL.md.
+
+### Tests
+
+76 tests in `tests/skill-output-format-id-helper/`: 13 `format_id`
+unit tests, 14 mutate.py tests across both managers, 5 backfill
+tests, 4 print-brief integration tests, 16 lint-script tests across
+7 fixtures plus CLI flag and schema-integration coverage. 24
+humanize-schema-and-backfill regression tests still pass.
+
 ## v0.8.16 (2026-04-27)
 
 Cleanup-and-tighten release. Six features merged in one session that
