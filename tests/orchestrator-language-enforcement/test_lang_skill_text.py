@@ -73,13 +73,23 @@ def test_three_agent_has_language_directive(three_agent_text: str) -> None:
 def test_sp_feedback_mode_a_has_language_check(sp_feedback_text: str) -> None:
     """sp-feedback Mode A must surface a language-compliance check so that
     a future feature where language=zh produced English orchestrator output
-    is automatically flagged for follow-up."""
-    # We don't pin the exact wording — just require the literal anchors.
-    assert "language" in sp_feedback_text
-    assert "orchestrator" in sp_feedback_text.lower(), (
-        "sp-feedback template must mention 'orchestrator' in the context "
-        "of language enforcement so the Mode A checklist can land the "
-        "compliance review."
+    is automatically flagged for follow-up. Pin the exact section heading
+    so removing the new dimension fails this test loudly — the previous
+    version of this assertion passed vacuously off pre-existing
+    'language' / 'orchestrator' mentions elsewhere in the template."""
+    assert "### 8. Language compliance" in sp_feedback_text, (
+        "agent-templates/sp-feedback.md must contain the literal heading "
+        "'### 8. Language compliance' for the Mode A checklist's "
+        "orchestrator-output drift dimension."
+    )
+    assert "orchestrator-output drift" in sp_feedback_text, (
+        "The new dimension's heading must include 'orchestrator-output "
+        "drift' so future readers see what the check is for."
+    )
+    # Header count must match actual section count.
+    assert "Structured Checklist (8 dimensions)" in sp_feedback_text, (
+        "The Structured Checklist heading must declare 8 dimensions, "
+        "matching the section count after this feature."
     )
 
 
