@@ -5,7 +5,7 @@ description: |
   dead code, and small debts. Auto-fixes unambiguous issues, escalates
   ambiguous ones. Triggered by feature-tracker every 3 features.
 author: sp-harness
-version: 1.1.0
+version: 1.2.0
 user-invocable: false
 ---
 
@@ -85,13 +85,45 @@ Hygiene complete (N files): auto-fixed X, escalated Y, skipped Z
 
 Write `.claude/agents/state/active/hygiene-result.json`:
 ```json
-{"status": "complete", "auto_fixed": N, "escalated": N, "skipped": N}
+{"status": "complete", "auto_fixed": N, "escalated": N, "skipped": N, "next_action": "continue_step_5d_d"}
 ```
+
+The `next_action` field is REQUIRED. It is the machine-readable half of
+the return-of-control contract: it tells whatever orchestrator dispatched
+this skill (typically feature-tracker) which step to resume on. Always
+emit `"continue_step_5d_d"` when status is `"complete"` — do not omit,
+do not abbreviate, do not localize.
 
 Do NOT write this file if hygiene fails or is interrupted.
 
 Recurring patterns are not your concern — leave them for sp-feedback (Mode A)
 to detect from archived eval-reports and your hygiene-result.json history.
+
+---
+
+## Step 5: Return control to caller
+
+After Step 4 emits the report and writes the state file with
+`next_action`, this skill is finished — but the WORK is not. Hygiene was
+dispatched from the middle of feature-tracker Step 5, and the caller
+still has counter updates, the Feature Brief, and a loop-back to do.
+
+To prevent the orchestrator from treating hygiene's commit + report as
+the terminal step of the whole feature cycle, print this exact line as
+the LAST output of this skill:
+
+```
+CONTROL RETURNS TO feature-tracker Step 5d.d — orchestrator must continue, this skill is not the terminal step
+```
+
+Then stop. Do not summarize. Do not propose next features. Do not loop.
+Do not commit anything else. The orchestrator (still in feature-tracker
+Step 5d) reads this line + the `next_action` field and proceeds to 5d.d
+counter update, then 5e Feature Brief, then loops back to Step 2.
+
+This dual-signal contract (terminal sentinel + JSON `next_action`) is
+the only thing fighting silent chain breaks at this interface — both
+halves are required.
 
 ---
 

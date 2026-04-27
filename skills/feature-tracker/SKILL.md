@@ -7,7 +7,7 @@ description: |
   automatically: after each feature completes, picks the next one.
   Use when starting or resuming feature development.
 author: sp-harness
-version: 3.1.0
+version: 3.2.0
 ---
 
 # feature-tracker
@@ -154,6 +154,17 @@ If REJECT, feature-tracker stops and reports to user.
 
 ## Step 5: Commit, hygiene cleanup, LOOP BACK
 
+<EXTREMELY-IMPORTANT>
+Step 5 runs as a single unit. Every MUST-block below — archive plan,
+check todo, commit completion, hygiene cleanup, Print Feature Brief,
+loop-back-to-Step-2 — must execute in order with no early exit. In
+particular, if hygiene is dispatched (5d), control returns here; the
+brief and the loop-back still owe you. The hygiene skill prints a
+sentinel line ("CONTROL RETURNS TO feature-tracker Step 5d.d ...") and
+writes `next_action: "continue_step_5d_d"` to its result file precisely
+to remind you of this — heed both signals and continue.
+</EXTREMELY-IMPORTANT>
+
 The dev skill (three-agent or single-agent) already archived state files
 to `.claude/agents/state/archive/<feature-id>/` on PASS.
 
@@ -217,6 +228,11 @@ d. **If delta >= 3:**
       - Write sp-harness.json to disk
       - Delete `.claude/agents/state/active/hygiene-result.json`
       - Report: "Hygiene complete. Counter updated to {completed_count}."
+      - **DO NOT STOP here.** Hygiene is not the terminal step of this
+        feature. Continue immediately to "MUST: Print Feature Brief"
+        below, then back to Step 2. Hygiene's commit + report does not
+        replace the brief, and the brief does not replace the
+        loop-back. All three still owe you.
    e. **If file missing OR status is NOT `"complete"`:**
       - Do NOT update the counter
       - Warn: "Hygiene did not complete. Counter not updated. Will retry next loop."
@@ -235,7 +251,9 @@ This step MUST come after hygiene cleanup and BEFORE the all-done branch
 or the loop-back-to-Step-2 jump. The brief is the final per-feature
 output the user sees; nothing else may print between it and the next
 loop iteration. If hygiene ran and printed output, the brief still
-prints after — it is always the closing line for the current feature.
+prints after hygiene — it is always the closing line for the current
+feature. Hygiene's report and sentinel line do NOT substitute for the
+brief; the brief is mandatory regardless of whether hygiene ran.
 
 Read the archived plan YAML for source data:
 `.claude/agents/state/archive/<feature-id>/<feature-id>.plan.yaml`
