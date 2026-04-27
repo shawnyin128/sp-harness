@@ -43,10 +43,18 @@ class TestValidFixtures(_NoSchemaCheck):
     def test_valid_with_id_placeholder_passes(self):
         res = self.lint_fixture("valid_with_id_placeholder.md")
         self.assertEqual(res.returncode, 0, res.stderr)
+        # Regression guard: <feature-id|format> placeholder must not
+        # trip the R3 'feature-id' denylist (the literal hides inside
+        # an angle-bracket placeholder, not in prose).
+        self.assertNotIn("[R3]", res.stderr)
 
     def test_valid_with_phase_in_gloss_passes(self):
         res = self.lint_fixture("valid_with_phase_in_gloss.md")
         self.assertEqual(res.returncode, 0, res.stderr)
+        # Regression guard: a properly glossed codename like
+        # 'Phase 3(...)' must not trip the R3 'Phase' denylist —
+        # it IS the codename role the rule is exempting.
+        self.assertNotIn("[R3]", res.stderr)
 
     def test_valid_quality_disable_passes(self):
         # The fixture has snake_case + Title Case in a gloss but R3 disabled.

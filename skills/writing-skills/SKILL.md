@@ -645,6 +645,164 @@ How future Claude finds your skill:
 
 **Optimize for this flow** - put searchable terms early and often.
 
+## Output Template Rules
+
+When a skill produces user-facing terminal output — anything the user
+will read on screen, including agent-to-agent protocol messages echoed
+to terminal — that output must be wrapped in a fenced block tagged
+`output-template` and follow strict rules to prevent codename leakage.
+Static lint enforces this; running agents render placeholders.
+
+### When to use the fence
+
+Use ` ```output-template ` for content the user reads:
+
+- Final briefs, status reports, decision touch-points printed to terminal
+- Per-step summaries, completion banners, error reports
+- Agent-to-agent protocol messages echoed to terminal (round verdicts,
+  dispatch summaries) — the user sees them in the transcript even if the
+  designed reader is the next agent
+
+Do **not** wrap with the fence:
+
+- Internal flow instructions ("after Step 3, do X")
+- Concept explanations or rationale prose
+- Internal vocabulary glossaries
+- Slash command names, file paths, identifiers in normal prose
+
+The lint scans **only** content inside `output-template` fences. Other
+SKILL.md sections may use codenames freely.
+
+### Inline gloss format
+
+Universal format: `代号(白话) → 内容`
+
+Static codenames inside the fence — `D1`, `F2`, `S3`, `Phase N`,
+`Round N`, `Mode A/B` — must be immediately followed by a parenthesized
+plain-language gloss. The lint rule R1 fails the build otherwise.
+
+✅ GOOD — passes lint:
+
+```output-template
+· D1(用户名是否区分大小写) → 不区分(85%)
+· Phase 3(架构与代理实现澄清阶段) 已完成
+```
+
+❌ BAD — would fail R1:
+
+```text
+· D1 → 不区分(85%)
+· Phase 3 已完成
+```
+
+For runtime-resolved IDs (feature ids, todo ids), use a placeholder
+ending with `|format`:
+
+✅ GOOD — passes lint:
+
+```output-template
+Feature <n>/<total> 完成: <feature-id|format>
+Linked todo: <todo-id|format>
+```
+
+❌ BAD — would fail R2:
+
+```text
+Feature <n>/<total> 完成: <feature-id>
+```
+
+The `|format` suffix signals to the renderer that this position is fed
+through `skills/_lib/format_id.format_id(id, kind)`, which returns
+`<id>(<display_name>)` and raises if `display_name` is missing or empty.
+Lint rule R2 fails the build if the suffix is omitted.
+
+### Concrete-example anchor rule
+
+Abstract placeholder labels like `<plain-language label>` give agents
+no anchor and they drift to jargon. Always include a concrete example
+inline:
+
+❌ BAD — agent fills with anything:
+
+```text
+· <plain-language label> (D1) → <choice>
+```
+
+✅ GOOD — concrete shape pins quality:
+
+```output-template
+· D1(<question, ≤12 words, conversational, no jargon —
+       e.g. "Should usernames be case-sensitive?">) → <choice>
+```
+
+The example does not appear in user output (the agent replaces the
+placeholder); it appears in the SKILL.md template the agent reads, and
+shapes what the agent writes.
+
+### Self-check step
+
+For any flow that emits user-facing summaries from agent-generated
+text, add this instruction immediately before the emission step:
+
+> "Re-read each gloss as if reading it aloud to a colleague unfamiliar
+> with the project. If you would stumble or they would ask 'what does
+> that mean,' rewrite it."
+
+This is a soft mitigation, not enforced by lint. It catches
+runtime-generated content that still drifts despite a concrete-example
+template.
+
+### Quality lint (R3, warn-only)
+
+R3 inspects literal-string content inside gloss `(...)` clauses for:
+
+- snake_case or kebab-case multi-word tokens
+- Two or more consecutive Title Case words
+- sp-harness denylist tokens (`Phase`, `Round`, `Mode A/B`, `F1`-`F9`,
+  `plan.yaml`, `feature-id`) used outside their own gloss role
+- Gloss clause length over 80 chars
+
+R3 emits warnings but does not change exit status. Inline disable for a
+single line (above the offending line):
+
+```
+<!-- lint:disable=R3 -->
+· D1(snake_case_intentional_for_some_reason) → keep
+```
+
+Full-file disable is forbidden — if many R3 hits are showing up,
+revisit the gloss text rather than silencing the check.
+
+### Wiring lint into your project
+
+The lint script ships as `scripts/lint-skill-output.py`. Run it manually:
+
+```bash
+python3 scripts/lint-skill-output.py            # full repo scan
+python3 scripts/lint-skill-output.py --check    # JSON summary
+python3 scripts/lint-skill-output.py --paths skills/foo/SKILL.md
+```
+
+`framework-check` runs the script as part of project health checks and
+flags failures red.
+
+To wire into your project's pre-commit / CI per your conventions:
+
+```bash
+# pre-commit hook (project-local; e.g. .git/hooks/pre-commit)
+python3 scripts/lint-skill-output.py --paths $(git diff --cached --name-only --diff-filter=ACM | grep 'SKILL\.md$') || exit 1
+```
+
+```yaml
+# CI step (e.g. GitHub Actions)
+- run: python3 scripts/lint-skill-output.py --check
+```
+
+sp-harness intentionally does not ship a global pre-commit config or CI
+workflow — different projects have different conventions, and forcing a
+specific framework on every plugin user is the wrong fit. Pick the
+mechanism your project already uses.
+
 ## The Bottom Line
 
 **Creating skills IS TDD for process documentation.**

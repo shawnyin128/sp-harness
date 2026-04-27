@@ -165,6 +165,13 @@ def check_r2(block: Block) -> list[str]:
 # ---------------------------------------------------------------------------
 
 _GLOSS_RE = re.compile(r"\(([^()]{1,200})\)")
+_PLACEHOLDER_RE = re.compile(r"<[^<>]{1,200}>")
+# Codename-followed-by-gloss patterns that legitimately use a denylist
+# token in the codename position. These are stripped before denylist
+# scanning so we don't false-positive on `Phase 3(架构...) 已完成`.
+_CODENAME_WITH_GLOSS_RE = re.compile(
+    r"\b(Phase\s+\d+|Round\s+\d+|Mode\s+[AB]|[DFS]\d+)\s*\([^()]{1,200}\)"
+)
 _SNAKE_KEBAB_RE = re.compile(r"\b[a-z][a-z0-9]*[_-][a-z0-9_-]*[a-z0-9]\b")
 _TITLE_PAIR_RE = re.compile(r"\b[A-Z][a-z]+\s+[A-Z][a-z]+\b")
 _DENYLIST = (
@@ -205,10 +212,13 @@ def check_r3(block: Block) -> list[str]:
                     f"{block.file}:{line_no}: [R3] gloss has "
                     f"consecutive Title Case words {tp.group(0)!r}"
                 )
-        # Denylist outside gloss roles: scan the line minus gloss text
-        line_outside_gloss = _GLOSS_RE.sub("", line)
+        # Denylist scan: strip codename-with-gloss (legitimate role),
+        # placeholders <...>, and remaining glosses, then check what's left.
+        line_for_scan = _CODENAME_WITH_GLOSS_RE.sub("", line)
+        line_for_scan = _PLACEHOLDER_RE.sub("", line_for_scan)
+        line_for_scan = _GLOSS_RE.sub("", line_for_scan)
         for pat in _DENYLIST:
-            m = pat.search(line_outside_gloss)
+            m = pat.search(line_for_scan)
             if m:
                 warns.append(
                     f"{block.file}:{line_no}: [R3] denylist token "
