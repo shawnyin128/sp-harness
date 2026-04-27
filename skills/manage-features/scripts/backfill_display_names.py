@@ -34,11 +34,25 @@ def main(argv: list[str]) -> int:
     entries = data.get("features", [])
     filled = 0
     skipped = 0
+    pending = []  # (entry, derived_name)
     for entry in entries:
-        if entry.get("display_name"):
+        existing = entry.get("display_name")
+        if isinstance(existing, str) and existing.strip():
             skipped += 1
             continue
-        entry["display_name"] = derive_display_name(entry.get("description", ""))
+        derived = derive_display_name(entry.get("description", ""))
+        if not derived or not derived.strip():
+            print(
+                f"error: cannot derive display_name for feature "
+                f"{entry.get('id', '<no-id>')!r} — description is empty or "
+                f"unparseable. Set display_name explicitly in {target}.",
+                file=sys.stderr,
+            )
+            return 1
+        pending.append((entry, derived))
+
+    for entry, derived in pending:
+        entry["display_name"] = derived
         filled += 1
 
     target.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
