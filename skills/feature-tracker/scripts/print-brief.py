@@ -13,15 +13,34 @@ Usage:
 
 Output is English-only by design — see feature-tracker SKILL.md and
 docs/plan-file-schema.md for the language-exception rationale.
+
+YAML support is intentionally narrow. The bundled loader handles the
+plan-file-schema subset: block mappings (2-space indent), block
+sequences with "- " items, "- |" sequence-item literal block scalars,
+literal "|" block scalars in mapping values, simple flow sequences
+"[a, b]", and identifier-keyed mappings. It does NOT handle: anchors,
+aliases, folded scalars (">"), JSON-style flow mappings ("{a: b}"),
+multi-doc streams, explicit type tags, or mapping keys that contain
+spaces or non-identifier characters. Sequence-item scalars MAY contain
+arbitrary punctuation including ": " — the loader uses a strict
+identifier-key regex to distinguish "- key: value" mapping items from
+plain prose items that merely happen to contain a colon.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
+
+# Sequence-item mapping detector: "- <ident>: ..." where <ident> is a
+# bare identifier-like key (letters/digits/underscore/hyphen). This
+# excludes prose items like "- File rename: collision" because the key
+# part contains a space.
+_MAPPING_ITEM_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$")
 
 
 # ---------------------------------------------------------------------------
@@ -91,19 +110,23 @@ def _parse_sequence(lines, pos, indent):
             # Literal block scalar as a sequence item: "- |" followed by
             # indented block content.
             result.append(_parse_block_scalar(lines, pos, indent))
-        elif ":" in item_content and not _looks_like_quoted(item_content):
+        elif _MAPPING_ITEM_RE.match(item_content) and not _looks_like_quoted(item_content):
             # Mapping item — first kv inline, rest at indent+2 (column where "- " ended).
             child_indent = indent + 2
             item = {}
-            key, _, rest = item_content.partition(":")
-            item[key.strip()] = _parse_value(lines, pos, child_indent, rest.strip())
+            m = _MAPPING_ITEM_RE.match(item_content)
+            key = m.group(1)
+            rest = m.group(2).strip()
+            item[key] = _parse_value(lines, pos, child_indent, rest)
             while pos[0] < len(lines):
                 ci, cc = lines[pos[0]]
-                if ci != child_indent or cc.startswith("- ") or ":" not in cc:
+                if ci != child_indent or cc.startswith("- "):
                     break
-                k, _, v = cc.partition(":")
+                kv = _MAPPING_ITEM_RE.match(cc)
+                if not kv:
+                    break
                 pos[0] += 1
-                item[k.strip()] = _parse_value(lines, pos, child_indent, v.strip())
+                item[kv.group(1)] = _parse_value(lines, pos, child_indent, kv.group(2).strip())
             result.append(item)
         else:
             # Plain scalar item. Consume continuation lines (indent > the

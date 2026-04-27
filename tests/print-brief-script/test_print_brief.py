@@ -38,7 +38,13 @@ def run_script(plan_file: Path, display_name: str = "Sample Feature",
 
 @pytest.mark.parametrize(
     "fixture_name",
-    ["full-pass", "missing-optimization", "multi-round", "wrapped-scalars"],
+    [
+        "full-pass",
+        "missing-optimization",
+        "multi-round",
+        "wrapped-scalars",
+        "colon-in-prose",
+    ],
 )
 def test_brief_snapshot(fixture_name: str) -> None:
     plan = FIXTURES / f"{fixture_name}.plan.yaml"

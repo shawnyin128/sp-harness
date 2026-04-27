@@ -1,0 +1,47 @@
+plan_id: sample-feature
+iteration: 1
+based_on: none
+
+problem: |
+  Exercises the case where sequence-item prose contains "key-like:
+  value-like" patterns that must NOT be confused with mapping items.
+  Real plans put rationale and notes inside lists with embedded colons
+  all the time.
+
+steps:
+  - id: S1
+    desc: Only step
+    coverage_min: 100
+
+decisions: []
+
+execution:
+  S1:
+    status: done
+    confidence: 100
+    commits: ["abc1234"]
+
+unplanned_changes: []
+
+flags_for_eval:
+  - |
+    Block-scalar item that itself contains: a colon in prose,
+    a path like skills/code-hygiene/SKILL.md: line 42, and various
+    other punctuation. The loader must keep this as one block.
+
+eval:
+  rounds:
+    - round: 1
+      closure_check:
+        unplanned_accepted:
+          - File rename: collision with another module
+          - Patch applied: covers the colon-in-prose case
+          - tests/path/file.py:42: edge case worth flagging
+        unplanned_rejected: []
+      tests:
+        S1:
+          pass: 1
+          fail: 0
+          coverage: 100
+      blockers: []
+      verdict: PASS

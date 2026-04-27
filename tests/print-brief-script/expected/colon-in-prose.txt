@@ -1,0 +1,9 @@
+─── Feature complete: "Sample Feature" (sample-feature) ───
+What:      Exercises the case where sequence-item prose contains "key-like: value-like" patterns that must NOT be confused with mapping items. Real plans put rationale and notes inside lists with embedded colons all the time.
+Steps:     1 step · 1 commit
+Files:     —
+Tests:     1 test · avg 100% coverage
+Rounds:    1 (PASS in round 1)
+Followups: —
+Commit:    deadbeef
+─────────────────────────────────────────────────────────
