@@ -355,9 +355,9 @@ generates project-level copies adapted to this project's context.
 ### Q1: Dev mode
 
 This is a decision touch-point per `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoint-protocol.md`
-(structured menu — both options as one-sentence consequences):
+(structured menu — both options as one-sentence consequences).
 
-```
+```output-template
 → Pick a development mode for this project:
   (a) Single-agent (default) — one agent plays Planner / Generator /
       Evaluator roles sequentially in the same session; faster, lower
@@ -365,8 +365,8 @@ This is a decision touch-point per `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoi
       red-team check is weaker; fits most projects.
   (b) Three-agent — Planner / Generator / Evaluator run as separate
       subagents in their own contexts; stronger evaluator independence
-      (true red-team) at higher token cost and dispatch overhead. Pick
-      this when correctness matters enough to pay for adversarial review.
+      (true adversarial review) at higher token cost and dispatch
+      overhead. Pick this when correctness matters enough to pay for it.
 ```
 
 ### Step 6a: Generate sp-feedback (always, regardless of dev mode)
@@ -381,8 +381,8 @@ Write to `.claude/agents/sp-feedback.md`.
 ### Step 6b: If three-agent, generate sp-planner / sp-generator / sp-evaluator
 
 Print defaults from templates:
-```
-Default three-agent configuration (from agent-templates/):
+```output-template
+Default three-agent configuration from the agent template files:
   sp-planner:   opus, tools=Read/Grep/Glob/Bash/Write/Edit/Skill, memory=project, skills=sp-harness:writing-plans
   sp-generator: sonnet, isolation=worktree, skills=subagent-driven-dev+TDD+git-convention
   sp-evaluator: opus, tools=Read/Grep/Glob/Bash, memory=project
@@ -390,7 +390,7 @@ Default three-agent configuration (from agent-templates/):
 
 **Q2:** decision touch-point per protocol — spell out both paths:
 
-```
+```output-template
 → Use the defaults shown above?
   · yes — write the three agent files now using template defaults;
     you can always re-run switch-dev-mode later to customize.
