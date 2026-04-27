@@ -6,6 +6,72 @@
 > v0.5.0 onward (post-fork-reset). The 1.0.0 entry at the bottom of
 > this file documents the fork creation. Everything above it is
 > post-reset history, newest-first.
+>
+> **Documented release gap:** v0.5.1 — v0.8.15 are not described here;
+> 39 version bumps in that range carried internal iteration that was
+> never written into release notes. They survive in `git log
+> --oneline` (commit messages of the form `[infra]: bump version to
+> X`). v0.8.16 picks up the changelog narrative at the next
+> meaningful inflection point.
+
+## v0.8.16 (2026-04-27)
+
+Cleanup-and-tighten release. Six features merged in one session that
+plug long-standing gaps in the orchestrator chain and shrink the
+plugin's distribution footprint.
+
+### What's new
+
+- **Hygiene → tracker dual-signal contract.** `code-hygiene` now
+  prints a verbatim "CONTROL RETURNS TO feature-tracker Step 5d.d"
+  sentinel and writes `next_action: "continue_step_5d_d"` to its
+  result file, plus three reinforcement points in feature-tracker
+  Step 5. Fixes the silent chain break where the orchestrator treated
+  hygiene's commit as the end of the feature loop and skipped the
+  Feature Brief / loop-back.
+- **Scripted Feature Brief.** `skills/feature-tracker/scripts/print-
+  brief.py` replaces the prose template; the script reads the
+  archived plan YAML and emits a fixed 9-line brief. Bundled
+  stdlib-only YAML loader handles the plan-file-schema subset
+  (block mappings, "- |" sequence-item block scalars, wrapped
+  multi-line scalars, identifier-key mapping items). The brief is
+  English-only by design; new exception note in feature-tracker
+  SKILL + plan-file-schema.md documents why.
+- **Orchestrator language enforcement.** Three orchestrator SKILLs
+  (feature-tracker, single-agent-development, three-agent-
+  development) gain a "Session language" hard-gate at session
+  entry, mirroring the existing rule on sp-* subagent templates. New
+  sp-feedback Mode A dimension 8 ("Language compliance") flags
+  drift.
+
+### Cleanup
+
+- **Upstream-fork residue removed.** `.github/`, 5 unreferenced
+  upstream test corpora (`tests/{brainstorm-server, claude-code,
+  explicit-skill-requests, skill-triggering, subagent-driven-dev}`),
+  `docs/testing.md`, and stray `.DS_Store` files — ~280KB stops
+  shipping to user installs. CLAUDE.md references to the removed
+  PR template were rewritten in place.
+- **CHANGELOG consolidated.** This file replaces the prior 29-line
+  fork-creation stub plus the parallel `RELEASE-NOTES.md`; v0.5.0+
+  history is now in one canonical place. (v0.5.1 — v0.8.15 remains
+  undocumented; that gap predates this consolidation.)
+- **Maintainer-only tooling untracked.** `scripts/bump-version.sh`,
+  `.version-bump.json`, `.githooks/pre-push`, `tests/humanize-*`
+  (4 dirs) — all stay on the maintainer's working tree but no
+  longer ship to user installs via marketplace `source: "./"`.
+  Recovery story: trust git history.
+- **Single canonical version source.** `package.json` deleted;
+  `.githooks/pre-push` and `.version-bump.json` migrated to read
+  `.claude-plugin/plugin.json` exclusively.
+
+### Test infrastructure
+
+- New `tests/_helpers/version_check.py` (shared `assert_min_version`
+  with `>= baseline` semantics) plus `tests/conftest.py` adding
+  `tests/` to sys.path. Markdown-grep regression tests across the
+  six features lock the new directives + script behavior + cleanup
+  state in place. 34 tests / 6 feature suites.
 
 ## v0.5.0 (2026-04-14)
 
