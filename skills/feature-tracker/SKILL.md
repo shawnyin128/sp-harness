@@ -106,7 +106,7 @@ Hygiene: last at <last-hygiene>, next at <next-threshold>
 
 Remaining (script output — display name first, then id on indented line):
   · [<priority>] <display name>
-      id: <feature-id|format>   deps: <dep display name>
+      id: <id>   deps: <dep display name>
       <description>
   ...
 ```
@@ -137,7 +137,7 @@ unfamiliar with the project. If you would stumble or they would ask
 "what does that mean," rewrite it before emitting.
 
 ```output-template
-→ Ready to start "<display_name>" — id <feature-id|format> ?
+→ Ready to start <feature-id|format> ?
   · yes  → dispatch the <dev-mode> development skill on this feature now.
   · pick → show the remaining list and let you choose a different one.
   · no   → stop here; nothing runs until you come back.
@@ -301,15 +301,14 @@ inconsistency — accepted as the cost of guaranteed brief delivery.
 
 Reference output format the script produces (do not re-implement
 in prose). The script renders this verbatim — the placeholders below
-shape what the script emits, not what the agent prints. The R3 disable
-comment on the title line is intentional: the script's title format
-puts the kebab-case id inside parens, which trips R3's snake_kebab
-heuristic (warn-only); the disable keeps the reference faithful to
-script output without silencing R3 elsewhere.
+shape what the script emits, not what the agent prints. The id position
+uses `<id>` (not `<feature-id|format>`) because print-brief.py emits a
+bare id, not the format_id-rendered `<id>(<display_name>)` pair; using
+`|format` here would falsely assert a runtime contract that
+print-brief.py does not implement.
 
 ```output-template
-<!-- lint:disable=R3 -->
-─── Feature complete: "<display_name>" (<feature-id|format>) ───
+─── Feature complete: "<display_name>" (<id>) ───
 What:      <one-line problem statement, whitespace-collapsed>
 Steps:     <N steps · M commits>
 Files:     <unique paths from steps[].files + unplanned_changes[].loc, "—" if none>
