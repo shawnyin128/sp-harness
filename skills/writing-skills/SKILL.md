@@ -949,6 +949,108 @@ python3 scripts/lint-skill-output.py --check
 python3 scripts/lint-skill-procedural.py --check
 ```
 
+## Output Prose Discipline
+
+Sibling chapter to "Output Template Rules" (R1/R2/R3 — codename gloss
++ id placeholder format inside fences) and "Procedural Section Rules"
+(P1/P2/P3 — free-form generation needs a paired worked-example).
+This chapter governs **prose discipline** of user-facing terminal
+output: section header style and project-internal short-code
+glossing. Three rules added to `lint-skill-output.py` (R4 + R5) and
+one runtime self-check rule added to `using-sp-harness/SKILL.md`.
+
+### Section header style
+
+Inside ` ```output-template ` fences, section labels must use the
+markdown bold form `**Label**` rather than bare `Label:`. Lint rule
+R4 catches the bare form. Two valid shapes:
+
+- **Multi-line briefs** — drop the trailing colon. The line break
+  delimits header from body:
+
+  ```text
+  **Problem**
+    One-line problem statement.
+
+  **Approach**
+    One-line approach summary.
+  ```
+
+- **Compact one-line briefs** — keep the trailing colon as the same-
+  line delimiter:
+
+  ```text
+  ─── Feature complete: "..." (...) ───
+  **What:**      One-line problem statement.
+  **Steps:**     N steps · M commits
+  **Files:**     ...
+  ```
+
+R4 accepts both forms (the leading `**` escapes the bare-label
+regex). Inline disable available via
+`<!-- lint:disable=R4 -->` for legitimate exceptions.
+
+### Short-code glossing
+
+Project-internal short codes — `Track A`, `Tier 1`, `F3+F4+F5`,
+`v0.8.18` used as a label (not just a release tag) — appear in
+design docs, todo notes, changelog entries, and plan YAML problem
+statements. Without discipline, agents echo these short codes back
+to the user verbatim. The user does not know what they mean.
+
+Two enforcement layers cover the surface:
+
+1. **Lint R5** scans inside ` ```output-template ` fences. Any match
+   of `Track [A-Z]`, `Tier \d+`, `F\d+\+F\d+(...)`, or
+   `v\d+\.\d+\.\d+` must be IMMEDIATELY followed (within 8 chars
+   on the same line) by a parenthesized inline gloss. Same regex
+   semantics as R1's codename gloss check.
+
+2. **Runtime self-check** (in `using-sp-harness/SKILL.md` Output
+   prose self-check section) covers free-form chat where R5
+   cannot scan. Same four patterns; same gloss requirement. Loaded
+   automatically at every sp-harness session start.
+
+Compliant phrasing in either context:
+
+```text
+Track A (the codename-gloss work shipped in v0.8.17 / v0.8.18)
+provided the foundation. F3+F4+F5 (the three migration features
+of Track A) wrapped every templated SKILL.md output. Phase 2's
+Tier 1 (the do-this-first rollout cluster) collapsed to a single
+fixture once the audit completed.
+```
+
+Note that the gloss describes the **meaning** of the short code in
+plain words — not the spelling. "Track A (the first track)" is
+useless; "Track A (the codename-gloss work)" is the load-bearing
+information.
+
+### Why generic self-checks fail
+
+Before this chapter, several SKILL.md files used a generic rule of
+the shape "before printing, re-read each line aloud as if to a
+colleague unfamiliar with the project." The pre-design experiment
+for the runtime self-check found that this generic guidance does
+NOT reliably catch project-internal short codes — agents
+self-interpret "jargon" too leniently and pass the codes through.
+Specific-pattern self-check rules (with the four pattern types
+named explicitly) achieved 3/3 PASS on the same experiment.
+
+The conclusion shipped as the audit-and-upgrade decision: eight
+existing generic self-check sites were AUGMENTED (not replaced)
+with a one-line cross-reference back to the central specific-
+pattern rule in `using-sp-harness/SKILL.md`. The generic rule
+still has value — it catches arbitrary jargon (architectural
+phrases, internal team vocabulary) that the specific-pattern rule
+does not enumerate. Both layers run at every print site.
+
+The takeaway for future skill authors: **specific-pattern rules
+beat generic guidance when the failure mode is enumerable.** If you
+find yourself writing a "rewrite if it sounds wrong" rule, ask
+whether you can list the actual patterns that go wrong, and check
+those by name.
+
 ## The Bottom Line
 
 **Creating skills IS TDD for process documentation.**
