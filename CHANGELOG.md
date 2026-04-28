@@ -14,6 +14,107 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.19 (2026-04-27)
+
+Procedural skill instruction fixtures release. Five-feature design
+([procedural-skill-fixtures](docs/design-docs/2026-04-27-procedural-skill-fixtures-design.md))
+shipping a parallel mechanism to the v0.8.17/18 output-template work,
+applied to a different content class: free-form generation sections
+inside SKILL.md files.
+
+### What problem this solves
+
+Some SKILL.md sections tell the agent to *render a template* — a
+fixed shape with placeholders. Output Template Rules (v0.8.17/18)
+governs those. But other sections tell the agent to *freely generate*
+200-300 words of original output from a directive (e.g.
+brainstorming's `Presenting the design`, which says "Cover
+architecture, components, data flow, error handling, testing"). Until
+this release, those directive sections used only abstract bullets
+with no concrete worked example. Agents read them and self-interpret
+"depth" idiosyncratically — output quality drifted session-to-session.
+
+### What's new
+
+- **New fence pair: `procedural-instruction` + `worked-example`.**
+  Authors wrap the abstract directive bullets in
+  ` ```procedural-instruction `, immediately followed (only blank
+  lines between) by ` ```worked-example ` carrying a ~200-word sample
+  output that demonstrates the target depth, plus a numbered list of
+  three or more "things to notice in this example" that translate
+  concrete choices in the sample back to abstract principles.
+
+- **Static lint: `scripts/lint-skill-procedural.py`.** Three rules:
+    - **P1 (pairing)** every procedural-instruction is immediately
+      followed by a worked-example; orphans on either side fail.
+    - **P2 (minimum body)** worked-example body has >= 100
+      whitespace-separated words.
+    - **P3 (observation list)** worked-example body contains a
+      numbered list with >= 3 items (position-agnostic; blank lines
+      between items allowed).
+  Wired into `framework-check` as a 🔴 manual check. Round 1 of the
+  evaluator pipeline caught a P3 false-positive on blank-line-separated
+  list items; rule was tightened to total-count rather than
+  max-consecutive-run before merge.
+
+- **`writing-skills` chapter "Procedural Section Rules".** Sibling
+  to "Output Template Rules". Defines what counts as a procedural
+  section, the P1/P2/P3 rules with one-line definitions, the explicit
+  no-anti-examples rule (with rationale citing past mimicry incidents
+  in this codebase), and a self-anchoring worked-example pair
+  demonstrating the form. Cross-linked with Output Template Rules
+  so authors finding either chapter find the other.
+
+- **Phase 1 pilot: brainstorming `Presenting the design`.**
+  Original 5 directive bullets preserved verbatim inside a
+  procedural-instruction fence; worked-example fence below carries a
+  URL-shortener-with-admin-dashboard sample (concrete tables, key
+  fields, sliding-window keying, RFC 7807 error format, named test
+  categories). 5 numbered observation points pin the form: name
+  concrete files/tables not abstract roles · HOW + KEYED BY WHAT for
+  components · trade-offs in choices not in whether-to-have-it ·
+  specific status codes / formats · named test categories.
+
+- **Phase 1 verification (before/after comparison).** Ran a
+  primed-prompt comparison on a deliberately fresh scenario (markdown
+  note-taking CLI with cross-device sync — distinct from URL shortener
+  used inside the fixture). Pre-pilot baseline 743 words; post-pilot
+  pilot 516 words. Pilot adopted all 5 fixture observation patterns
+  applied to the new domain — strongest evidence the methodology
+  shapes form, not text. Verdict: concreteness IMPROVED, form transfer
+  IMPROVED, depth NEUTRAL → Phase 2 gate cleared.
+
+- **Phase 2 audit + rollout.** Audit of the originally-projected
+  "5 SKILL.md files, multiple sections each" found that only **one**
+  additional section across the 5 candidate files meets the strict
+  free-form-generation definition: brainstorming's
+  `Exploring approaches`. Other candidates are checklist-style
+  instructions, principle-giving meta-guidance, or templated output
+  already covered by Output Template Rules. Phase 2 wrapped exactly
+  that one section (API-keys storage decision space sample, 5
+  observation points). Spot-check on a fresh API-cache scenario
+  produced fixture-shaped output including a stronger conditional-swap
+  close that goes beyond the fixture pattern. Tests lock the four
+  audit-negative files at zero procedural-instruction fences so a
+  future author cannot quietly add one without revisiting the audit.
+
+### Notes
+
+- The Phase 2 audit is the most informative outcome of this release:
+  the original design's "5 files, multiple sections" projection was
+  optimistic. Tight rule for "what counts as procedural" + locking
+  test for the audit-negative files are more valuable than expanding
+  scope.
+- Mid-implementation, the writing-skills chapter caught its own
+  meta-violation: the first draft used `❌ BAD` literally to name the
+  banned anti-example pattern, which the chapter's own no-anti-example
+  test rejected. Reworded to "negative samples / negative variant" —
+  the chapter follows the rule it teaches.
+- Brief / verdict files in `tests/skill-procedural/` are gitignored
+  (maintainer-local, not distributed with the plugin).
+
+---
+
 ## v0.8.18 (2026-04-27)
 
 Skill-output codename gloss migration release. F3+F4+F5 of the
