@@ -14,6 +14,48 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.21 (2026-04-27)
+
+Follow-up patch closing two gaps that sp-feedback Mode A surfaced
+after the v0.8.20 batch shipped.
+
+### What's new
+
+- **Agent templates now in lint scope.** `agent-templates/sp-planner.md`
+  and `agent-templates/sp-evaluator.md` print user-facing briefs but
+  were outside the default `lint-skill-output.py` scan scope (which
+  globbed only `skills/*/SKILL.md`). Both templates' brief fences
+  migrated from plain ` ``` ` to ` ```output-template `; bare labels
+  in `sp-planner.md` (Problem / Key decisions / Options) wrapped as
+  `**Label**`; both templates' `<feature-id>` placeholders use the
+  `<feature-id|format>` runtime-renderer form. `default_skill_files()`
+  now returns `skills/*/SKILL.md` UNION `agent-templates/*.md`
+  (30 files vs the previous 26).
+
+- **CHANGELOG.md gloss audit.** Five naked project-internal short
+  codes in older v0.8.18 / v0.8.17 / v0.8.16 entries (cluster-label
+  references like `F3+F4+F5`, `F1+F2`, `F3-F5`) gained inline glosses
+  describing the cluster's meaning. Backtick-quoted pattern
+  descriptions (e.g. `` `F\d+(\+F\d+)+` ``) are unchanged — those
+  are documentation, not references. New regression test in
+  `tests/output-prose-changelog-shortcode-gloss/` strips backtick
+  spans and fenced blocks before scanning so pattern docs do not
+  false-positive.
+
+### Notes
+
+- Single-commit packaging note: the agent-templates implementation
+  ended up in a single `[tests]`-labeled commit because the original
+  `[scripts]` commit message hit a heredoc parse error on literal
+  triple-backticks. Per `CLAUDE.md` no-amend rule, left as-is.
+- One follow-up pending: an R3 false-positive — `feature-id` inside
+  the `<feature-id|format>` placeholder syntax is detected as a
+  snake_case token when the placeholder sits inside a parenthesized
+  gloss. R3 is warn-only so this doesn't break builds; tracked
+  informally.
+
+---
+
 ## v0.8.20 (2026-04-27)
 
 Output prose discipline release. Six-feature design
