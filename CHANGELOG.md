@@ -14,6 +14,33 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.22 (2026-04-28)
+
+Single-patch release: brainstorming skill now has explicit guidance for
+the merged-todo case.
+
+### What's new
+
+- **Brainstorming `link-features` step now checks for merged duplicates.**
+  When a brainstorm consolidates multiple seed todos into one spec, the
+  skill previously linked the new feature set only to the Step 0 seed
+  todo, leaving any other in-scope `pending` / `in_brainstorm` todos
+  untouched. Worst-case: the user manually relinked the same feature set
+  to a second todo, and `check-done` then marked both done at the same
+  moment with no record of the merge. New mandatory check before
+  `link-features`: scan `.claude/todos.json` for other todos covering
+  the same problem, surface them to the user, and `manage-todos drop
+  <other-id> --reason="merged into <seed-id>"` for each confirmed merge.
+
+### Notes
+
+- Discovered while reconciling todo state: two `in_feature` todos
+  (`standardize-dev-skill-terminal-output-schema-...` and
+  `inline-explain-framework-ids-...`) had been linked to the same five
+  `skill-output-*` features after their concerns merged into one Track A
+  spec. Both `check-done`-promoted to `done` simultaneously; the spec
+  text fix prevents this shape from recurring.
+
 ## v0.8.21 (2026-04-27)
 
 Follow-up patch closing two gaps that sp-feedback Mode A surfaced
