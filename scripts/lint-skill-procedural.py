@@ -175,25 +175,21 @@ P3_MIN_ITEMS = 3
 _ORDERED_ITEM_RE = re.compile(r"^\s*\d+\.\s+\S")
 
 
-def _max_consecutive_ordered_items(lines: list[str]) -> int:
-    best = 0
-    run = 0
-    for line in lines:
-        if _ORDERED_ITEM_RE.match(line):
-            run += 1
-            best = max(best, run)
-        else:
-            # Continuation lines (indented but not a list item) preserve the run.
-            # An empty line breaks the run.
-            if not line.strip():
-                run = 0
-    return best
+def _count_ordered_items(lines: list[str]) -> int:
+    """Count lines that begin a numbered list item.
+
+    Position-agnostic and tolerant of common markdown styles where list
+    items are separated by blank lines (which still render as one list).
+    Continuation lines that are indented under an item are not counted
+    as new items because they don't match the leading-digit pattern.
+    """
+    return sum(1 for line in lines if _ORDERED_ITEM_RE.match(line))
 
 
 def check_p3(block: Block) -> list[str]:
     if block.kind != WORKED_EXAMPLE:
         return []
-    if _max_consecutive_ordered_items(block.lines) >= P3_MIN_ITEMS:
+    if _count_ordered_items(block.lines) >= P3_MIN_ITEMS:
         return []
     return [
         f"{block.file}:{block.start_line}: [P3] worked-example body "

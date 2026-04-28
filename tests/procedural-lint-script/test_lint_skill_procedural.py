@@ -33,6 +33,13 @@ class TestValidFixtures(unittest.TestCase):
         res = fixture("valid_no_fences.md")
         self.assertEqual(res.returncode, 0, res.stderr)
 
+    def test_valid_p3_blank_separated_items_passes(self):
+        # Regression: numbered items separated by blank lines are a
+        # legitimate markdown ordered list. P3 must count by total,
+        # not by max consecutive run, or this style false-positives.
+        res = fixture("valid_p3_blank_separated.md")
+        self.assertEqual(res.returncode, 0, res.stderr)
+
 
 class TestP1Pairing(unittest.TestCase):
     def test_no_pair_fails(self):
