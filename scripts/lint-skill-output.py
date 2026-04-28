@@ -6,7 +6,7 @@ prose, internal vocabulary, and flow instructions are ignored.
 
 Rules:
   R1  Static codename in fence block must have inline `(<gloss>)`.
-      Pattern: D1, F2, S3, R4, "Phase 3", "Round 2", "Mode A", "Mode B".
+      Pattern: D1, F2, S3, "Phase 3", "Round 2", "Mode A", "Mode B".
       A codename is "covered" if `(...)` follows on the same line within
       8 chars or wraps it.
   R2  Id placeholder `<…-id>` (kebab-case ending in `-id`) must include
@@ -19,6 +19,15 @@ Rules:
           feature-id) when used outside its own gloss role
         · gloss clause length > 80 chars
       Inline disable: prepend `<!-- lint:disable=R3 -->` on the line above.
+  R4  Section headers inside fence blocks must use `**Label**` style,
+      not bare `Label:` followed by indented body. Detection: line
+      matches `^\\s*[A-Z][a-zA-Z]*(\\s+[A-Za-z]+)*:\\s*$`. Inline
+      disable: `<!-- lint:disable=R4 -->` on the line above.
+  R5  Project-internal short codes inside fence blocks must have inline
+      `(<gloss>)`. Patterns: `Track [A-Z]`, `Tier \\d+`, multi-segment
+      `F\\d+\\+F\\d+(...)+`, `v\\d+\\.\\d+\\.\\d+` used as a label.
+      Same 8-char-look-ahead rule as R1. Inline disable:
+      `<!-- lint:disable=R5 -->` on the line above.
 
 Schema check (always runs unless --no-schema-check):
   Every entry in .claude/features.json and .claude/todos.json must have
@@ -229,6 +238,70 @@ def check_r3(block: Block) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Rule R4: section header style
+# ---------------------------------------------------------------------------
+
+# Bare 'Title-case Words:' on its own line — needs '**Label**' wrapping.
+# The wrapped form '**Problem**' does NOT match this regex (no colon)
+# so passes trivially. The disable comment escape hatch is honored via
+# the existing `lint:disable=R4` mechanism.
+_BARE_LABEL_RE = re.compile(
+    r"^\s*[A-Z][a-zA-Z]*(\s+[A-Za-z]+)*:\s*$"
+)
+
+
+def check_r4(block: Block) -> list[str]:
+    fails: list[str] = []
+    for offset, line in enumerate(block.lines):
+        if not _BARE_LABEL_RE.match(line):
+            continue
+        prev = block.lines[offset - 1] if offset > 0 else None
+        if _line_has_disable(prev, "R4"):
+            continue
+        line_no = block.start_line + 1 + offset
+        label = line.strip().rstrip(":").strip()
+        fails.append(
+            f"{block.file}:{line_no}: [R4] section header "
+            f"{label!r} uses bare 'Label:'; use '**{label}**' form"
+        )
+    return fails
+
+
+# ---------------------------------------------------------------------------
+# Rule R5: project-internal short-code gloss
+# ---------------------------------------------------------------------------
+
+# Project-internal short codes that need an inline gloss when they
+# appear inside an output-template fence.
+_SHORTCODE_RE = re.compile(
+    r"\b("
+    r"Track\s+[A-Z]"
+    r"|Tier\s+\d+"
+    r"|F\d+(?:\+F\d+)+"        # multi-segment cluster label, e.g. F3+F4+F5
+    r"|v\d+\.\d+\.\d+"
+    r")\b"
+)
+
+
+def check_r5(block: Block) -> list[str]:
+    fails: list[str] = []
+    for offset, line in enumerate(block.lines):
+        prev = block.lines[offset - 1] if offset > 0 else None
+        if _line_has_disable(prev, "R5"):
+            continue
+        for m in _SHORTCODE_RE.finditer(line):
+            tail = line[m.end():]
+            if _GLOSS_AFTER_RE.match(tail):
+                continue
+            line_no = block.start_line + 1 + offset
+            fails.append(
+                f"{block.file}:{line_no}: [R5] short code "
+                f"{m.group(0)!r} needs inline gloss '(...)'"
+            )
+    return fails
+
+
+# ---------------------------------------------------------------------------
 # Schema validation
 # ---------------------------------------------------------------------------
 
@@ -280,6 +353,8 @@ def lint_files(
             file_fails.extend(check_r1(block))
             file_fails.extend(check_r2(block))
             file_warns.extend(check_r3(block))
+            file_fails.extend(check_r4(block))
+            file_fails.extend(check_r5(block))
         if not check and not quiet and not file_fails and not file_warns:
             print(f"PASS {file}")
         all_fails.extend(file_fails)
