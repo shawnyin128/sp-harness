@@ -653,6 +653,12 @@ to terminal — that output must be wrapped in a fenced block tagged
 `output-template` and follow strict rules to prevent codename leakage.
 Static lint enforces this; running agents render placeholders.
 
+For sections where the agent **freely generates** content rather than
+rendering a template, see "Procedural Section Rules" further below.
+Distinct concern, separate lint script
+(`scripts/lint-skill-procedural.py`), but parallel mechanics: paired
+fence + static lint.
+
 ### When to use the fence
 
 Use ` ```output-template ` for content the user reads:
@@ -802,6 +808,146 @@ sp-harness intentionally does not ship a global pre-commit config or CI
 workflow — different projects have different conventions, and forcing a
 specific framework on every plugin user is the wrong fit. Pick the
 mechanism your project already uses.
+
+## Procedural Section Rules
+
+When a skill section tells the agent to **freely generate** content
+rather than render a near-verbatim template — produce a 200-300 word
+design discussion, write a planning chapter, author a hygiene scan
+report — abstract bullets alone do not anchor depth. Agents read
+"Cover architecture, components, data flow" and self-interpret what
+"cover" means; output quality drifts session-to-session.
+
+The fix mirrors Output Template Rules but applies a different
+mechanism: pair an instruction block with a concrete worked-example
+fixture inside the SKILL.md. A separate static lint
+(`scripts/lint-skill-procedural.py`) enforces the pairing and a
+minimum body shape so the prose cannot decay back to bullets-only.
+
+### When to use the procedural-instruction fence
+
+Use ` ```procedural-instruction ` for sections where the agent
+generates original content from a directive:
+
+- Open-ended design discussion ("Present the design", "Propose
+  approaches")
+- Multi-paragraph scan or audit reports authored fresh per run
+- Plan chapters where the agent fills sections rather than copying
+  a template
+
+Do **not** use it for sections covered by Output Template Rules.
+Templated output (a fixed shape with placeholders the agent
+substitutes) belongs in ` ```output-template `, governed by
+`lint-skill-output.py`. The two fence types are sibling concerns:
+
+| Concern | Fence | Lint script | Failure mode |
+|---|---|---|---|
+| Templated output | `output-template` | lint-skill-output.py | codename leakage, missing gloss |
+| Free-form generation | `procedural-instruction` | lint-skill-procedural.py | shallow output, abstract bullets |
+
+### Authoring the worked-example
+
+Every ` ```procedural-instruction ` fence must be **immediately
+followed** by a paired ` ```worked-example ` fence (only blank lines
+allowed between). The worked-example body has two parts:
+
+1. A complete sample output (~200 words) showing exactly the depth
+   and shape a passing answer takes. Use a fictional but specific
+   target system (concrete tables, file paths, components).
+2. A numbered list of three or more "things to notice in the example
+   above" — each item translates a concrete choice in the sample
+   back to the abstract principle from the instruction block above.
+
+Example chapter using the fence pair (4-backtick outer fence to show
+the 3-backtick inner fences literally):
+
+````markdown
+### Presenting the design
+
+```procedural-instruction
+- Once you understand what is being built, present the design.
+- Cover architecture, components, data flow, error handling, testing.
+- Scale each section to its complexity.
+```
+
+```worked-example
+Suppose the user wants a URL shortener with admin dashboard. After
+clarifying questions you understand: PostgreSQL backend, JWT auth,
+rate limiting at one hundred requests per minute per user. The
+"Presenting the design" output should look like the following.
+
+Architecture. Single FastAPI service. Two tables: `urls` (slug,
+target, owner_id, created_at) and `users` (id, email_hash, pw_hash).
+Rate limiter is a Redis sliding window keyed by `owner_id`. Admin
+dashboard is a separate FastAPI sub-app mounted under `/admin`,
+sharing the same DB pool.
+
+Three things this example does that abstract bullets do not enforce:
+
+1. Each section names concrete files and tables, not abstract roles
+   such as "the API layer" or "the storage tier".
+2. The rate-limiter section says HOW it is implemented and KEYED BY
+   WHAT. Not just "rate limiting".
+3. The trade-off lives in the choice (Redis vs in-process), not in
+   whether to have rate limiting at all.
+```
+````
+
+### The three lint rules
+
+`lint-skill-procedural.py` enforces three rules on every paired fence
+it finds:
+
+- **P1 (pairing)** — every `procedural-instruction` fence is followed
+  immediately by a `worked-example` fence. Only blank lines may
+  appear between them. Orphan worked-examples (no preceding
+  procedural-instruction) and unpaired procedurals (no following
+  worked-example) both fail.
+- **P2 (minimum body)** — the worked-example body contains at least
+  100 whitespace-separated words. Prevents one-line stub fixtures
+  that satisfy P1 trivially.
+- **P3 (observation list)** — the worked-example body contains a
+  numbered list with at least three items. Position-agnostic; blank
+  lines between items are allowed.
+
+### No anti-examples in the worked-example
+
+A worked-example fixture must not include negative samples — paired
+side-by-side variants tagged as the wrong way to do it. Reason:
+agents in this codebase have been observed mimicking the negative
+sample when it sits inside a fixture the agent reads as
+authoritative. Show only the positive shape. The instruction block
+above the fence may state principles in plain language, but the
+fixture body stays positive throughout. Authors who want to see what
+a failing case looks like should run `lint-skill-procedural.py`
+against the fixtures in `tests/procedural-lint-script/lint-fixtures/`,
+which exercise each failing rule under controlled conditions.
+
+This chapter follows the rule: only one positive worked-example is
+shown above; no negative variant sits next to it.
+
+### Self-check step
+
+Before committing a worked-example, re-read its sample paragraphs
+aloud as if explaining the target system to a colleague unfamiliar
+with the project. If any phrase reads like jargon or assumes
+background ("the orchestrator", "the rate-limiter component"),
+rewrite it in concrete terms ("feature-tracker", "Redis sliding
+window keyed by `owner_id`"). The lint cannot catch this; it is on
+the author.
+
+### Wiring lint into your project
+
+`lint-skill-procedural.py` ships alongside `lint-skill-output.py`.
+`framework-check` runs both as part of project health checks.
+Project pre-commit / CI integration follows the same pattern as
+Output Template Rules (see the previous chapter's "Wiring lint into
+your project" section); both lints can be invoked side by side:
+
+```bash
+python3 scripts/lint-skill-output.py --check
+python3 scripts/lint-skill-procedural.py --check
+```
 
 ## The Bottom Line
 
