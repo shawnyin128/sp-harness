@@ -497,6 +497,29 @@ SKILL.md content; the maintainer must fix the offending fence per
 the rules in `writing-skills` "Output template rules" chapter).
 R3 warnings are reported but do not fail the check.
 
+### Skill procedural lint (runs independently)
+
+Run:
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lint-skill-procedural.py" --check
+```
+
+Scans every `skills/*/SKILL.md` for paired ` ```procedural-instruction `
+and ` ```worked-example ` fences and verifies:
+
+- P1: every procedural-instruction fence is immediately followed (only
+  blank lines between) by a worked-example fence; orphan worked-examples
+  also fail
+- P2: every worked-example body has at least 100 whitespace-separated words
+- P3: every worked-example body contains a numbered list with >= 3 items
+  (position-agnostic; blank lines between items allowed)
+
+Output is a JSON summary with `errors` and `files_scanned`.
+
+Exit 1 on P1/P2/P3 failure → 🔴, `manual` (do NOT auto-edit
+SKILL.md content; the maintainer must fix the offending fence per
+the rules in `writing-skills` "Procedural Section Rules" chapter).
+
 ---
 
 ## Step 1: Run all checks
