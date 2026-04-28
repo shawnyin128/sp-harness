@@ -13,6 +13,7 @@ tests/skill-routing/
 tests/skill-routing-mvp-runner/
 tests/skill-pruning/
 tests/skill-pruning-*/
+tests/skill-procedural/
 tests/humanize-*
 docs/design-docs/
 
