@@ -627,6 +627,20 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-todos/scripts/mutate.py" \
 
 This transitions the todo's status to `in_feature` and records the linkage.
 
+**Merged-todo cleanup (mandatory check before linking):** Before invoking
+`link-features`, scan `.claude/todos.json` for any other pending or
+in-brainstorm todo whose problem the new spec also covers. If found,
+surface them to the user (one line each: `<id> — <description>`) and ask
+whether to drop them as merged. For each user-confirmed merge, run:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/manage-todos/scripts/mutate.py" \
+  drop <other-todo-id> --reason="merged into <seed-todo-id>"
+```
+
+Never link the same feature set to multiple live todos — that desyncs
+`check-done` (it would mark both done at once with no record of the merge).
+
 ## Project Map Update
 
 After updating features.json, update the `## Project Map` section in `CLAUDE.md`
