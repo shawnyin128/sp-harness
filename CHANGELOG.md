@@ -14,6 +14,69 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
+## v0.8.23 (2026-04-29)
+
+Single-patch release: lock the Plan summary format and ban macOS
+smart-quote leakage from touch-point output.
+
+### What's new
+
+- **Single-agent Plan summary fence now lives inline in the skill.**
+  Previously `skills/single-agent-development/SKILL.md` Phase 3 said
+  "see sp-planner template for exact format" — a cross-file reference
+  the main session never opens. Result: every Plan summary was
+  reconstructed from LLM memory of the format, drifting into invented
+  section headers (`Approach (3 steps)`, `Decisions (...)`), bare
+  `S1`/`D1` labels without plain-language glosses, and Chinese-English
+  code-mixing inside Chinese-pinned sessions. The canonical
+  `output-template` fence is now physically inlined into the
+  single-agent SKILL, byte-identical to the source in
+  `agent-templates/sp-planner.md`. A new regression test in
+  `tests/canonical-plan-summary-parity/` fails the moment one copy
+  drifts from the other.
+- **Self-check before emitting Plan summary (parity with Evaluator).**
+  Phase 3 in single-agent mode previously had no pre-emit check, while
+  Phase 4 (Evaluator) had a mandatory "re-read each option line aloud"
+  pass plus the Output prose self-check. Phase 3 now has its own six-
+  item gate: literal section headers, both `Goal:` and `Approach:`
+  lines per step, no bare `S\d+`/`D\d+`/`F\d+` outside a parenthesized
+  gloss, no code-mixing, no fancy/curly quotes, and the runtime self-
+  check from `using-sp-harness`. Failing any check forces a rewrite
+  before emitting.
+- **R6 rule in `lint-skill-output.py` bans fancy/curly quotes.**
+  U+2018 / U+2019 / U+201C / U+201D inside `output-template` fences
+  now fail static lint. macOS smart-quote autocorrect is the typical
+  leak source on Chinese-language sessions; the rule catches them at
+  source-tree time before they ship in user-facing fences. Inline
+  escape hatch via `<!-- lint:disable=R6 -->` for the rare case where
+  a touch-point intentionally quotes typographic examples. Four-test
+  regression suite in `tests/output-prose-lint-r6/` covers ASCII pass,
+  curly-double fail, curly-single fail, and disable-comment pass.
+- **Runtime self-check and decision-touchpoint protocol both ban
+  fancy quotes.** `skills/using-sp-harness/SKILL.md` Output prose
+  self-check now scans free-form chat drafts for the four code points
+  alongside the existing short-code patterns;
+  `docs/decision-touchpoint-protocol.md` Forbidden patterns lists the
+  same restriction. Three layers of defense (runtime self-check,
+  protocol-level forbidden pattern, static lint) make the regression
+  much harder to reintroduce.
+
+### Notes
+
+- This release is the response to a recurring complaint about Planner
+  output format drift in `language: zh` single-agent sessions. Three
+  prior point-fixes had each added another prose rule somewhere in the
+  skill tree without addressing the structural cause: the canonical
+  format lived in `agent-templates/`, the runtime self-check lived in
+  `using-sp-harness`, and the chat language pin lived in
+  `single-agent-development` itself — three rules, zero of them visible
+  to the Planner role at emit time. Inlining the fence and adding a
+  pre-emit self-check brings all the rules to one place.
+- The fancy-quote ban is a new rule, not a strengthening of an existing
+  one. Pre-emit self-check at the runtime layer + R6 at static-lint
+  layer is the same belt-and-suspenders pattern as R5 (project-internal
+  short codes).
+
 ## v0.8.22 (2026-04-28)
 
 Single-patch release: brainstorming skill now has explicit guidance for
