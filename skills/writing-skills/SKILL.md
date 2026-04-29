@@ -689,6 +689,7 @@ plain-language gloss. The lint rule R1 fails the build otherwise.
 
 ✅ GOOD — passes lint:
 
+<!-- lint:disable=R7 -->
 ```output-template
 · D1(用户名是否区分大小写) → 不区分(85%)
 · Phase 3(架构与代理实现澄清阶段) 已完成
@@ -706,6 +707,7 @@ ending with `|format`:
 
 ✅ GOOD — passes lint:
 
+<!-- lint:disable=R7 -->
 ```output-template
 Feature <n>/<total> 完成: <feature-id|format>
 Linked todo: <todo-id|format>
@@ -736,6 +738,7 @@ inline:
 
 ✅ GOOD — concrete shape pins quality:
 
+<!-- lint:disable=R7 -->
 ```output-template
 · D1(<question, ≤12 words, conversational, no jargon —
        e.g. "Should usernames be case-sensitive?">) → <choice>

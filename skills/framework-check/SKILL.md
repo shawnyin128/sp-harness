@@ -582,6 +582,7 @@ Fixability: <A> auto · <N> needs confirm · <M> manual
 ```
 
 Example:
+<!-- lint:disable=R7 -->
 ```output-template
 🔍 Framework Check (v<CURRENT>)
 
@@ -636,6 +637,7 @@ This is a decision touch-point per `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoi
 (structured menu — each option must be a plain-language consequence).
 After the report, print:
 
+<!-- lint:disable=R7 -->
 ```output-template
 → Your call:
   (a) Auto-fix all — apply every 🟡auto immediately; for each

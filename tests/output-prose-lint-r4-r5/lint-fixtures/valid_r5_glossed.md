@@ -1,5 +1,6 @@
 # Skill with glossed short codes
 
+<!-- lint:disable=R7 -->
 ```output-template
 **Problem**
   Track A (the codename-gloss work) needs extension.

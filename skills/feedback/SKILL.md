@@ -52,6 +52,7 @@ sp-feedback has already executed `memory_update` and `memory_compact` actions
 before returning. Read the results from `.claude/agents/state/active/memory-ops-log.json`
 and print a brief summary:
 
+<!-- lint:disable=R7 -->
 ```output-template
 Auto-executed memory operations:
   memory_update: X applied, Y rejected by target agent

@@ -357,6 +357,7 @@ generates project-level copies adapted to this project's context.
 This is a decision touch-point per `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoint-protocol.md`
 (structured menu — both options as one-sentence consequences).
 
+<!-- lint:disable=R7 -->
 ```output-template
 → Pick a development mode for this project:
   (a) Single-agent (default) — one agent plays Planner / Generator /
@@ -381,6 +382,7 @@ Write to `.claude/agents/sp-feedback.md`.
 ### Step 6b: If three-agent, generate sp-planner / sp-generator / sp-evaluator
 
 Print defaults from templates:
+<!-- lint:disable=R7 -->
 ```output-template
 Default three-agent configuration from the agent template files:
   sp-planner:   opus, tools=Read/Grep/Glob/Bash/Write/Edit/Skill, memory=project, skills=sp-harness:writing-plans
@@ -390,6 +392,7 @@ Default three-agent configuration from the agent template files:
 
 **Q2:** decision touch-point per protocol — spell out both paths:
 
+<!-- lint:disable=R7 -->
 ```output-template
 → Use the defaults shown above?
   · yes — write the three agent files now using template defaults;

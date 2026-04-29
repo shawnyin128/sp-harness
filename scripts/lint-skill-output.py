@@ -31,6 +31,14 @@ Rules:
   R6  Fancy/curly quotes (U+201C, U+201D, U+2018, U+2019) inside fence
       blocks. ASCII `"` and `'` only. macOS smart-quote autocorrect leak
       guard. Inline disable: `<!-- lint:disable=R6 -->` on the line above.
+  R7  Self-check block presence: every ``output-template`` fence MUST
+      be preceded (within 30 lines before the opener) OR followed
+      (within 30 lines after the closer) by one of the canonical
+      self-check markers — `Self-check before print:`,
+      `Output prose self-check`, or `specific-pattern self-check`.
+      Catches the case where a new emit point ships without the
+      self-check boilerplate. Inline disable: `<!-- lint:disable=R7 -->`
+      on the line immediately above the fence opener.
 
 Schema check (always runs unless --no-schema-check):
   Every entry in .claude/features.json and .claude/todos.json must have
@@ -333,6 +341,48 @@ def check_r6(block: Block) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Rule R7: self-check block presence
+# ---------------------------------------------------------------------------
+
+# Markers that satisfy R7. Any one of these phrases in the search
+# window counts as a self-check block.
+_R7_SELF_CHECK_MARKERS = (
+    "Self-check before print:",
+    "Output prose self-check",
+    "specific-pattern self-check",
+)
+_R7_WINDOW = 30  # lines before opener / after closer
+
+
+def check_r7(block: Block, file_lines: list[str]) -> list[str]:
+    """Each output-template fence must be preceded or followed by a
+    self-check marker within the configured window. The pre-fence
+    pattern is the legacy form; the post-fence pattern (with explicit
+    'rewrite before emitting' language) was introduced in v0.8.23.
+    Both satisfy this guard.
+    """
+    fails: list[str] = []
+    # Honor lint:disable=R7 on the line immediately above the opener
+    above_idx = block.start_line - 2  # 0-based index for line above opener
+    if above_idx >= 0 and "lint:disable=R7" in file_lines[above_idx]:
+        return fails
+    before_start = max(0, block.start_line - 1 - _R7_WINDOW)
+    before_end = block.start_line - 1
+    after_start = block.end_line  # 1-based end_line == closer; index after closer = end_line
+    after_end = min(len(file_lines), block.end_line + _R7_WINDOW)
+    text = "\n".join(
+        file_lines[before_start:before_end] + file_lines[after_start:after_end]
+    )
+    if not any(marker in text for marker in _R7_SELF_CHECK_MARKERS):
+        fails.append(
+            f"{block.file}:{block.start_line}: [R7] output-template fence "
+            f"missing self-check block within {_R7_WINDOW} lines "
+            f"(before opener or after closer)"
+        )
+    return fails
+
+
+# ---------------------------------------------------------------------------
 # Schema validation
 # ---------------------------------------------------------------------------
 
@@ -388,6 +438,7 @@ def lint_files(
     all_warns: list[str] = []
     for file in files:
         blocks = extract_blocks(file)
+        file_lines = file.read_text(encoding="utf-8").splitlines()
         file_fails: list[str] = []
         file_warns: list[str] = []
         for block in blocks:
@@ -397,6 +448,7 @@ def lint_files(
             file_fails.extend(check_r4(block))
             file_fails.extend(check_r5(block))
             file_fails.extend(check_r6(block))
+            file_fails.extend(check_r7(block, file_lines))
         if not check and not quiet and not file_fails and not file_warns:
             print(f"PASS {file}")
         all_fails.extend(file_fails)

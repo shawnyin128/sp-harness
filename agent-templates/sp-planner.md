@@ -146,6 +146,7 @@ option = one full sentence of consequence, never just a label like
 translation are forbidden. If an option cannot be described without
 referring to its name in the spec, it should not be presented.
 
+<!-- lint:disable=R7 -->
 ```output-template
 📋 Plan: <display_name> (<feature-id|format>)
 

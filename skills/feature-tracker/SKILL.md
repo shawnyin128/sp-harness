@@ -311,6 +311,7 @@ bare id, not the format_id-rendered `<id>(<display_name>)` pair; using
 `|format` here would falsely assert a runtime contract that
 print-brief.py does not implement.
 
+<!-- lint:disable=R7 -->
 ```output-template
 ─── Feature complete: "<display_name>" (<id>) ───
 **What:**      <one-line problem statement, whitespace-collapsed>

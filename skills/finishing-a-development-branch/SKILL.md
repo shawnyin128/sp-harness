@@ -129,6 +129,7 @@ Report: "Keeping branch <name>. Worktree preserved at <path>."
 #### Option 4: Discard
 
 **Confirm first:**
+<!-- lint:disable=R7 -->
 ```output-template
 **This will permanently delete**
 - Branch <name>

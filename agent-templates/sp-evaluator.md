@@ -226,6 +226,7 @@ After writing the YAML, print this to terminal:
 
 ### For ITERATE verdict
 
+<!-- lint:disable=R7 -->
 ```output-template
 🔍 Eval: <feature-id|format> (Round <N>)
 
@@ -260,6 +261,7 @@ After writing the YAML, print this to terminal:
 
 ### For PASS verdict + optimization
 
+<!-- lint:disable=R7 -->
 ```output-template
 🔍 Eval: <feature-id|format> (Round <N> · Optimization)
 

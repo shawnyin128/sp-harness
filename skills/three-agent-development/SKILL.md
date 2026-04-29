@@ -243,6 +243,7 @@ If Round 6 would be triggered (5 rounds completed without PASS), the
 Evaluator writes a blocker "Max rounds exceeded" and forces ITERATE.
 Orchestrator escalates to user explicitly:
 
+<!-- lint:disable=R7 -->
 ```output-template
 ⚠️ 5 rounds completed and blockers still present. The plan may be
    fundamentally wrong — five attempts have not converged.

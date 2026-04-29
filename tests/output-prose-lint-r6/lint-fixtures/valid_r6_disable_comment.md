@@ -5,6 +5,7 @@ description: lint:disable=R6 escape hatch
 
 # Sample
 
+<!-- lint:disable=R7 -->
 ```output-template
 **Problem**
 <!-- lint:disable=R6 -->

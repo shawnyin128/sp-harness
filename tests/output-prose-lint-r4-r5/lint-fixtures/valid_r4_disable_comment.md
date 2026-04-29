@@ -1,5 +1,6 @@
 # Skill with disable comment
 
+<!-- lint:disable=R7 -->
 ```output-template
 <!-- lint:disable=R4 -->
 Problem:

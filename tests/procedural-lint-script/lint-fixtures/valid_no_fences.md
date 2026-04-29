@@ -5,6 +5,7 @@ fences. The lint should pass trivially because no rule applies.
 
 It may have other fences, like:
 
+<!-- lint:disable=R7 -->
 ```output-template
 This is governed by lint-skill-output, not procedural lint.
 ```

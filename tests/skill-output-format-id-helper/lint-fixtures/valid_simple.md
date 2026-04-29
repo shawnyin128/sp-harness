@@ -2,6 +2,7 @@
 
 Some prose. D1 may appear here freely because this is not in a fence.
 
+<!-- lint:disable=R7 -->
 ```output-template
 · D1(用户名是否区分大小写) → 不区分(85%)
 · D2(密码长度下限) → 8 字符(90%)
