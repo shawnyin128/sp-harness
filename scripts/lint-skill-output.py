@@ -45,8 +45,8 @@ Schema check (always runs unless --no-schema-check):
   a non-empty `display_name`. Backfilled by F1; lint guards regression.
 
 Exit codes:
-  0  no R1/R2/schema failures (R3 warnings are non-failing)
-  1  one or more R1/R2/schema failures
+  0  no failures (R3 warnings are non-failing)
+  1  one or more R1/R2/R4/R5/R6/R7/schema failures
   2  internal error (file unreadable, JSON malformed, etc.)
 
 CLI:
