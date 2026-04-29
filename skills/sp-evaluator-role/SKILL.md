@@ -273,17 +273,44 @@ After writing the YAML, print this to terminal:
       suggestions above, a final Round verifies, then ship.
 ```
 
-### Keep terminal output under 35 lines
+### Density discipline (no global line cap)
 
-Do NOT dump the YAML. Do NOT list every test by name (aggregate counts
-only). Test failure details stay in the YAML for agent consumption.
+Structure decides shape, self-check decides density. Do NOT dump the
+YAML. Do NOT list every test by name (aggregate counts only). Test
+failure details stay in the YAML for agent consumption.
+
+**Self-check before print:** re-read your draft against ALL of these.
+If ANY check fails, rewrite before emitting.
+
+  1. Section headers are literally `[1] Closure check:` / `[1] Final
+     state:` / `[2] Unit tests:` / `[2] Optimization suggestions` /
+     `[3] Blockers:` per the verdict's template above. NOT improvised
+     variants.
+  2. Every Closure-check entry is a `✓` or `✗` mark against the
+     decision's question text, not its bare ID. Every Blockers entry
+     is a one-sentence consequence in plain language, not a label.
+  3. No bare `S\d+` / `D\d+` / `F\d+` token outside a parenthesized
+     gloss. First mention gets a 3-6 word plain-language label inline,
+     e.g. `S2 (sink validation step)`.
+  4. No code-mixing across the chat language. Per the orchestrator's
+     Step 0 language pin, prose is one language only. Identifiers
+     (file paths, command names, field names, product names) stay in
+     their original form; everything else follows the pinned
+     language. English content words embedded in non-English prose
+     (or vice versa) FAIL this check.
+  5. No fancy/curly quotes (U+201C, U+201D, U+2018, U+2019). Use
+     ASCII `"` and `'`. macOS smart-quote autocorrect is the typical
+     leak source — reverse it before emitting.
+  6. Apply the runtime self-check from `using-sp-harness/SKILL.md`
+     "Output prose self-check": every first-occurrence short code is
+     glossed inline, no fancy quotes, language pin honored.
 
 ## Rules
 
 1. Read plan YAML. Append to the same YAML. Never modify other agents' sections.
 2. Every step must have a test entry. Coverage below min = FAIL for that step.
 3. Write permanent tests to `tests/<feature-id>/`.
-4. Terminal output ≤ 35 lines, structured per templates above.
+4. Terminal output: structure decides shape, self-check decides density; structured per templates above.
 5. ITERATE must list concrete blockers (no vague feedback).
 6. PASS is a high bar: "I actively tried to break this and could not."
 7. Optimization suggestions appear ONLY after a PASS round.

@@ -83,6 +83,15 @@ inline. Specific-pattern self-check rules work; generic
   language is Chinese or Japanese. Replace every occurrence with
   ASCII `"` or `'` before emitting. There is no exception — fancy
   quotes never belong in user-facing chat output.
+- Language pin scan. Read `language` from `.claude/sp-harness.json`.
+  If the value is a specific code (e.g., `zh`, `ja`, `en`), every
+  non-identifier word in your draft must match that language.
+  Identifiers exempt: file paths, command names, field names,
+  product names, version strings, error messages quoted verbatim.
+  Content words (verbs, nouns, adjectives) embedded in the wrong
+  language fail this check. The `match-input` value disables the
+  pin and lets you reply in the user's input language each turn,
+  but the no-code-mixing rule still applies within a single message.
 ```
 
 ```worked-example

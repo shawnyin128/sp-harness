@@ -183,7 +183,30 @@ If no `ask_user: true` decisions, replace the final block with:
   · "adjust" lets you push back on any step or decision before Generator runs.
 ```
 
-Keep the terminal output under 35 lines. Do NOT print the YAML file.
+**Self-check before print:** re-read your draft against ALL of these.
+If ANY check fails, rewrite before emitting.
+
+  1. Section headers are literally `**Problem**`, `Plan (<N> steps):`,
+     and `**Key decisions**`. NOT improvised variants like
+     `Approach (3 steps)` or `Decisions (...)`.
+  2. Every step has BOTH a `Goal:` line and an `Approach:` line.
+  3. No bare `S\d+` / `D\d+` / `F\d+` token outside a parenthesized
+     gloss. First mention gets a 3-6 word plain-language label inline,
+     e.g. `D1 (file open mode default)`.
+  4. No code-mixing across the chat language. Per Step 0 of the
+     parent orchestrator, prose is pinned to ONE language. Identifiers
+     (file paths, command names, field names, product names) stay in
+     their original form; everything else follows the pinned
+     language. English content words (verbs, nouns, adjectives)
+     embedded in non-English prose, or vice versa, FAIL this check.
+  5. No fancy/curly quotes (U+201C, U+201D, U+2018, U+2019). Use
+     ASCII `"` and `'`. macOS smart-quote autocorrect is the typical
+     leak source — reverse it before emitting.
+  6. Apply the runtime self-check from `using-sp-harness/SKILL.md`
+     "Output prose self-check": every first-occurrence short code is
+     glossed inline, no fancy quotes, language pin honored.
+
+Structure decides shape, self-check decides density — no global line cap on the terminal output. Do NOT print the YAML file.
 
 ## Rules
 
@@ -191,7 +214,7 @@ Keep the terminal output under 35 lines. Do NOT print the YAML file.
 2. Schema must validate against `${CLAUDE_PLUGIN_ROOT}/docs/plan-file-schema.md`.
 3. Every step must have `test_plan` and `coverage_min`.
 4. Decisions with `confidence < 70` MUST have `ask_user: true`.
-5. Terminal output ≤ 35 lines, must not dump YAML.
+5. Terminal output: structure decides shape, self-check decides density; never dump the YAML.
 6. Do NOT write code. Do NOT invoke sp-harness:subagent-driven-development.
 7. Inline chat output: at session start, read `.claude/sp-harness.json` field `language`. If `match-input` (default), reply in the user's input language each turn; if a specific code (`en`, `zh`, ...), pin replies to that language regardless of input. Either way: no code-mixing; identifiers (paths/commands/field names/product names) stay in original. Files / commits / docs / plan YAML always English regardless.
 8. Every decision touch-point follows `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoint-protocol.md`. Background / What it controls / My pick / Options must be present per ⚠️ decision; bare spec IDs without translation are forbidden; option lines must be one-sentence consequences, never bare labels like `Option B`.

@@ -100,7 +100,7 @@ Write `<feature-id>.plan.yaml` per `${CLAUDE_PLUGIN_ROOT}/docs/plan-file-schema.
 **Phase 3: Print terminal summary.**
 
 <HARD-GATE>
-Print a condensed terminal summary (≤ 35 lines).
+Print a condensed terminal summary. Structure decides shape, self-check decides density — no global line cap. Use the canonical fence below; let the brief grow only as far as the decisions and steps demand.
 
 This output is a **decision touch-point** and MUST follow
 `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoint-protocol.md`. The fence
@@ -323,6 +323,12 @@ to Evaluator (Round N+1 for verification).
 
 If Round 6 would trigger, write blocker "Max rounds exceeded", ITERATE
 verdict, and print:
+
+**Self-check before print:** even on this rare escalation path, apply
+the runtime self-check from `using-sp-harness/SKILL.md` "Output prose
+self-check" — every first-occurrence short code is glossed inline,
+language pin honored, no fancy quotes. Option lines are full sentences
+of consequence, never bare labels.
 
 ```output-template
 ⚠️ 5 rounds completed and blockers still present. The plan may be

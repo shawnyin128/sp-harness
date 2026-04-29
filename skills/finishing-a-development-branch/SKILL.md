@@ -75,8 +75,8 @@ Implementation complete on <feature-branch>. What next?
 Which one?
 ```
 
-Keep this block under 10 lines. Don't pad — but each option must say
-what actually happens, not just its name.
+Structure decides shape, self-check decides density — no global line cap.
+Don't pad, but each option must say what actually happens, not just its name.
 
 ### Step 4: Execute Choice
 

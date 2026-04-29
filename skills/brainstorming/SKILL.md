@@ -487,7 +487,7 @@ Also apply the specific-pattern self-check from
 `using-sp-harness/SKILL.md` "Output prose self-check"
 (project-internal short codes each glossed inline).
 
-Print a brief in this exact structure (≤ 30 lines):
+Print a brief in this exact structure. Structure decides shape, self-check decides density — no global line cap.
 
 ```output-template
 📐 Design ready: <topic>

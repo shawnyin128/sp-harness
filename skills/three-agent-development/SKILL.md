@@ -94,7 +94,7 @@ and project memory enabled.
 Planner will:
 1. Discover implicit requirements (gap analysis, root-cause check for bugfixes)
 2. Write `<feature-id>.plan.yaml` with `problem`, `steps`, `decisions`
-3. Print a condensed terminal summary (≤ 30 lines)
+3. Print a condensed terminal summary — structure decides shape, self-check decides density; no global line cap
 
 ### Touch Point 1: User reviews Plan
 
@@ -150,7 +150,7 @@ Evaluator will:
    write to `tests/<feature-id>/`, run, record coverage
 4. Append new `eval.rounds[]` entry with verdict (PASS or ITERATE)
 5. If PASS: also append `eval.optimization` with non-blocking suggestions
-6. Print condensed terminal output (≤ 30 lines)
+6. Print condensed terminal output — structure decides shape, self-check decides density; no global line cap
 
 ### Touch Point 2: User reviews Eval
 
