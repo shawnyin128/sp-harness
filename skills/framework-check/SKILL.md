@@ -1,7 +1,7 @@
 ---
 name: framework-check
 description: |
-  Health check for the sp-harness project framework. Runs 7 check categories,
+  Health check for the sp-harness project framework. Runs 8 check categories,
   classifies each issue by severity (🔴 blocks runtime / 🟡 needs attention /
   ✅ pass) and fixability (auto / needs-confirm / manual), prints a structured
   report, and asks the user which fix path to take.
@@ -17,7 +17,7 @@ to fix issues.
 
 ---
 
-## Check Categories (9)
+## Check Categories (8)
 
 Each category groups related checks. Every issue found is tagged with:
 
@@ -141,88 +141,6 @@ Legacy files (🟡, `needs-confirm`: delete after printing content):
 - [ ] `.claude/mem/memory.md` absent (old scope pre-0.4.3)
 - [ ] `.claude/mem/todo.md` absent (replaced by todos.json in 0.4.0)
 - [ ] `.claude/mem/checklist.md` absent (old format)
-
-### 4. Agent templates
-
-Severity: 🔴 if drift or missing (runtime will break). Fixability: `needs-confirm`.
-
-Existence:
-- [ ] `.claude/agents/sp-feedback.md` exists (required regardless of dev_mode)
-- [ ] If `dev_mode` is `three-agent`: sp-planner.md, sp-generator.md, sp-evaluator.md all exist
-- [ ] No plugin-level `agents/sp-planner.md` / `sp-generator.md` / `sp-evaluator.md` in plugin source (legacy)
-
-Template drift (v0.7.0+) — deployed copies may be stale:
-
-Old-format markers (presence = BAD):
-- [ ] sp-planner.md does NOT contain `task-plan.json` or `eval-plan.json`
-- [ ] sp-generator.md does NOT contain `implementation.md` (as output filename)
-- [ ] sp-evaluator.md does NOT contain `eval-report.json`
-- [ ] sp-feedback.md does NOT contain `final-eval-report.json` or `iter-N-eval-report.json`
-
-New-format markers (absence = BAD):
-- [ ] sp-planner.md contains `<feature-id>.plan.yaml`
-- [ ] sp-generator.md contains `<feature-id>.plan.yaml`
-- [ ] sp-evaluator.md contains `eval.rounds[]` or `<feature-id>.plan.yaml`
-- [ ] sp-feedback.md contains `<feature-id>.plan.yaml`
-
-Configurable-language rule (v0.8.10+, 🔴 FORCE UPDATE, no manual fallback):
-- [ ] Each existing `.claude/agents/sp-*.md` (except `sp-generator.md`,
-      which has no terminal output) contains the configurable-language
-      rule. Markers (all three required, case-insensitive): `sp-harness.json`,
-      `language`, `code-mixing`. Old v0.8.7 form (just `match the user's
-      language` + `code-mixing` with no `sp-harness.json` reference) =
-      FAIL for that file — force-update.
-
-Decision touch-point protocol marker (v0.8.11+, 🔴 FORCE UPDATE):
-- [ ] Each existing `.claude/agents/sp-*.md` (except `sp-generator.md`,
-      which has no terminal output) contains the literal string
-      `decision-touchpoint-protocol`. Missing = FAIL for that file —
-      force-update by appending the canonical reference (per-file
-      wording in the Critical Fix Paths section below). Without this
-      marker the deployed agent has no protocol reference at the
-      generation site, even if the source template does.
-
-Plugin-doc references must use `${CLAUDE_PLUGIN_ROOT}/` prefix (v0.8.14+, 🔴 FORCE UPDATE):
-- [ ] Each existing `.claude/agents/sp-*.md` must NOT contain bare
-      `docs/decision-touchpoint-protocol.md` or `docs/plan-file-schema.md`
-      references. These resolve to the user project's working directory at
-      runtime, not the plugin install dir, so any agent that tries to Read
-      the path gets file-not-found. Detect bare references — substring
-      match for `docs/decision-touchpoint-protocol.md` or
-      `docs/plan-file-schema.md` not immediately preceded by
-      `${CLAUDE_PLUGIN_ROOT}/`. Any hit = FAIL for that file.
-
-      Detection one-liner:
-      ```bash
-      for f in .claude/agents/sp-{planner,evaluator,feedback,generator}.md; do
-        [ -f "$f" ] || continue
-        python3 -c "
-import re, sys
-src = open('$f').read()
-for m in re.finditer(r'(?<!\\$\\{CLAUDE_PLUGIN_ROOT\\}/)docs/(decision-touchpoint-protocol|plan-file-schema)\\.md', src):
-    print(f'{sys.argv[1]}: bare {m.group()}')
-" "$f"
-      done
-      ```
-
-Fix:
-- **Old/new format markers FAIL → `needs-confirm` (full template regenerate)**:
-  read `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`, fill
-  `{PROJECT_NAME}` and `{PROJECT_CONTEXT}` from CLAUDE.md, overwrite the
-  deployed file. User-confirm because hand customization is lost.
-- **Only language-consistency rule missing → 🔴 `auto` (FORCE UPDATE)**:
-  append the canonical rule (per-file wording in the Critical Fix Paths
-  section below) to the existing `## Rules` numbered list. Purely
-  additive. DO NOT downgrade to manual or needs-confirm.
-- **Only touch-point protocol marker missing → 🔴 `auto` (FORCE UPDATE)**:
-  append the canonical reference (per-file wording in the Critical Fix
-  Paths section below). Purely additive — no hand customization is
-  destroyed.
-- **Only bare plugin-doc references found → 🔴 `auto` (FORCE UPDATE)**:
-  literal-string replace — for each `docs/decision-touchpoint-protocol.md`
-  or `docs/plan-file-schema.md` not already preceded by
-  `${CLAUDE_PLUGIN_ROOT}/`, prepend `${CLAUDE_PLUGIN_ROOT}/`. Idempotent
-  (already-prefixed occurrences are skipped). Purely mechanical.
 
 ### 5. Agent state
 
@@ -557,8 +475,7 @@ in plain language. Also apply the specific-pattern self-check from
 [3/9] State sources
     ...
 
-[4/9] Agent templates
-    ...
+[4/9] (slot retired — see CHANGELOG)
 
 [5/9] Agent state
     ...
@@ -596,16 +513,7 @@ Example:
 [3/9] State sources
     ✅ pass
 
-<!-- lint:disable=R3 -->
-[4/9] Agent templates
-<!-- lint:disable=R3 -->
-    ❌ 3 fail (🔴 blocks runtime)
-<!-- lint:disable=R3 -->
-    - sp-planner.md contains task-plan.json (🔴needs confirm: regenerate from template)
-<!-- lint:disable=R3 -->
-    - sp-generator.md contains implementation.md (🔴needs confirm: regenerate)
-<!-- lint:disable=R3 -->
-    - sp-evaluator.md missing plan.yaml marker (🔴needs confirm: regenerate)
+[4/9] (slot retired — see CHANGELOG)
 
 [5/9] Agent state
     ✅ pass
