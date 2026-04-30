@@ -48,6 +48,37 @@ from _lib.format_id import get_display_name  # noqa: E402
 # part contains a space.
 _MAPPING_ITEM_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$")
 
+# Identifier-style keys that legitimately appear as the head of a
+# sequence-item mapping in plan-file-schema.md. Without this gate, any
+# bare-identifier prose item like "- Edge: collision case" matches the
+# regex above and is misclassified as a mapping, dropping the wrapped
+# continuation line and desyncing the indent stack downstream. The set
+# is co-located here rather than parsed from the schema doc because the
+# schema is Markdown prose, the key set is small, and changes to the
+# schema warrant a deliberate edit here anyway. Sources, by section:
+#   decisions[]                                 — id, question, planner_view,
+#                                                 confidence, rationale,
+#                                                 alternatives, ask_user,
+#                                                 user_decision
+#   decisions[].alternatives[]                  — option, rejected_because
+#   unplanned_changes[]                         — loc, what, reason
+#   eval.rounds[]                               — round, closure_check,
+#                                                 tests, blockers, verdict
+#   closure_check.user_decisions_honored[]      — verified, evidence
+#   closure_check.confidence_mismatches[]       — step, claimed, actual
+#   eval.optimization.suggestions[]             — kind, text
+# (id and confidence appear in multiple sections; deduped below.)
+_MAPPING_KEYS = frozenset({
+    "id", "question", "planner_view", "confidence", "rationale",
+    "alternatives", "ask_user", "user_decision",
+    "option", "rejected_because",
+    "loc", "what", "reason",
+    "round", "closure_check", "tests", "blockers", "verdict",
+    "verified", "evidence",
+    "step", "claimed", "actual",
+    "kind", "text",
+})
+
 
 # ---------------------------------------------------------------------------
 # Minimal YAML loader (focused on plan-file-schema.md subset)
@@ -116,11 +147,14 @@ def _parse_sequence(lines, pos, indent):
             # Literal block scalar as a sequence item: "- |" followed by
             # indented block content.
             result.append(_parse_block_scalar(lines, pos, indent))
-        elif _MAPPING_ITEM_RE.match(item_content) and not _looks_like_quoted(item_content):
+        elif (
+            (m := _MAPPING_ITEM_RE.match(item_content))
+            and m.group(1) in _MAPPING_KEYS
+            and not _looks_like_quoted(item_content)
+        ):
             # Mapping item — first kv inline, rest at indent+2 (column where "- " ended).
             child_indent = indent + 2
             item = {}
-            m = _MAPPING_ITEM_RE.match(item_content)
             key = m.group(1)
             rest = m.group(2).strip()
             item[key] = _parse_value(lines, pos, child_indent, rest)
