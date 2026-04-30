@@ -26,7 +26,6 @@ Check the following independently. Record results to skip completed steps.
 - **B2**: Does `.claude/memory.md` exist? (short-term session memory, reintroduced in v0.4.3 with tightened scope)
 - **C**: Are Stop and UserPromptSubmit hooks configured in `.claude/settings.json`?
 - **D**: Does `.claude/sp-harness.json` exist with `dev_mode` AND `external_codebase` AND `language`?
-- **E**: Does `.claude/agents/sp-feedback.md` exist? If dev_mode is three-agent, also check sp-planner.md, sp-generator.md, sp-evaluator.md.
 
 If all are done, report "All steps already complete." and stop.
 
@@ -346,11 +345,14 @@ to handle spaces in paths.
 
 ---
 
-## Step 6: Configure development mode and generate project-level agents
+## Step 6: Configure development mode and external codebase
 
-All agent definitions are project-level. Plugin ships templates at
-`${CLAUDE_PLUGIN_ROOT}/agent-templates/sp-*.md`. init-project **always**
-generates project-level copies adapted to this project's context.
+After the role-skill migration, agent role bodies (Planner /
+Generator / Evaluator / Feedback) live in
+`${CLAUDE_PLUGIN_ROOT}/skills/sp-*-role/SKILL.md` and are loaded by
+the orchestrators via the Skill tool. init-project no longer writes
+any per-project subagent files — the project's `.claude/agents/`
+directory is left untouched here.
 
 ### Q1: Dev mode
 
@@ -370,50 +372,9 @@ This is a decision touch-point per `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoi
       overhead. Pick this when correctness matters enough to pay for it.
 ```
 
-### Step 6a: Generate sp-feedback (always, regardless of dev mode)
-
-Read `${CLAUDE_PLUGIN_ROOT}/agent-templates/sp-feedback.md`. Replace:
-- `{PROJECT_NAME}` → project name from CLAUDE.md
-- `{PROJECT_CONTEXT}` → 2-4 lines summarizing: stack, key modules, critical
-  invariants identified during Step 1 scan
-
-Write to `.claude/agents/sp-feedback.md`.
-
-### Step 6b: If three-agent, generate sp-planner / sp-generator / sp-evaluator
-
-Print defaults from templates:
-<!-- lint:disable=R7 -->
-```output-template
-Default three-agent configuration from the agent template files:
-  sp-planner:   opus, tools=Read/Grep/Glob/Bash/Write/Edit/Skill, memory=project, skills=sp-harness:writing-plans
-  sp-generator: sonnet, isolation=worktree, skills=subagent-driven-dev+TDD+git-convention
-  sp-evaluator: opus, tools=Read/Grep/Glob/Bash, memory=project
-```
-
-**Q2:** decision touch-point per protocol — spell out both paths:
-
-<!-- lint:disable=R7 -->
-```output-template
-→ Use the defaults shown above?
-  · yes — write the three agent files now using template defaults;
-    you can always re-run switch-dev-mode later to customize.
-  · no  — I'll walk through the four config knobs (model / tools /
-    memory / worktree) for each of the three agents one at a time.
-```
-
-- **If yes:** For each of sp-planner, sp-generator, sp-evaluator:
-  Read template from `${CLAUDE_PLUGIN_ROOT}/agent-templates/{name}.md`.
-  Replace `{PROJECT_NAME}` and `{PROJECT_CONTEXT}` with project-specific values.
-  Write to `.claude/agents/{name}.md`.
-
-- **If no:** For each agent, ask:
-  1. "Model?" (opus / sonnet / haiku / inherit)
-  2. "Tools?" (default / read-only / custom list)
-  3. "Cross-session memory?" (none / project / user / local)
-  4. "Isolated worktree?" (yes / no)
-
-  Read template, override frontmatter fields with user answers, fill context,
-  write to `.claude/agents/{name}.md`.
+Persist the chosen mode in `.claude/sp-harness.json` under `dev_mode`.
+The orchestrators read role bodies from the role skills directly; no
+files are written under `.claude/agents/`.
 
 ### Step 6c: External codebase question
 
@@ -486,10 +447,6 @@ Save the user's answer as the `language` field in the next step.
 
 to `.claude/sp-harness.json`.
 
-**Single-agent mode note:** only `sp-feedback.md` is generated as a subagent.
-Planner/Generator/Evaluator roles are played by main session — no subagent
-definitions needed for them.
-
 ---
 
 ## Step 7: Confirm
@@ -505,7 +462,6 @@ docs/                      ✓ directory structure created / ✓ already complet
 .claude/sp-feedback-calibration.json  (auto-created on first sp-feedback run)
 .claude/sp-harness.json    ✓ dev_mode={mode}, external_codebase={true|false}, language={lang}
 .claude/codebase-context.md  ✓ generated (only if external_codebase=true) / — skipped
-.claude/agents/            ✓ sp-feedback.md + {3 dev agents if three-agent}
 ```
 
 ---

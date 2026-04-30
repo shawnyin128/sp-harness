@@ -130,9 +130,9 @@ drift check (added v0.8.10).
 Files with touch-points (must contain the compliance marker):
 
 **Open decisions:**
-- `agent-templates/sp-planner.md` — Touch Point 1 (decisions ask)
-- `agent-templates/sp-evaluator.md` — Touch Point 2 (verdict ask)
-- `agent-templates/sp-feedback.md` — Mode A per-batch confirmation
+- `skills/sp-planner-role/SKILL.md` — Touch Point 1 (decisions ask)
+- `skills/sp-evaluator-role/SKILL.md` — Touch Point 2 (verdict ask)
+- `skills/sp-feedback-role/SKILL.md` — Mode A per-batch confirmation
 - `skills/brainstorming/SKILL.md` — clarifying questions
 - `skills/finishing-a-development-branch/SKILL.md` — completion options
 

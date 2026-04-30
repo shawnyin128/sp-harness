@@ -192,9 +192,9 @@ grep -rP '[\x{4e00}-\x{9fff}]' .claude/agents/ 2>/dev/null
 ```
 
 **Plugin-dev context** (this repo is the sp-harness repo itself; has
-`skills/` and `agent-templates/` at the root):
+`skills/` at the root):
 ```bash
-grep -rP '[\x{4e00}-\x{9fff}]' skills/ agent-templates/ docs/ README.md CHANGELOG.md CLAUDE.md 2>/dev/null
+grep -rP '[\x{4e00}-\x{9fff}]' skills/ docs/ README.md CHANGELOG.md CLAUDE.md 2>/dev/null
 ```
 
 Checks:
@@ -203,10 +203,9 @@ Always check (both contexts):
 - [ ] No CJK characters in `.claude/agents/*.md` (deployed agents inherit
       from English plugin templates; CJK here means stale or hand-edited)
 
-Plugin-dev only (apply when `skills/` and `agent-templates/` exist at
-repo root — indicates this IS the sp-harness repo):
+Plugin-dev only (apply when `skills/` exists at repo root — indicates
+this IS the sp-harness repo):
 - [ ] No CJK in `skills/**/*.md`
-- [ ] No CJK in `agent-templates/*.md`
 - [ ] No CJK in `docs/**/*.md`
 - [ ] No CJK in `README.md`, `CHANGELOG.md`, `CLAUDE.md`
 
@@ -218,9 +217,9 @@ repo root — indicates this IS the sp-harness repo):
 
 Fixability:
 
-- **`.claude/agents/*.md`**: `needs-confirm` — if CJK present and plugin's
-  `${CLAUDE_PLUGIN_ROOT}/agent-templates/` is English (v0.7.4+), regenerate
-  from template (same path as agent drift detection).
+- **`.claude/agents/*.md`**: `needs-confirm` — sp-harness no longer
+  emits role bodies into `.claude/agents/`; if CJK appears in a
+  user-authored deployed subagent file, fix manually.
 - **Plugin-dev files**: `manual`. User/Claude translates per commit.
 
 Rationale: the plugin's source tree is English-only by contributor
@@ -231,9 +230,9 @@ the plugin and therefore should stay English.
 
 ### 9. Decision touch-point protocol coverage (v0.8.10+, plugin-dev only)
 
-Scope: applies when `skills/` and `agent-templates/` exist at repo root
-(this IS the sp-harness repo). Skipped in user-project context — the
-protocol is a plugin-source convention, not a user-project rule.
+Scope: applies when `skills/` exists at repo root (this IS the
+sp-harness repo). Skipped in user-project context — the protocol is a
+plugin-source convention, not a user-project rule.
 
 Severity: 🔴 (degraded user-facing output if missing). Fixability:
 `manual` (the LLM must understand WHY the protocol applies before
@@ -248,9 +247,9 @@ string `decision-touchpoint-protocol` must appear at least once
 Inventory (matches `${CLAUDE_PLUGIN_ROOT}/docs/decision-touchpoint-protocol.md` § Touch-point inventory):
 
 ```
-agent-templates/sp-planner.md
-agent-templates/sp-evaluator.md
-agent-templates/sp-feedback.md
+skills/sp-planner-role/SKILL.md
+skills/sp-evaluator-role/SKILL.md
+skills/sp-feedback-role/SKILL.md
 skills/three-agent-development/SKILL.md
 skills/single-agent-development/SKILL.md
 skills/feature-tracker/SKILL.md
@@ -265,8 +264,8 @@ skills/requesting-code-review/code-reviewer.md
 One-shot detection:
 
 ```bash
-for f in agent-templates/sp-planner.md agent-templates/sp-evaluator.md \
-         agent-templates/sp-feedback.md \
+for f in skills/sp-planner-role/SKILL.md skills/sp-evaluator-role/SKILL.md \
+         skills/sp-feedback-role/SKILL.md \
          skills/{three,single}-agent-development/SKILL.md \
          skills/feature-tracker/SKILL.md skills/brainstorming/SKILL.md \
          skills/finishing-a-development-branch/SKILL.md \
@@ -302,7 +301,7 @@ substitution, idempotent).
 
 Checks:
 
-Scan all files under `skills/`, `agent-templates/`, and `docs/` for
+Scan all files under `skills/` and `docs/` for
 substring `docs/decision-touchpoint-protocol.md` or
 `docs/plan-file-schema.md` not immediately preceded by
 `${CLAUDE_PLUGIN_ROOT}/`. Any hit = FAIL for that file.
@@ -313,7 +312,7 @@ One-shot detection:
 python3 - <<'PY'
 import re, os
 PROTECTED = ['decision-touchpoint-protocol', 'plan-file-schema']
-ROOTS = ['skills', 'agent-templates', 'docs']
+ROOTS = ['skills', 'docs']
 # Self-exclude: this skill defines the check, so its body legitimately
 # contains the protected names as data (PROTECTED list, pattern strings).
 EXCLUDE = {'skills/framework-check/SKILL.md'}
@@ -349,7 +348,7 @@ lookbehind already excludes already-prefixed occurrences.
 python3 - <<'PY'
 import re, os
 PROTECTED = ['decision-touchpoint-protocol', 'plan-file-schema']
-ROOTS = ['skills', 'agent-templates', 'docs']
+ROOTS = ['skills', 'docs']
 # Self-exclude: this skill defines the check, so its body legitimately
 # contains the protected names as data (PROTECTED list, pattern strings).
 EXCLUDE = {'skills/framework-check/SKILL.md'}
