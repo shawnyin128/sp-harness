@@ -1,0 +1,751 @@
+plan_id: role-skills-test-suite-update
+iteration: 1
+based_on: .claude/features.json#role-skills-test-suite-update
+
+problem: |
+  The orchestrator-refactor batch (create-role-skills,
+  refactor-{single,three,feedback}-orchestrator,
+  switch-dev-mode-migration-rewrite, framework-check-cat4-removal) has
+  shipped, so the test suite no longer matches the architecture: there
+  is no surviving Plan-summary fence in agent-templates that needs a
+  byte-parity guard, the briefs the humanize tests inspect are now
+  served from role skills, and the agent-templates lint-scope test
+  guards a coupling the orchestrators no longer rely on. New behavior
+  also lacks coverage: nothing currently fails when an orchestrator
+  drops the Skill(sp-harness:sp-<role>-role) dispatch contract or when
+  switch-dev-mode forgets to enumerate one of the four stale agent
+  files. Without this clean-up the suite either ratifies dead surface
+  area or leaves the just-shipped contracts unguarded; with it the
+  remaining tests are all live and the role-skill architecture has a
+  green regression baseline. As a final administrative step, the
+  queued language-pin-emit-self-check-coverage feature's step list
+  must be reconciled against the new architecture before it is
+  picked up.
+
+steps:
+  - id: S1
+    desc: Add role-skill dispatch smoke test
+    approach: |
+      Create tests/role-skill-dispatch-smoke/ with a structural
+      assertion (no live subagent dispatch) that mirrors the
+      precedent set by tests/refactor-three-agent-orchestrator/,
+      tests/refactor-single-agent-orchestrator/,
+      tests/refactor-feedback-orchestrator/. For each of the four
+      orchestrator entry points — skills/single-agent-development,
+      skills/three-agent-development, skills/feedback,
+      and the orchestrator hop that wraps each role — read the
+      relevant SKILL.md, locate the dispatch block (Step 2 / 3 / 4
+      sections in three-agent; Phase 1 / 2 / 3 in single-agent;
+      Step 1 in feedback), and assert two literals appear inside
+      that block: "subagent_type='general-purpose'" and
+      "sp-harness:sp-<role>-role" with the correct role token. Also
+      add a negative assertion that the legacy "@agent sp-<role>"
+      verb is absent and that the literal phrase
+      "Skill(sp-harness:sp-<role>-role) FIRST" (or its current
+      orchestrator wording for "invoke the role skill before any
+      other tool call") appears in the dispatch contract section.
+      Single test file with one TestCase per role; no fixtures, no
+      tmpdir.
+    files:
+      create:
+        - tests/role-skill-dispatch-smoke/__init__.py
+        - tests/role-skill-dispatch-smoke/test_dispatch_contract.py
+      modify: []
+      test:
+        - tests/role-skill-dispatch-smoke/test_dispatch_contract.py
+    test_plan:
+      - Each role's dispatch block contains both
+        subagent_type='general-purpose' and the matching role-skill
+        identifier.
+      - Legacy "@agent sp-<role>" pattern is absent from every
+        orchestrator SKILL.md.
+      - Dispatch contract section names "general-purpose" and the
+        role-first-invocation rule (the "Skill(...) FIRST" wording
+        used by three-agent today).
+      - Test fails if a future edit reintroduces .claude/agents/
+        sp-<role>.md as the dispatch target.
+    coverage_min: 90
+
+  - id: S2
+    desc: Add agent-file-migration test
+    approach: |
+      Create tests/agent-file-migration/ with two layers, both
+      static (no live skill execution). Layer A: structural
+      assertions on skills/switch-dev-mode/SKILL.md re-confirm what
+      tests/switch-dev-mode-migration-rewrite/ already locks
+      (cleanup section enumerates all four stale files, no
+      template-copy / drift / regenerate vocabulary, dev_mode
+      toggle is the only persisted side effect). Layer B:
+      behavior simulation — a Python helper that mirrors the
+      skill's own algorithm (read sp-harness.json, glob the four
+      paths under .claude/agents/, delete those that exist,
+      re-read sp-harness.json and verify dev_mode field updated).
+      The helper runs against a tmpdir fixture seeded with a
+      stub sp-harness.json plus all four stale files; the test
+      asserts post-state matches the contract (dev_mode flipped,
+      four files gone, sp-harness.json unrelated fields
+      preserved, .claude/agents/state/ untouched). The simulator
+      lives in the test file, not in production code. Layer A
+      catches regressions in the SKILL prose; Layer B catches
+      regressions in anyone re-implementing the cleanup
+      algorithm.
+    files:
+      create:
+        - tests/agent-file-migration/__init__.py
+        - tests/agent-file-migration/test_migration.py
+      modify: []
+      test:
+        - tests/agent-file-migration/test_migration.py
+    test_plan:
+      - skills/switch-dev-mode/SKILL.md still enumerates all four
+        cleanup targets and still mentions sp-harness.json /
+        dev_mode (overlap with switch-dev-mode-migration-rewrite
+        is intentional — kept narrow so a future SKILL rewrite
+        does not silently shrink coverage).
+      - Behavior simulation on a tmpdir: post-cleanup state has
+        all four agent files gone, dev_mode toggled, other JSON
+        fields unchanged, .claude/agents/state/ contents
+        preserved.
+      - Edge: stale-files set is empty → simulator is a no-op,
+        sp-harness.json unchanged.
+      - Edge: only some of the four files exist → simulator
+        deletes only those that exist, no errors.
+    coverage_min: 90
+
+  - id: S3
+    desc: Delete the three obsoleted test directories
+    approach: |
+      Remove tests/canonical-plan-summary-parity/ if it exists on
+      disk (current state: not present — verified during planning,
+      so this sub-step is a no-op safety check rather than a real
+      deletion). Remove tests/humanize-planner-evaluator-briefs/
+      whole directory. Remove
+      tests/output-prose-agent-templates-lint-scope/ whole
+      directory. After deletion, grep the remaining tests/ tree
+      for any string reference to the three deleted directory
+      names; assert zero matches before continuing. This step
+      depends on the D1 outcome only for the lint-scope test —
+      see decisions[].
+    files:
+      create: []
+      modify: []
+      test: []
+    test_plan:
+      - The three target directories no longer exist in tests/.
+      - No remaining test imports from or references the three
+        deleted paths by string.
+      - pytest collection over tests/ still succeeds.
+    coverage_min: 80
+
+  - id: S4
+    desc: Run pytest and confirm green baseline
+    approach: |
+      Run `pytest tests/` from the repo root. Expect every
+      remaining test directory to pass. If anything fails,
+      diagnose before proceeding — the deletions in S3 should
+      not produce failures elsewhere; if they do, S3's delete
+      list is incomplete or a coupling we missed exists. Capture
+      the pytest summary line in the eval log so a future reader
+      can confirm the baseline was actually green at merge time.
+    files:
+      create: []
+      modify: []
+      test: []
+    test_plan:
+      - pytest tests/ exits 0.
+      - Summary names the new tests/role-skill-dispatch-smoke/
+        and tests/agent-file-migration/ directories among
+        passing collections.
+      - No collection error, no skipped-due-to-import-error
+        anywhere.
+    coverage_min: 90
+
+  - id: S5
+    desc: Reconcile language-pin feature step list
+    approach: |
+      Inspect features.json entry
+      language-pin-emit-self-check-coverage. The current step
+      list already contains 4 steps (cap removal across
+      skills/*/SKILL.md, language-pin scan added to
+      using-sp-harness, role-skill self-check upgrade for
+      sp-planner-role / sp-evaluator-role, regression test).
+      The dispatch instruction frames this step as "drop steps
+      4/5/6 of the original 8" — the residual the dispatcher
+      expects matches what is currently stored. Either way,
+      run `manage-features update language-pin-emit-self-
+      check-coverage --steps <residual-4>` to make the
+      reconciliation explicit and idempotent: even if the
+      stored list already matches, the call leaves a record
+      that the trim was reviewed in this feature. The four
+      residual step strings are the ones currently in
+      features.json verbatim. Do NOT modify the description
+      text in this step (that is also out of date — references
+      "six emit points" — but description-vs-steps drift is a
+      separate concern; surface it in the commit message but
+      do not silently rewrite description here). Document the
+      reconciliation in the commit message of this feature
+      per the spec.
+    files:
+      create: []
+      modify:
+        - .claude/features.json
+      test: []
+    test_plan:
+      - features.json entry for
+        language-pin-emit-self-check-coverage has exactly the
+        four residual steps after S5.
+      - No reference in those four steps to three-agent Touch
+        Point 1, Touch Point 2, agent-templates inline self-
+        check, or any artifact that no longer exists.
+      - manage-features update call succeeded (exit 0) and the
+        post-state JSON validates against the manage-features
+        schema check.
+    coverage_min: 80
+
+decisions:
+  - id: D1
+    question: |
+      Should the new tests/role-skill-content-parity/ regression
+      (originally feature step 3) be added to this plan, given
+      that role-skill bodies and agent-templates bodies already
+      diverge today (sp-planner: 25-line drift, sp-evaluator:
+      28-line drift; sp-generator and sp-feedback do match
+      byte-for-byte)?
+    planner_view: drop_step_3
+    confidence: 60
+    rationale: |
+      The dispatch instruction itself flags step 3 as
+      "decision worth surfacing" because it is conditional on
+      whether agent-templates/ stays alive. We verified
+      agent-templates/ IS still in active use:
+      skills/init-project/SKILL.md reads
+      ${CLAUDE_PLUGIN_ROOT}/agent-templates/sp-{planner,
+      generator,evaluator,feedback}.md to bootstrap project-
+      level subagent files; skills/framework-check/SKILL.md
+      still scans the directory for CJK leakage. So
+      agent-templates/ is NOT going away. But content parity
+      is already broken at planning time — the planner role
+      skill diverges from agent-templates/sp-planner.md by 25
+      lines and evaluator by 28 lines. Writing the parity
+      assertion now would either fail on day one (rejecting a
+      green baseline) or require copying those bodies back
+      into sync first, which is a content edit not authorized
+      by this feature's scope. The honest move is to drop the
+      step and capture the divergence as a separate
+      decision-worthy debt: either delete agent-templates/
+      after migrating init-project to read role-skill bodies,
+      or accept divergence and spec the differences. Either
+      path is a feature of its own, not a regression test
+      buried in a test-suite-cleanup feature.
+    alternatives:
+      - option: add_parity_test_with_synchronization_step
+        rejected_because: |
+          Would require an unscoped content edit to copy
+          role-skill bodies back into agent-templates/sp-
+          planner.md and sp-evaluator.md. That edit is
+          behavior-shaping — it modifies what init-project
+          ships into new projects — and per CLAUDE.md must
+          route through writing-skills with eval evidence.
+          Not appropriate to bundle inside a test-suite
+          cleanup feature.
+      - option: add_parity_test_marked_xfail
+        rejected_because: |
+          A regression test marked xfail is signal noise; it
+          ratifies the drift instead of forcing a decision
+          and clutters the green baseline.
+      - option: keep_parity_test_for_generator_and_feedback_only
+        rejected_because: |
+          Partial parity guards only the two role skills that
+          happen to match today; the asymmetry is fragile
+          (any future edit to sp-generator-role would
+          silently fail this test even if the divergence is
+          deliberate) and does not catch the actual risk
+          (planner / evaluator drift).
+    ask_user: true
+    user_decision: |
+      (a) Drop the parity test entirely. Whether agent-templates/ is
+      retired or whether parity is enforced at all is left as a
+      separate, properly-scoped feature input. This feature ships
+      cleanly without dragging behavior-shaping content edits into a
+      test-suite cleanup. User confirmed Planner's recommendation
+      2026-04-29.
+
+  - id: D2
+    question: |
+      Should the role-skill dispatch smoke test (S1) be a
+      structural string-match assertion against orchestrator
+      SKILL.md files, or a behavior simulation that mocks a
+      subagent dispatch and asserts the first tool call?
+    planner_view: structural_only
+    confidence: 85
+    rationale: |
+      The dispatch instruction explicitly notes that
+      "structural assertions" are the precedent set by
+      tests/refactor-{single,three,feedback}-orchestrator/.
+      Reading those tests confirms: every existing orchestrator
+      test reads SKILL.md and asserts substrings like
+      "subagent_type='general-purpose'" and
+      "sp-harness:sp-<role>-role". Behavior simulation
+      (mocking subagent dispatch, capturing the actual
+      tool-use log) would require either intercepting the
+      Agent SDK or running a real subagent in CI — neither is
+      a deterministic unit test, both add CI complexity for
+      coverage we already get structurally. Structural is
+      the right call.
+    alternatives:
+      - option: behavior_simulation_with_mocked_dispatch
+        rejected_because: |
+          Brittle (mocks drift from real Agent SDK), high
+          maintenance, and provides no signal a structural
+          assertion does not already provide. The thing we
+          care about is "does the SKILL.md tell the
+          subagent to invoke the role skill first" — that
+          is text, and text-grep is the right test shape.
+    ask_user: false
+    user_decision: null
+
+  - id: D3
+    question: |
+      Should the agent-file-migration test (S2) be structural-
+      only, or include a tmpdir behavior simulation of the
+      cleanup algorithm?
+    planner_view: both_layers
+    confidence: 75
+    rationale: |
+      Pure structural would duplicate
+      tests/switch-dev-mode-migration-rewrite/ — that suite
+      already locks the SKILL.md prose (cleanup targets
+      enumerated, dev_mode toggle present, no template-copy
+      vocabulary). Adding ANOTHER structural test would be
+      redundant. The behavior-simulation layer catches a
+      different class of regression: someone re-implements
+      the cleanup algorithm wrong (forgets to preserve
+      .claude/agents/state/, blows away unrelated JSON
+      fields, etc.). A small Python helper that mirrors the
+      algorithm and runs against a tmpdir fixture is
+      deterministic, fast, and has zero CI infra cost.
+      Keeping a thin structural layer too is cheap and
+      defends against future SKILL rewrites that silently
+      shrink the cleanup target list.
+    alternatives:
+      - option: structural_only_skip_simulation
+        rejected_because: |
+          Redundant with switch-dev-mode-migration-rewrite;
+          adds no new coverage; misses algorithmic
+          regressions.
+      - option: simulation_only_skip_structural
+        rejected_because: |
+          Loses the cheap insurance against SKILL prose
+          drift. The two layers cost almost nothing
+          together.
+    ask_user: false
+    user_decision: null
+
+  - id: D4
+    question: |
+      For step S5 — reconciling
+      language-pin-emit-self-check-coverage — what are the
+      four residual steps that survive in the new architecture?
+    planner_view: keep_currently_stored_4_steps_verbatim
+    confidence: 80
+    rationale: |
+      Read the live features.json entry and confirmed it
+      already stores exactly four steps:
+      (1) remove global line caps from
+      skills/*/SKILL.md emit points and replace each with
+      the "structure decides shape" sentence;
+      (2) add a language-pin scan item to
+      skills/using-sp-harness/SKILL.md Output prose self-
+      check;
+      (3) ensure sp-planner-role and sp-evaluator-role each
+      have the 6-item enumerated self-check block before
+      their emit templates, matching the pattern from
+      single-agent-development Phase 3;
+      (4) regression test that greps every output-template
+      fence in skills/*/SKILL.md for self-check presence
+      and asserts no obsolete line-cap phrases remain.
+      Mapping these against the description's "six emit
+      points" list shows the missing two (three-agent Touch
+      Point 1 and Touch Point 2 inline self-checks plus
+      agent-template inline self-checks) are exactly the
+      steps the dispatch instruction wanted dropped — they
+      are subsumed by sp-planner-role / sp-evaluator-role
+      self-checks in the new architecture (orchestrator
+      Touch Points no longer print directly; they route
+      role-skill emit). The currently-stored 4 steps are
+      already the residual. S5 calls
+      manage-features update with these four anyway, so the
+      reconciliation is explicit and idempotent and the
+      commit message documents the trim.
+    alternatives:
+      - option: rewrite_step_3_to_explicitly_list_remaining_emit_points
+        rejected_because: |
+          Tightening step 3 to enumerate sp-planner-role +
+          sp-evaluator-role makes the wording more precise
+          but the current generic "6-item enumerated self-
+          check block" already covers it via the
+          "single-agent-development Phase 3" pattern
+          reference. Tightening introduces an unscoped
+          content edit; defer to whoever picks up
+          language-pin-emit-self-check-coverage.
+      - option: also_drop_step_4_regression_test
+        rejected_because: |
+          The regression test in step 4 is the whole point
+          of the feature (it locks every emit-point
+          self-check + cap removal into a perpetual guard).
+          Dropping it would gut the feature.
+      - option: also_rewrite_description_to_match_4_step_reality
+        rejected_because: |
+          Description text drift ("six emit points" no
+          longer matches "four steps") is a real bug, but
+          rewriting it changes feature semantics and is
+          out of scope for a test-suite cleanup feature.
+          Surface in commit message; let the next planner
+          decide.
+    ask_user: false
+    user_decision: null
+
+execution:
+  S1:
+    status: done
+    confidence: 90
+    notes: |
+      Created tests/role-skill-dispatch-smoke/__init__.py and
+      test_dispatch_contract.py with 19 structural tests across
+      five TestCase classes — one per orchestrator entry point
+      plus the canonical Subagent Dispatch Contract section.
+      Asserts: each role's dispatch block contains the matching
+      Skill(sp-harness:sp-<role>-role) invocation; three-agent
+      and feedback dispatch blocks additionally contain
+      subagent_type='general-purpose' (single-agent intentionally
+      omitted since it dispatches in-session via Skill(...) with
+      no subagent boundary); the legacy '@agent sp-<role>' verb
+      and obsolete .claude/agents/sp-<role>.md path references
+      are absent from every orchestrator; the dispatch contract
+      section enforces the literal "Skill(sp-harness:sp-<role>-role)
+      FIRST" rule. All 19 tests green on first run. Mirrors the
+      style of tests/refactor-{single,three,feedback}-orchestrator/.
+    commits:
+      - 72b78bc133294b7ea70820e7d2068e0b9a3361c2
+  S2:
+    status: done
+    confidence: 88
+    notes: |
+      Created tests/agent-file-migration/__init__.py and
+      test_migration.py with 9 tests across five TestCase
+      classes. Layer A (5 structural tests) re-confirms
+      switch-dev-mode/SKILL.md still enumerates all four
+      cleanup targets, references dev_mode and
+      .claude/sp-harness.json, names state/ as off-limits, and
+      preserves the decision-touchpoint-protocol marker. Layer B
+      (4 simulator tests) seeds a tmpdir with a stub JSON, the
+      four stale agent files, plus two decoys
+      (.claude/agents/state/active-placeholder.txt and
+      .claude/agents/sp-other.md), then invokes a private
+      _simulate_cleanup helper that mirrors the SKILL's
+      algorithm (read JSON, glob the four exact filenames,
+      delete, re-write JSON with dev_mode flipped). Edge cases
+      covered: empty stale set is filesystem no-op; partial
+      stale set deletes only what exists; JSON key order is
+      preserved (so a future re-implementation that re-orders
+      keys is caught). All 9 tests green.
+    commits:
+      - e95727c7f9a3a7900aa1d538499d9c02ed1c229e
+  S3:
+    status: done
+    confidence: 95
+    notes: |
+      Verified tests/canonical-plan-summary-parity/ was already
+      off-disk (Planner correctly anticipated this).
+      tests/humanize-planner-evaluator-briefs/ existed locally
+      but was already untracked by git (stale resurrection — the
+      directory contained only an untracked test_templates.py
+      plus __pycache__; canonical history shows it was removed
+      in commit 22ff135). Removed it from the working tree.
+      tests/output-prose-agent-templates-lint-scope/ was
+      tracked; deleted both files (__init__.py, test_scope.py).
+      Post-deletion grep across tests/ for all three
+      directory-name strings returned zero hits. Single commit
+      per S3. The git diff for this commit shows only
+      output-prose-agent-templates-lint-scope/ because the
+      other two were already off-disk or untracked.
+    commits:
+      - 32ad5a3054abf84772da08e783f7b94f80b7bb0b
+  S4:
+    status: done
+    confidence: 95
+    notes: |
+      Ran `python3 -m unittest discover tests` from repo root.
+      Result: "Ran 174 tests in 2.844s — OK". Of those, 19 are
+      from the new tests/role-skill-dispatch-smoke/ suite and 9
+      from tests/agent-file-migration/. Pre-S1 baseline was 146
+      tests; net delta = +28 (no test regressions from the S3
+      deletions since the deleted suites guarded couplings the
+      orchestrators no longer rely on). No pure verification
+      step generates a commit.
+    commits: []
+  S5:
+    status: done
+    confidence: 75
+    notes: |
+      Inspected features.json entry
+      language-pin-emit-self-check-coverage and confirmed the
+      currently-stored step list already contains exactly the
+      4 residual steps the dispatcher expects (cap removal
+      across skills/*/SKILL.md, language-pin scan in
+      using-sp-harness, role-skill self-check upgrade for
+      sp-planner-role / sp-evaluator-role, regression test).
+      Called the cache-resolved manage-features mutate.py with
+      `update language-pin-emit-self-check-coverage --steps
+      <four steps verbatim joined by ;;>` (cache copy verified
+      byte-identical to the in-repo skills/manage-features/
+      scripts/mutate.py). The script accepted the call and
+      printed {"id": "...", "updated": ["steps"]}. Because the
+      input was byte-identical to the stored steps list, the
+      resulting features.json file is byte-identical to its
+      pre-call state — git diff is empty. There is nothing to
+      commit; the call itself is the reconciliation record (it
+      exercised the mutate path and confirmed schema validity).
+      Description text drift ("six emit points" no longer
+      matches "four steps") deliberately left intact per
+      Planner D4 rationale; surface to next planner. S5 has no
+      commit by design (no diff to commit).
+    commits: []
+
+unplanned_changes: []
+
+flags_for_eval:
+  - |
+    S1's TestSingleAgentOrchestratorDispatch class intentionally
+    does NOT assert subagent_type='general-purpose' because
+    single-agent dispatches role skills via in-session Skill(...)
+    with no subagent boundary. The plan's test_plan item 1 for
+    S1 says "Each role's dispatch block contains both
+    subagent_type='general-purpose' and the matching role-skill
+    identifier" — strictly read, that would fail for
+    single-agent. Evaluator should confirm this scope
+    interpretation matches the user's intent (the plan and the
+    existing tests/refactor-single-agent-orchestrator/ suite
+    both treat single-agent as the in-session exception). If
+    Evaluator disagrees, the fix is one TestCase swap.
+  - |
+    S2's _simulate_cleanup mirrors the SKILL.md algorithm but
+    is NOT a direct invocation of the live skill (the SKILL is
+    English prose, not Python). Evaluator should diff the
+    simulator step-by-step against the SKILL's "Steps 1-4"
+    section to confirm fidelity. The simulator preserves JSON
+    key order because the SKILL prose says "preserving every
+    other field unchanged" — strict reading suggests order
+    should be preserved too; if Evaluator believes key-order
+    preservation is over-spec, the TestCleanupSimulatorPreservesJsonKeyOrder
+    case can be relaxed without affecting Layer A or the other
+    Layer B tests.
+  - |
+    S3 deleted tests/humanize-planner-evaluator-briefs/ even
+    though it was already untracked by git in the canonical
+    history. The directory had been recreated locally
+    (test_templates.py reappeared on disk despite being deleted
+    in commit 22ff135). The deletion is therefore a working-tree
+    cleanup with no commit-visible change beyond git's existing
+    record. Evaluator may want to confirm nothing else in the
+    working tree is in a similar "resurrected from history"
+    state.
+  - |
+    S5 produced no commit because the byte-identical input
+    yielded a byte-identical output. The Planner's D4
+    rationale anticipated this (the call is "explicit and
+    idempotent" — the explicit reconciliation record is the
+    successful CLI invocation, not a diff). Evaluator should
+    decide whether a soft no-op commit (e.g. `--allow-empty`)
+    is needed for an audit trail; the current decision was to
+    skip per repository git-convention norms (no empty commits).
+  - |
+    All S1/S2 tests are STRUCTURAL (string-grep / tmpdir
+    simulation) — they are deterministic and fast but they do
+    NOT exercise the live Agent SDK dispatch path or the live
+    switch-dev-mode skill. Evaluator should consider whether
+    this is the right shape for a long-lived regression suite,
+    or whether at least one end-to-end smoke (e.g. dispatch a
+    real Skill() invocation in a sandbox) would be worth
+    adding in a follow-up feature. Per D2's planner_view this
+    is the deliberate choice; flagging only so Evaluator can
+    re-affirm.
+  - |
+    Final pytest run summary: 174 tests, 0 failures, 0 errors.
+    New suites collected: tests/role-skill-dispatch-smoke (19)
+    and tests/agent-file-migration (9). No skips, no collection
+    errors. Baseline is genuinely green.
+  - |
+    Pre-existing observation (NOT introduced by this Generator):
+    the locked Planner section's test_plan items contain
+    unquoted colon-space sequences inside list items (e.g.
+    "Behavior simulation on a tmpdir: post-cleanup state ..."
+    in S2.test_plan), which makes the file fail strict
+    yaml.safe_load. Nothing in the codebase actually parses
+    plan YAML programmatically (verified via grep), so this
+    has no runtime impact, but Evaluator may want to flag it
+    as a Planner-side hygiene item for a future feature.
+
+eval:
+  rounds:
+    - round: 1
+      closure_check:
+        user_decisions_honored:
+          - id: D1
+            verified: true
+            evidence: |
+              No tests/role-skill-content-parity/ on disk; grep -ril
+              for "parity" / "content_parity" / agent-templates/sp-
+              planner / agent-templates/sp-evaluator across tests/
+              returns zero matches. No equivalent parity assertion
+              hidden in another test file.
+          - id: D2
+            verified: true
+            evidence: |
+              tests/role-skill-dispatch-smoke/test_dispatch_contract.py
+              is structural-only: every assertion is a string-grep on
+              SKILL.md text. No mock subagent dispatch, no Agent SDK
+              import, no live Skill() invocation. Mirrors the precedent
+              of refactor-{single,three,feedback}-orchestrator/.
+          - id: D3
+            verified: true
+            evidence: |
+              tests/agent-file-migration/test_migration.py has Layer A
+              (TestSwitchDevModeSkillPreservesCleanupContract: 5
+              structural assertions) and Layer B (three simulator
+              TestCase classes: AllFourStaleFiles, EmptyStaleSet,
+              PartialStaleSet, plus PreservesJsonKeyOrder). Tmpdir
+              fixture seeds .claude/sp-harness.json + four stale agent
+              files + decoys (.claude/agents/state/active-placeholder.txt
+              and .claude/agents/sp-other.md).
+          - id: D4
+            verified: true
+            evidence: |
+              `python3 skills/manage-features/scripts/query.py get
+              language-pin-emit-self-check-coverage` returns exactly
+              4 steps (cap removal, language-pin scan, role-skill
+              self-check upgrade, regression test) — same four
+              residual steps Planner D4 enumerated. Description text
+              still references "six emit points" (deliberately left
+              intact per D4 rationale; surfaced for next planner).
+              The mutate.py update with --steps was idempotent and
+              produced no diff because input matched stored steps.
+        missing_plan_items: []
+        confidence_mismatches: []
+        unplanned_accepted: []
+        unplanned_rejected: []
+      tests:
+        S1:
+          pass: 19
+          fail: 0
+          coverage: 95
+          tests_file: tests/role-skill-dispatch-smoke/test_dispatch_contract.py
+          notes: |
+            Five TestCase classes, 19 tests. Covers test_plan items
+            1-4 of S1: positive role-skill identifier per orchestrator,
+            negative @agent legacy verb, contract-section general-
+            purpose + FIRST wording, no .claude/agents/sp-<role>.md
+            path references. Single-agent intentionally skips the
+            subagent_type assertion (in-session Skill() dispatch has
+            no subagent boundary) — confirmed against
+            tests/refactor-single-agent-orchestrator/ precedent and
+            against the actual SKILL prose; matches Generator flag 1.
+        S2:
+          pass: 9
+          fail: 0
+          coverage: 95
+          tests_file: tests/agent-file-migration/test_migration.py
+          notes: |
+            Layer A (5 tests) locks SKILL.md prose: four stale
+            filenames enumerated, dev_mode + sp-harness.json
+            referenced, decision-touchpoint-protocol marker present,
+            state/ marked off-limits. Layer B (4 tests) runs
+            _simulate_cleanup against tmpdir fixtures: all-four-stale
+            happy path, empty-stale edge, partial-stale edge, JSON
+            key order preservation. Decoys (.claude/agents/state/
+            and .claude/agents/sp-other.md) verified preserved.
+            Simulator handles missing dev_mode via .get() default
+            (graceful — defaults to single-agent then flips to
+            three-agent).
+        S3:
+          pass: 0
+          fail: 0
+          coverage: 100
+          tests_file: ""
+          notes: |
+            Pure deletion step. Verified absent: tests/canonical-
+            plan-summary-parity/, tests/humanize-planner-evaluator-
+            briefs/, tests/output-prose-agent-templates-lint-scope/.
+            No string references to those directory names anywhere
+            under tests/ scripts/ skills/ (CHANGELOG.md mentions
+            them as historical record only — not a stale code
+            reference). No conftest.py / CI / .gitignore hard-codes
+            the deleted paths beyond the broad "tests/humanize-*"
+            glob in .gitignore which is harmless.
+        S4:
+          pass: 174
+          fail: 0
+          coverage: 90
+          tests_file: ""
+          notes: |
+            Re-ran `python3 -m unittest discover tests` — "Ran 174
+            tests in 2.958s — OK". Generator's reported count
+            matches. No collection error, no skip, no import
+            failure. Also ran `python3 scripts/lint-skill-output.py`
+            — "OK — 34 files scanned, 12 warnings, 0 failures".
+        S5:
+          pass: 0
+          fail: 0
+          coverage: 100
+          tests_file: ""
+          notes: |
+            Reconciliation verified by `query.py get` returning
+            exactly 4 steps. Mutate call ran (Generator log) and
+            was byte-identical → no diff → no commit. Per CLAUDE.md
+            "PR must solve a real problem", a no-op idempotent
+            reconciliation with no diff legitimately skips the
+            commit. The CLI invocation itself is the audit trail
+            (it exercised the schema-validating mutate path).
+            --allow-empty marker not warranted; no concrete audit
+            consumer asks for one.
+      blockers: []
+      verdict: PASS
+
+  optimization:
+    suggestions:
+      - loc: tests/agent-file-migration/test_migration.py:_simulate_cleanup
+        what: |
+          The simulator unifies two semantically-separate SKILL
+          decisions (dev_mode flip and stale-file cleanup) into one
+          atomic helper. The SKILL prose treats them as decoupled
+          (rule 2: "the two questions are decoupled"). Consider
+          splitting _simulate_cleanup into _simulate_toggle_mode
+          and _simulate_cleanup_files so the test fixture can
+          assert each side effect independently — matches SKILL
+          semantics more faithfully and also lets future tests
+          exercise the "yes-toggle / no-cleanup" and "no-toggle /
+          yes-cleanup" combinations explicitly. Non-blocking;
+          current shape adequately codifies the contract Planner
+          asked for.
+      - loc: tests/role-skill-dispatch-smoke/test_dispatch_contract.py
+        what: |
+          Negative assertions only catch the literal "@agent
+          sp-<role>" verb. If a future regression introduces a
+          different obsolete dispatch shape (e.g.
+          Task(subagent_type='sp-planner') with literal sp-planner
+          identifier), the current tests would not catch it.
+          Optional hardening: add a broader "no role-name appears
+          as a subagent_type literal" check. Non-blocking — D2
+          settled the structural-only scope and the positive
+          assertion (Skill(sp-harness:sp-<role>-role) must be
+          present) already catches removal of the role-skill
+          dispatch.
+      - loc: .claude/features.json#language-pin-emit-self-check-coverage
+        what: |
+          Description text still references "six emit points" while
+          the step list is the residual 4. Per D4 rationale this
+          was deliberately deferred to the next planner of that
+          feature, not silently rewritten here. Surfacing as a
+          non-blocking nudge so the next planner notices it
+          immediately on plan-time read.
+    final_verdict: MERGE_READY
