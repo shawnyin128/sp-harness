@@ -28,6 +28,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 SINGLE = REPO_ROOT / "skills" / "single-agent-development" / "SKILL.md"
 THREE = REPO_ROOT / "skills" / "three-agent-development" / "SKILL.md"
 FEEDBACK = REPO_ROOT / "skills" / "feedback" / "SKILL.md"
+FEATURE_TRACKER = REPO_ROOT / "skills" / "feature-tracker" / "SKILL.md"
 
 
 def _section(text: str, heading: str, next_heading: str) -> str:
@@ -222,6 +223,65 @@ class TestThreeAgentDispatchContractSection(unittest.TestCase):
             )
             return self.text[idx:]
         return m.group(0)
+
+
+class TestFeatureTrackerModeADispatch(unittest.TestCase):
+    """skills/feature-tracker Step 5's ALL-PASS exit branch dispatches
+    sp-feedback-role in Mode A via a fresh general-purpose subagent.
+    The slice is anchored on the literal "All features complete" inside
+    Step 5 to avoid the descriptive forward-pointer at Step 3 that
+    intentionally retains "(dispatch sp-feedback)" prose."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = FEATURE_TRACKER.read_text(encoding="utf-8")
+        step5 = _section(
+            cls.text,
+            "Step 5: Commit, hygiene cleanup, LOOP BACK",
+            "Rules",
+        )
+        anchor = step5.find("All features complete")
+        if anchor == -1:
+            raise AssertionError(
+                "ALL-PASS branch anchor 'All features complete' not "
+                "found inside Step 5"
+            )
+        cls.section = step5[anchor:]
+
+    def test_dispatch_block_has_general_purpose_subagent_type(self):
+        self.assertIn("subagent_type='general-purpose'", self.section)
+
+    def test_dispatch_block_targets_sp_feedback_role_skill(self):
+        self.assertIn("sp-harness:sp-feedback-role", self.section)
+
+    def test_dispatch_block_passes_mode_A(self):
+        self.assertRegex(
+            self.section,
+            r"mode\s*=\s*['\"]A['\"]",
+            "ALL-PASS dispatch no longer passes mode='A' / mode=\"A\"",
+        )
+
+    def test_references_canonical_subagent_dispatch_contract(self):
+        # Feature-tracker delegates the dispatch contract to
+        # three-agent-development (DRY); the literal phrase must
+        # appear inside the ALL-PASS slice.
+        self.assertIn("Subagent Dispatch Contract", self.section)
+
+    def test_no_legacy_at_agent_dispatch_verb_in_all_pass_slice(self):
+        self.assertNotRegex(
+            self.section,
+            r"@agent\s+sp-feedback\b",
+            "feature-tracker ALL-PASS branch still references legacy "
+            "'@agent sp-feedback' dispatch verb",
+        )
+
+    def test_no_dot_claude_agents_feedback_path_in_all_pass_slice(self):
+        self.assertNotIn(
+            ".claude/agents/sp-feedback.md",
+            self.section,
+            "feature-tracker ALL-PASS branch still references obsolete "
+            ".claude/agents/sp-feedback.md path",
+        )
 
 
 if __name__ == "__main__":
