@@ -14,22 +14,87 @@
 > X`). v0.8.16 picks up the changelog narrative at the next
 > meaningful inflection point.
 
-## Unreleased
+## v0.8.24 (2026-04-29)
 
-- **framework-check Cat 4 (Agent templates) retired.** The category
-  detected drift in per-project `.claude/agents/sp-*.md` files, but
-  the orchestrator refactor eliminated those files (orchestrator
-  skills now dispatch role skills in-process; `switch-dev-mode` no
-  longer copies templates). Cat 4's check body, three Critical Fix
-  Paths entries (configurable-language rule, decision touch-point
-  protocol marker, agent template drift), and the `[4/9] Agent
-  templates` example block in the report template are deleted. The
-  report template's `[4/9]` slot is now a one-line stub
+Role-skill migration release: orchestrators now dispatch role bodies
+through dedicated role skills, `agent-templates/` retired, framework-
+check Cat 4 dropped, plus a print-brief YAML loader fix and an R7
+self-check lint guard.
+
+### Role-skill migration (major arc)
+
+Role bodies for Planner / Generator / Evaluator / Feedback have been
+extracted from per-project `.claude/agents/sp-*.md` files and the
+plugin's `agent-templates/` directory into four canonical role skills:
+`skills/sp-planner-role/`, `skills/sp-generator-role/`,
+`skills/sp-evaluator-role/`, `skills/sp-feedback-role/`. The
+orchestrators now dispatch a fresh `general-purpose` subagent and
+direct it to load the role skill via the Skill tool — one source of
+truth for each role body, no per-project copies to drift.
+
+- **Role skills authored** (`create-role-skills`,
+  `language-pin-emit-self-check-coverage`). Four role-skill bodies
+  live under `skills/sp-*-role/SKILL.md` with shared self-check
+  coverage and language-pin emit rules.
+- **Orchestrators thinned** (`refactor-single-agent-orchestrator`,
+  `refactor-three-agent-orchestrator`,
+  `refactor-feedback-orchestrator`). `single-agent-development`,
+  `three-agent-development`, and the `feedback` Mode B entry point
+  delegate role bodies to the role skills via the canonical
+  Subagent Dispatch Contract; retry-with-stronger-prompt protocol
+  added so role-skill skip is detected and surfaced.
+- **feature-tracker ALL-PASS dispatch refactored**
+  (`fix-feature-tracker-mode-a-dispatch`). The Step 5 ALL-PASS
+  branch now matches the canonical contract; legacy
+  `@agent sp-feedback` verb gone. Smoke test in
+  `tests/role-skill-dispatch-smoke/` locks the regression.
+- **Per-project legacy agent files retired**
+  (`remove-stale-sp-feedback-md-residue`,
+  `retire-init-project-agent-files`). Deployed
+  `.claude/agents/sp-feedback.md` deleted; `init-project` no longer
+  emits any per-project subagent files; `agent-templates/`
+  directory deleted from the plugin source. Coverage that lived in
+  `agent-templates/` (CJK lint, decision touch-point inventory,
+  `lint-skill-output` default scope) reshuffled to the role-skill
+  paths so framework-check still binds.
+- **Test suite aligned** (`role-skills-test-suite-update`). New
+  `tests/role-skill-dispatch-smoke/` and
+  `tests/agent-file-migration/`; three obsoleted test directories
+  retired (`canonical-plan-summary-parity/`,
+  `humanize-planner-evaluator-briefs/`,
+  `output-prose-agent-templates-lint-scope/`).
+- **switch-dev-mode rewritten** (`switch-dev-mode-migration-rewrite`).
+  Field-only `dev_mode` toggle in `.claude/sp-harness.json` plus
+  best-effort cleanup of leftover legacy `.claude/agents/sp-*.md`
+  files; agent-template regen flow gone.
+
+### Other
+
+- **framework-check Cat 4 (Agent templates) retired**
+  (`framework-check-cat4-removal`). Cat 4 detected drift in
+  per-project `.claude/agents/sp-*.md`, made obsolete by the
+  orchestrator refactor. Check body, three Critical Fix Paths
+  entries, and the `[4/9] Agent templates` report-template block
+  deleted. Slot is now a one-line stub
   `[4/9] (slot retired — see CHANGELOG)` to keep the gap explicit
-  for readers of historical reports. Numbering of remaining
-  categories (1, 2, 3, 5, 6, 7, 8, 9) is unchanged. Frontmatter
-  description corrected from a stale `Runs 7 check categories` to
-  `Runs 8`, and `## Check Categories (9)` updated to `(8)`.
+  for readers of historical reports. Remaining numbering (1, 2,
+  3, 5, 6, 7, 8, 9) unchanged. Frontmatter `Runs 7 check
+  categories` → `Runs 8`; `## Check Categories (9)` → `(8)`.
+
+- **lint R7 self-check block guard** (`lint-r7-self-check-block-presence`).
+  `scripts/lint-skill-output.py` now enforces R7 (output prose
+  self-check block must be present in any SKILL with terminal
+  emissions) at lint time, not just review time.
+
+- **print-brief YAML loader hardened** (`fix-print-brief-edge-item-parser`).
+  The bundled YAML loader in `skills/feature-tracker/scripts/print-brief.py`
+  no longer misclassifies plain-prose `- Edge: <description>`
+  sequence items as mapping items. The mapping branch is now gated
+  on an allow-list of canonical plan-file-schema keys; anything
+  else falls into the scalar branch (which already handles wrapped
+  continuations). Fixed brief output on the
+  `role-skills-test-suite-update` archived plan from "2 steps · 0
+  tests" to "5 steps · 202 tests".
 
 ## v0.8.23 (2026-04-29)
 
